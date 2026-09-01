@@ -1,0 +1,21 @@
+/* ─── MARKETPLACE ─── */
+.mkt-hero{background:linear-gradient(135deg,#ECFDF5 0%,#E0E7FF 50%,#FEF3C7 100%);border-radius:var(--rxl);padding:32px;margin-bottom:24px;position:relative;overflow:hidden}
+.mkt-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(16,185,129,.15),transparent 70%);border-radius:50%}
+.mkt-hero h1{font-size:28px;font-weight:900;letter-spacing:-.8px;margin-bottom:6px}
+.mkt-hero p{font-size:14px;color:var(--tx2);max-width:500px;line-height:1.6}
+.mkt-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.mkt-filter{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:var(--trans);border:1px solid var(--bo);background:var(--card);color:var(--tx2)}
+.mkt-filter:hover{border-color:var(--ac);color:var(--ac)}
+.mkt-filter.active{background:var(--ac);color:#fff;border-color:var(--ac)}
+.mkt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.agent-card{background:var(--card);border:1px solid var(--bo);border-radius:var(--rl);padding:0;transition:var(--trans);cursor:pointer;overflow:hidden}
+.agent-card:hover{box-shadow:var(--sh-lg);transform:translateY(-3px);border-color:var(--bo2)}
+.agent-top{padding:20px 20px 0;display:flex;align-items:flex-start;gap:14px}
+.agent-icon{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.agent-info{flex:1;min-width:0}
+.agent-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.agent-author{font-size:11px;color:var(--tx4)}
+.agent-desc{padding:10px 20px;font-size:12px;color:var(--tx3);line-height:1.5}
+.agent-bottom{padding:12px 20px;border-top:1px solid var(--bo);display:flex;align-items:center;gap:8px}
+.agent-stat{font-size:11px;color:var(--tx4);display:flex;align-items:center;gap:3px}
+.agent-price{margin-left:auto;font-size:12px;font-weight:700;color:var(--ac)}

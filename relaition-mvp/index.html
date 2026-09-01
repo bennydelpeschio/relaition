@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RelAItion — AI Agent Marketplace</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/marketplace.css">
+<link rel="stylesheet" href="css/builder.css">
+<link rel="stylesheet" href="css/pages.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#10B981">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+</head>
+<body>
+<div id="loginScreen" style="position:fixed;inset:0;background:linear-gradient(160deg,#0F172A 0%,#1E293B 100%);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:Inter,sans-serif;padding:20px">
+  <div style="width:100%;max-width:380px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:36px 32px;backdrop-filter:blur(12px)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
+      <div style="width:44px;height:44px;background:linear-gradient(135deg,#10B981,#059669);border-radius:12px;display:grid;place-items:center;font-size:22px;box-shadow:0 4px 12px rgba(16,185,129,.4)">⚡</div>
+      <div><div style="color:#F8FAFC;font-size:19px;font-weight:800;letter-spacing:-.5px">RelAItion</div><div style="color:rgba(148,163,184,.7);font-size:11px;font-weight:500;letter-spacing:.5px">AI Agent Marketplace</div></div>
+    </div>
+    <div style="color:#F1F5F9;font-size:16px;font-weight:700;margin-bottom:4px">Bentornato</div>
+    <div style="color:#94A3B8;font-size:12px;margin-bottom:22px">Accedi per continuare sulla piattaforma</div>
+    <form id="loginForm" onsubmit="return doLogin(event)">
+      <div style="margin-bottom:14px">
+        <label style="display:block;color:#CBD5E1;font-size:11px;font-weight:600;margin-bottom:6px">Email</label>
+        <input type="email" id="loginEmail" required placeholder="nome@azienda.it" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#F1F5F9;font-size:13px;font-family:inherit">
+      </div>
+      <div style="margin-bottom:8px">
+        <label style="display:block;color:#CBD5E1;font-size:11px;font-weight:600;margin-bottom:6px">Password</label>
+        <input type="password" id="loginPassword" required placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#F1F5F9;font-size:13px;font-family:inherit">
+      </div>
+      <div id="loginError" style="color:#FCA5A5;font-size:11px;min-height:16px;margin-bottom:6px"></div>
+      <button type="submit" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#10B981,#059669);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">Accedi</button>
+      <button type="button" onclick="doGuestLogin()" style="width:100%;padding:11px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:transparent;color:#CBD5E1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px">👤 Continua come ospite</button>
+    </form>
+    <!-- Selezione rapida degli account. Le password non si mostrano: cliccando
+         una scheda vengono compilate nei campi, che è quello che serve per
+         provare i profili senza doverle leggere da nessuna parte. -->
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)">
+      <div style="color:#94A3B8;font-size:10.5px;font-weight:600;margin-bottom:10px;letter-spacing:.02em">Oppure entra con un profilo di prova</div>
+      <div id="accountDemo" class="account-griglia"></div>
+      <div style="color:#64748B;font-size:9.5px;text-align:center;margin-top:14px;line-height:1.5">Demo — l'autenticazione non è reale.<br>Nessun dato lascia il tuo browser.</div>
+    </div>
+  </div>
+</div>
+<div id="bootOverlay" style="position:fixed;inset:0;background:linear-gradient(160deg,#0F172A 0%,#1E293B 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:Inter,sans-serif;gap:12px">
+  <div style="font-size:32px;width:44px;height:44px;background:linear-gradient(135deg,#10B981,#059669);border-radius:12px;display:grid;place-items:center;box-shadow:0 4px 12px rgba(16,185,129,.4)">⚡</div>
+  <div style="font-size:13px;color:#94A3B8">Inizializzazione database locale (SQLite)...</div>
+</div>
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo-area">
+    <div class="logo-row" onclick="go('dashboard')" title="Torna alla Dashboard">
+      <div class="logo-mark">⚡</div>
+      <div><div class="logo-text">RelAItion</div><div class="logo-sub">AI Agent Marketplace</div></div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-group">Piattaforma</div>
+    <div class="ni active" data-page="dashboard" onclick="go('dashboard')"><span class="ni-ic">📊</span>Dashboard</div>
+    <div class="ni" data-page="marketplace" onclick="go('marketplace')"><span class="ni-ic">🏪</span>Marketplace<span class="ni-badge" id="mktBadge">18</span></div>
+    <div class="ni" data-page="builder" onclick="go('builder')"><span class="ni-ic">🔧</span>Builder<span class="ni-badge" style="background:rgba(99,102,241,.15);color:#6366F1">AI</span></div>
+    <div class="ni" data-page="myagents" onclick="go('myagents')"><span class="ni-ic">📁</span>I miei agenti<span class="ni-badge" id="pubBadge" style="display:none;background:#FEF3C7;color:#B45309"></span></div>
+    <div class="ni" data-page="execlog" onclick="go('execlog')"><span class="ni-ic">📜</span>Log Esecuzioni</div>
+    <div class="ni" data-page="monitoraggio" onclick="go('monitoraggio')"><span class="ni-ic">📡</span>Monitoraggio<span class="ni-badge" id="monBadge" style="background:rgba(239,68,68,.15);color:#EF4444;display:none">0</span></div>
+    <div class="nav-group">Apprendimento</div>
+    <div class="ni" data-page="learning" onclick="go('learning')"><span class="ni-ic">🎓</span>Learning Hub</div>
+    <div class="ni" data-page="challenges" onclick="go('challenges')"><span class="ni-ic">🏆</span>Sfide & Eventi</div>
+    <div class="nav-group">Social</div>
+    <div class="ni" data-page="community" onclick="go('community')"><span class="ni-ic">💬</span>Community</div>
+    <div class="ni" data-page="profile" onclick="go('profile')"><span class="ni-ic">👤</span>Profilo</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sf-row" style="justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0" onclick="go('profile')">
+        <div class="ava">MR</div>
+        <div class="sf-info"><div class="sf-name">Mario R.</div><div class="sf-role">AI Agent Builder</div></div>
+      </div>
+      <span onclick="logout()" title="Esci" style="cursor:pointer;color:rgba(203,213,225,.6);font-size:15px;padding:6px;flex-shrink:0">🚪</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <span class="tb-title" id="tb-title">Dashboard</span>
+    <span class="tb-sub" id="tb-sub">Panoramica piattaforma</span>
+    <div class="tb-spacer"></div>
+    <div class="tb-search"><span>🔍</span><input placeholder="Cerca agenti, corsi, post..." id="globalSearch" oninput="onGlobalSearch(this.value)"></div>
+    <button class="tb-btn" id="btnInstallApp" onclick="installApp()" style="display:none" title="Installa RelAItion come applicazione sul computer">⬇️ Installa app</button>
+    <div class="tb-icon-btn" title="Connessioni: cartelle, endpoint, database" onclick="openConnessioni()"><span>🔌</span></div>
+    <div class="tb-icon-btn" title="La tua Knowledge Base" onclick="openKnowledgeBaseModal()"><span>📦</span></div>
+    <div class="tb-icon-btn" onclick="toggleNotifications()"><span>🔔</span><div class="notif-dot"></div></div>
+    <div class="notif-panel" id="notifPanel" onclick="event.stopPropagation()"></div>
+    <button class="tb-btn primary" onclick="startNewAgent()">+ Nuovo Agente</button>
+  </header>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-pad">
+        <div class="section-title" id="salutoDashboard">Buongiorno 👋</div>
+        <div class="section-sub">Ecco una panoramica della tua attività sulla piattaforma.</div>
+
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">🤖 Agenti creati</div><div class="stat-val" id="dashAgentsVal">0</div><div class="stat-change stat-up" id="dashAgentsSub"></div></div>
+          <div class="stat-card"><div class="stat-label">▶️ Esecuzioni totali</div><div class="stat-val" id="dashRunsVal">0</div><div class="stat-change stat-up" id="dashRunsSub"></div></div>
+          <div class="stat-card"><div class="stat-label">🎓 Corsi completati</div><div class="stat-val"><span id="dashCoursesVal">0</span><span style="font-size:14px;color:var(--tx4)">/5</span></div><div class="stat-change stat-up" id="dashCoursesSub"></div></div>
+          <div class="stat-card"><div class="stat-label">⭐ XP totali</div><div class="stat-val" id="dashXPVal">0</div><div class="stat-change stat-up" id="dashXPLevel">Livello 1</div></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📈 Agenti più usati</div></div>
+            <div id="dash-popular"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">🕐 Attività recente</div></div>
+            <div id="dash-activity"></div>
+          </div>
+        </div>
+
+        <div class="card mt-20">
+          <div class="card-header"><div class="card-title">🚀 Quick Actions</div></div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <button class="tb-btn" onclick="startNewAgent()">🔧 Crea nuovo agente</button>
+            <button class="tb-btn" onclick="go('marketplace')">🏪 Esplora marketplace</button>
+            <button class="tb-btn" onclick="go('learning')">🎓 Continua a studiare</button>
+            <button class="tb-btn" onclick="go('community')">💬 Vai al forum</button>
+          </div>
+        </div>
+
+        <div class="grid-2 mt-20">
+          <div class="card">
+            <div class="card-header"><div class="card-title">💡 Consigliati per te</div><span class="badge badge-b">In base al tuo profilo</span></div>
+            <div id="dash-suggestions"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">📢 Novità piattaforma</div></div>
+            <div id="dash-news"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MARKETPLACE ═══ -->
+    <div class="page" id="page-marketplace">
+      <div class="page-pad">
+        <div class="mkt-hero">
+          <h1>Marketplace Agenti AI</h1>
+          <p>Agenti verificati e pronti all'uso per ogni funzione aziendale. Installa in 1 clic, personalizza nel Builder, esegui con governance completa.</p>
+          <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--tx2)"><span style="font-size:16px">🛡️</span> AI Act & GDPR ready</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--tx2)"><span style="font-size:16px">📋</span> Audit log immutabile</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--tx2)"><span style="font-size:16px">🔒</span> Sandbox isolata</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--tx2)"><span style="font-size:16px">🇪🇺</span> Dati in EU</div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button class="tb-btn primary" onclick="go('builder')">+ Crea il tuo agente</button>
+            <button class="tb-btn" onclick="showToast('📖 Documentazione integrazioni — 63 connettori disponibili')">📖 Guida integrazioni</button>
+            <button class="tb-btn" onclick="openReviewQueue()" id="reviewQueueBtn" style="color:#D97706;border-color:#FDE68A">🛡️ Revisiona pubblicazioni</button>
+            <button class="tb-btn" onclick="openPublishHealthPanel()" id="pubHealthBtn" style="display:none">📈 Salute pubblicazioni</button>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+          <div class="mkt-filters" id="mkt-filters" style="margin-bottom:16px;flex:1"></div>
+          <select class="prop-select" style="width:auto;font-size:12px" onchange="setMktSort(this.value)">
+            <option value="rating">⭐ Rating più alto</option>
+            <option value="installs">📥 Più installati</option>
+            <option value="name">🔤 Nome A-Z</option>
+          </select>
+        </div>
+        <div class="mkt-grid" id="mkt-grid"></div>
+      </div>
+    </div>
+
+    <!-- ═══ BUILDER ═══ -->
+    <div class="page" id="page-builder" style="overflow:hidden">
+      <div class="builder-wrap">
+        <!-- Palette -->
+        <div class="builder-sidebar">
+          <div class="builder-sidebar-header">
+            <h3>🧩 Blocchi</h3>
+            <input class="palette-search" placeholder="Cerca blocchi..." id="paletteSearch" oninput="filterPalette(this.value)">
+          </div>
+          <div class="palette-tabs" style="flex-wrap:wrap">
+            <div class="palette-tab active" data-cat="all" onclick="setPaletteCat('all',this)">Tutti</div>
+            <div class="palette-tab" data-cat="trigger" onclick="setPaletteCat('trigger',this)">Trigger</div>
+            <div class="palette-tab" data-cat="ai" onclick="setPaletteCat('ai',this)">AI</div>
+            <div class="palette-tab" data-cat="crm" onclick="setPaletteCat('crm',this)">CRM</div>
+            <div class="palette-tab" data-cat="comm" onclick="setPaletteCat('comm',this)">Comm</div>
+            <div class="palette-tab" data-cat="erp" onclick="setPaletteCat('erp',this)">ERP</div>
+            <div class="palette-tab" data-cat="action" onclick="setPaletteCat('action',this)">Tools</div>
+            <div class="palette-tab" data-cat="data" onclick="setPaletteCat('data',this)">Data</div>
+            <div class="palette-tab" data-cat="devops" onclick="setPaletteCat('devops',this)">DevOps</div>
+            <div class="palette-tab" data-cat="logic" onclick="setPaletteCat('logic',this)">Logic</div>
+            <div class="palette-tab" data-cat="guard" onclick="setPaletteCat('guard',this)">Controlli</div>
+            <div class="palette-tab" data-cat="output" onclick="setPaletteCat('output',this)">Output</div>
+          </div>
+          <div class="palette-list" id="paletteList"></div>
+
+          <!-- AI Integration Panel -->
+          <div style="padding:12px;border-top:1px solid var(--bo)">
+            <div class="ai-panel">
+              <div class="ai-panel-title"><span class="sparkle">✨</span> Integrazione AI</div>
+              <div style="margin-bottom:8px">
+                <select class="prop-select" id="aiProvider" onchange="onAIProviderChange()">
+                  <option value="claude">Anthropic Claude</option>
+                  <option value="openai">OpenAI GPT</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="mistral">Mistral AI</option>
+                  <option value="locale"><!--💻-->Modello in locale (Ollama, LM Studio...)</option>
+                  <option value="custom"><!--🔧-->Endpoint personalizzato</option>
+                </select>
+              </div>
+              <div id="localeAIFields" style="display:none;margin-bottom:8px">
+                <select class="prop-select" id="localePreset" onchange="onLocalePresetChange()" style="margin-bottom:6px">
+                  <option value="ollama">Ollama — http://localhost:11434</option>
+                  <option value="lmstudio">LM Studio — http://localhost:1234</option>
+                  <option value="localai">LocalAI — http://localhost:8080</option>
+                  <option value="jan">Jan — http://localhost:1337</option>
+                  <option value="altro">Altro (indica l'indirizzo)</option>
+                </select>
+                <input class="ai-key-input" style="width:100%;margin-bottom:6px" id="localeUrl" placeholder="http://localhost:11434">
+                <div style="display:flex;gap:6px;margin-bottom:6px">
+                  <select class="prop-select" id="localeModel" style="flex:1"><option value="">— nessun modello rilevato —</option></select>
+                  <button class="tb-btn" onclick="discoverLocalModels()" style="height:30px;font-size:11px;padding:0 10px" title="Cerca i modelli installati">🔄</button>
+                </div>
+                <div style="font-size:10px;color:var(--tx4);line-height:1.5">Nessuna chiave necessaria. Il modello gira sul tuo computer: i dati non escono dalla macchina.</div>
+              </div>
+              <div id="customAIFields" style="display:none;margin-bottom:8px">
+                <input class="ai-key-input" style="width:100%;margin-bottom:6px" id="customAIUrl" placeholder="Base URL: https://.../v1">
+                <input class="ai-key-input" style="width:100%" id="customAIModel" placeholder="Modello: llama3.1, mistral-large, gpt-4o...">
+              </div>
+              <div class="ai-key-row">
+                <input class="ai-key-input" type="password" placeholder="sk-ant-api..." id="aiKeyInput">
+                <button class="tb-btn" onclick="testAIKey()" style="height:30px;font-size:11px;padding:0 10px">Test</button>
+              </div>
+              <div id="openaiProxyField" style="display:none;margin-bottom:6px">
+                <input class="ai-key-input" style="width:100%" id="openaiProxyUrl" placeholder="Proxy CORS (opzionale): http://localhost:8010/">
+              </div>
+              <div style="font-size:10px;color:var(--ac2);cursor:pointer;text-decoration:underline;margin-bottom:4px" onclick="openConnectionGuide()">ℹ️ Guida connessione e problemi CORS</div>
+              <div class="ai-status" id="aiStatus"><span class="ai-dot idle"></span> Non configurato</div>
+              <div style="font-size:10px;color:var(--tx4);margin-top:4px;line-height:1.5">💡 Puoi collegare più fornitori: ogni nodo AI sceglie il proprio, e se quello scelto non risponde la richiesta passa a un altro collegato.<br>🔑 La chiave resta in <strong>questa scheda</strong> finché non la chiudi — non viene scritta su disco né inclusa negli export. <span style="text-decoration:underline;cursor:pointer" onclick="dimenticaChiaviAI()">Rimuovila ora</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Colonna centrale: intestazione con la chat, poi il canvas.
+             La barra stava SOPRA il canvas in posizione assoluta e copriva i
+             nodi in alto — proprio dove sta il trigger, cioè l'inizio del
+             flusso. Ora occupa una fascia propria e il canvas comincia sotto:
+             non c'è più modo che i due si sovrappongano. -->
+        <!-- Maniglia palette↔canvas: la larghezza della palette dipende da
+             quanto sono lunghi i nomi dei connettori, che variano. -->
+        <div class="bgrip bgrip-v" id="gripPalette" title="Trascina per ridimensionare"></div>
+        <div class="builder-main">
+          <!-- Nome del flusso aperto: senza, lavorando su piu' agenti non si
+               sa quale si sta modificando, e si finisce per salvare sopra
+               quello sbagliato. Cliccandolo si rinomina. -->
+          <div class="builder-titolo" id="builderTitolo" onclick="rinominaFlusso()" title="Clicca per rinominare">
+            <span class="bt-nome" id="builderTitoloNome">Nuovo agente</span>
+            <span class="bt-stato" id="builderTitoloStato"></span>
+            <span class="bt-edit">&#x270f;&#xfe0f;</span>
+          </div>
+          <div class="builder-header">
+            <!-- AI Chat Builder -->
+            <div class="chat-builder">
+              <div class="chat-builder-bar">
+                <span style="font-size:16px;padding-left:6px">✨</span>
+                <span id="chatAIStatusDot" title="Stato AI" style="width:8px;height:8px;border-radius:50%;background:var(--tx4);flex-shrink:0"></span>
+                <input id="chatBuilderInput" placeholder="Descrivi l'agente che vuoi creare... es: 'qualifica i lead in arrivo e notifica il sales team'" onkeydown="if(event.key==='Enter')aiGenerateWorkflow()">
+                <button class="chat-builder-btn" id="chatBuilderBtn" onclick="aiGenerateWorkflow()">Genera</button>
+              </div>
+              <div class="chat-builder-hint" id="chatBuilderHint">🤖 AI Chat Builder — crea o modifica il workflow in linguaggio naturale</div>
+              <div class="chat-sugg-wrap" id="chatSuggWrap">
+                <div id="chatSuggestions" class="chat-sugg"></div>
+              </div>
+              <div id="composeHistory" class="compose-history" style="display:none"></div>
+              <div id="composePreview" class="compose-preview" style="display:none"></div>
+            </div>
+          </div>
+          <!-- Maniglia chat↔canvas: chi usa molto la chat vuole piu' spazio
+               sopra, chi disegna lo vuole sul canvas. -->
+          <div class="bgrip bgrip-h" id="gripHeader" title="Trascina per ridimensionare"></div>
+        <div class="canvas-area" id="canvasArea">
+          <div class="canvas-grid"></div>
+          <svg id="edgeSvg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4"></svg>
+          <div id="builderCanvas"></div>
+          <div class="canvas-controls">
+            <button id="btnUndo" onclick="undoCanvas()" title="Annulla (Ctrl+Z)">↩︎</button>
+            <button id="btnRedo" onclick="redoCanvas()" title="Ripristina (Ctrl+Y)">↪︎</button>
+            <button onclick="bZoom(-1)">−</button>
+            <span class="zoom-label" id="zoomLabel">100%</span>
+            <button onclick="bZoom(1)">+</button>
+            <button onclick="bResetView()" title="Reset vista">⊙</button>
+            <button id="btnOrientamento" onclick="cambiaOrientamento()" title="Flusso verticale — clicca per passare a orizzontale">⇅</button>
+            <button onclick="bAutoLayout()" title="Riordina il flusso">⊞</button>
+            <button onclick="bFitView()" title="Adatta vista">⛶</button>
+          </div>
+          <!-- Exec log -->
+          <div class="exec-log collapsed" id="execLog">
+            <!-- Bordo superiore trascinabile: il registro si ridimensiona come
+                 un pannello, invece di avere due sole altezze fisse. -->
+            <div class="exec-log-grip" id="execLogGrip" title="Trascina per ridimensionare"></div>
+            <div class="exec-log-header" onclick="toggleExecLog()">
+              <span class="exec-log-dot" id="execDot"></span>
+              <span>Registro esecuzione</span>
+              <span style="flex:1"></span>
+              <span style="font-size:10px;color:var(--tx4)" id="execCount">0 voci</span>
+              <span class="tb-icon-btn" style="width:22px;height:22px;font-size:12px" id="execLogExport"
+                    title="Esporta il registro di questa esecuzione" onclick="menuEsportaRegistro(event)">📥</span>
+              <span class="tb-icon-btn" style="width:22px;height:22px;font-size:12px" id="execLogEspandi"
+                    title="Espandi a tutta altezza" onclick="event.stopPropagation();espandiRegistro()">⤢</span>
+              <span class="tb-icon-btn" style="width:22px;height:22px;font-size:12px"
+                    title="Riduci" onclick="event.stopPropagation();riduciRegistro()">▾</span>
+            </div>
+            <div class="exec-log-body" id="execLogBody"></div>
+          </div>
+        </div>
+        </div><!-- /builder-main -->
+
+        <!-- Props panel -->
+        <div class="bgrip bgrip-v" id="gripProps" title="Trascina per ridimensionare"></div>
+        <div class="builder-props" id="builderProps">
+          <div class="builder-props-header" style="flex-direction:column;align-items:stretch;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <h3>⚙️ Proprietà</h3>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span id="suggBadge" class="chip" onclick="checkWorkflow()" style="display:none;font-size:11px;color:#A21CAF;background:#FDF4FF;border:1px solid #F5D0FE;padding:3px 9px;border-radius:20px;cursor:pointer;font-weight:600"></span>
+                <button class="tb-btn" onclick="startOnboardingTour()" title="Guida rapida: come costruire un workflow" style="width:28px;height:28px;padding:0;border-radius:50%"><center>&nbsp;&nbsp;❓</center></button>
+              </div>
+            </div>
+            <div class="props-run-row">
+              <button class="tb-btn primary" id="btnRun" onclick="runAgent()" title="Esegui il workflow con dati di esempio" style="flex:1;justify-content:center;height:34px;font-size:13px">▶️ Esegui</button>
+              <button class="tb-btn" id="btnStop" onclick="stopAgentRun()" title="Interrompi subito l'esecuzione in corso" disabled style="flex:0 0 116px;justify-content:center;height:34px;font-size:13px;color:#EF4444;border-color:#FEE2E2;opacity:.4">⏹️ Interrompi</button>
+            </div>
+            <div class="props-toolbar">
+              <button class="tb-btn" onclick="checkWorkflow()" title="Verifica struttura e presidi consigliati">🔍 Verifica</button>
+              <button class="tb-btn" onclick="newBlankAgent()" title="Svuota il canvas e inizia un nuovo agente">🆕 Nuovo</button>
+              <button class="tb-btn" onclick="openContextModal()" title="Contesto generale del workflow — istruzioni che tutti i nodi AI rispettano" style="color:#7C3AED;border-color:#EDE9FE">📋 Contesto</button>
+              <button class="tb-btn" onclick="saveAgent()" title="Salva con un nome nel database">💾 Salva</button>
+              <button class="tb-btn" onclick="exportAgent()" title="Scarica il workflow come file JSON">📄 Esporta</button>
+              <button class="tb-btn" onclick="generatePythonCode()" title="Genera uno script Python eseguibile" style="color:#3776AB;border-color:#DBEAFE">🐍 Python</button>
+              <button class="tb-btn" onclick="openDeployModal()" title="Metti in produzione: esecuzione automatica pianificata o su evento" style="color:#D97706;border-color:#FDE68A">⏱️ Pianifica</button>
+              <button class="tb-btn" onclick="openPublishModal()" title="Pubblica nel Marketplace (in attesa di revisione)" style="color:var(--ac2);border-color:var(--ac2-l)">🚀 Pubblica</button>
+            </div>
+          </div>
+          <div class="props-body" id="propsBody">
+            <div style="text-align:center;padding:40px 20px;color:var(--tx4)">
+              <div style="font-size:32px;margin-bottom:8px">👈</div>
+              <div style="font-size:13px;font-weight:600">Seleziona un nodo</div>
+              <div style="font-size:11px;margin-top:4px">Clicca su un nodo nel canvas per configurarlo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MY AGENTS ═══ -->
+    <div class="page" id="page-myagents">
+      <div class="page-pad">
+        <div class="section-title">I miei agenti</div>
+        <div class="section-sub">Agenti che hai creato o installato dal marketplace.</div>
+        <div id="myagents-grid"></div>
+      </div>
+    </div>
+
+
+    <!-- ═══ EXEC LOG ═══ -->
+    <div class="page" id="page-execlog">
+      <div class="page-pad">
+        <div class="section-title">📜 Log Esecuzioni</div>
+        <div class="section-sub">Storico completo delle esecuzioni dei tuoi agenti — audit trail personale con esito, durata e dettaglio nodi.</div>
+        <div id="execlog-content"></div>
+      </div>
+    </div>
+
+    <!-- ═══ GOVERNO DELLA PIATTAFORMA ═══ -->
+    <div class="page" id="page-monitoraggio">
+      <div class="page-pad">
+        <div class="section-title">📡 Monitoraggio della piattaforma</div>
+        <div class="section-sub">Vista complessiva su tutta la piattaforma: totali, medie per utente, presidio e segnali di rischio. Ogni numero è calcolato sui dati reali, non stimato.</div>
+        <div id="monitoraggio-body"></div>
+      </div>
+    </div>
+
+
+    <!-- ═══ LEARNING HUB ═══ -->
+    <div class="page" id="page-learning">
+      <div class="page-pad">
+        <div id="learn-main">
+          <div class="learn-hero">
+            <h1>🎓 Learning Hub</h1>
+            <p style="font-size:14px;color:var(--tx2);max-width:560px;line-height:1.6">Percorsi adattivi basati sul tuo ruolo. Progredisci attraverso i 4 livelli di certificazione: da AI Aspirant ad AI Ambassador.</p>
+            <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap" id="levelTrack">
+              <div style="flex:1;min-width:130px;background:var(--card);border:2px solid var(--ac);border-radius:12px;padding:12px;position:relative"><div style="font-size:18px">🌱</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Aspirant</div><div style="font-size:10px;color:var(--tx4)">Livello 1 · Completato ✓</div></div>
+              <div style="flex:1;min-width:130px;background:var(--card);border:2px solid var(--ac3);border-radius:12px;padding:12px"><div style="font-size:18px">⚙️</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Practitioner</div><div style="font-size:10px;color:#D97706;font-weight:600">Livello 2 · In corso — 40%</div></div>
+              <div style="flex:1;min-width:130px;background:var(--bg2);border:2px solid var(--bo);border-radius:12px;padding:12px;opacity:.7"><div style="font-size:18px">🏆</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Champion</div><div style="font-size:10px;color:var(--tx4)">Livello 3 · Bloccato 🔒</div></div>
+              <div style="flex:1;min-width:130px;background:var(--bg2);border:2px solid var(--bo);border-radius:12px;padding:12px;opacity:.7"><div style="font-size:18px">👑</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Ambassador</div><div style="font-size:10px;color:var(--tx4)">Livello 4 · Bloccato 🔒</div></div>
+            </div>
+            <div class="learn-progress">
+              <div class="learn-progress-bar"><div class="learn-progress-fill" id="learnProgressFill" style="width:40%"></div></div>
+              <div class="learn-progress-text" id="learnProgressText">40% completato</div>
+            </div>
+          </div>
+          <div id="learn-guida"></div>
+          <div class="tabs">
+            <div class="tab active" onclick="setLearnTab('paths',this)">Percorsi</div>
+            <div class="tab" onclick="setLearnTab('certs',this)">Certificazioni</div>
+            <div class="tab" onclick="setLearnTab('resources',this)">Risorse</div>
+          </div>
+          <div id="learn-tab-content">
+            <div class="path-grid" id="pathGrid"></div>
+          </div>
+        </div>
+        <div id="learn-detail" class="lesson-view"></div>
+      </div>
+    </div>
+
+    <!-- ═══ CHALLENGES ═══ -->
+    <div class="page" id="page-challenges">
+      <div class="page-pad">
+        <div class="section-title">🏆 Sfide & Eventi</div>
+        <div class="section-sub">Hackathon, competizioni e sfide a tema per guadagnare XP e badge.</div>
+        <div id="challenges-content"></div>
+      </div>
+    </div>
+
+    <!-- ═══ COMMUNITY ═══ -->
+    <div class="page" id="page-community">
+      <div class="page-pad">
+        <div class="section-title">💬 Community</div>
+        <div class="section-sub">Condividi, chiedi e impara dalla community di AI agent builders.</div>
+        <div class="community-grid">
+          <div>
+            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="forumFilters"></div>
+            <div id="posts-list"></div>
+            <button class="tb-btn primary mt-16" onclick="openNewPost()">+ Nuovo post</button>
+          </div>
+          <div>
+            <div class="com-sidebar-card">
+              <h3>🏅 Leaderboard</h3>
+              <div id="leaderboard"></div>
+            </div>
+            <div class="com-sidebar-card">
+              <h3>📅 Prossimi eventi</h3>
+              <div id="events-list"></div>
+            </div>
+            <div class="com-sidebar-card">
+              <h3>🔥 Tag popolari</h3>
+              <div id="popular-tags" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PROFILE ═══ -->
+    <div class="page" id="page-profile">
+      <div class="page-pad">
+        <div class="profile-header">
+          <div class="profile-avatar">BM</div>
+          <div>
+            <div class="profile-name">Mario R.</div>
+            <div class="profile-role">AI Agent Builder · Rome Business School</div>
+            <div class="profile-stats">
+              <div class="profile-stat"><div class="profile-stat-val" id="profileAgentsVal">0</div><div class="profile-stat-label">Agenti</div></div>
+              <div class="profile-stat"><div class="profile-stat-val" id="profileRunsVal">0</div><div class="profile-stat-label">Esecuzioni</div></div>
+              <div class="profile-stat"><div class="profile-stat-val" id="profileXPVal">0</div><div class="profile-stat-label">XP</div></div>
+              <div class="profile-stat"><div class="profile-stat-val" id="profileLevelVal">Lv.1</div><div class="profile-stat-label">Livello</div></div>
+            </div>
+          </div>
+          <!-- Il pulsante vive su un'intestazione scura: con lo sfondo chiaro
+               di .tb-btn il testo bianco spariva e si vedeva solo l'emoji. -->
+          <div style="margin-left:auto"><button class="tb-btn btn-su-scuro" onclick="toggleProfileEdit()">✏️ Modifica profilo</button></div>
+        </div>
+
+        <div class="profile-grid">
+          <div>
+            <div class="card mb-16">
+              <div class="card-header"><div class="card-title">📁 Il tuo lavoro</div></div>
+              <div id="profile-work"></div>
+            </div>
+            <div class="card mb-16">
+              <div class="card-header"><div class="card-title">🏅 Badge</div></div>
+              <div class="badge-shelf" id="badge-shelf"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">📊 Competenze</div></div>
+              <div id="skills-chart"></div>
+            </div>
+          </div>
+          <div>
+            <div class="card mb-16">
+              <div class="card-header"><div class="card-title">🕐 Attività recente</div></div>
+              <div id="profile-activity"></div>
+            </div>
+            <div class="card mb-16">
+              <div class="card-header"><div class="card-title">🛡️ Governance</div></div>
+              <div id="profile-governance"></div>
+              <div id="profile-obiettivi" style="margin-top:16px"></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">⚙️ Preferenze</div></div>
+              <div id="profile-prefs"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Modal overlay -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalContent"></div>
+</div>
+<script src="lib/sqljs/sql-wasm.js"></script>
+<script src="lib/sqljs/sql-wasm-inline.js"></script>
+<script src="js/state.js"></script>
+<script src="js/db.js"></script>
+<script src="js/guardrails.js"></script>
+<script src="js/policies.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/router.js"></script>
+<script src="js/fileout.js"></script>
+<script src="js/fileread.js"></script>
+<script src="js/cloudsave.js"></script>
+<script src="js/mailer.js"></script>
+<script src="js/webhook.js"></script>
+<script src="js/utenti.js"></script>
+<script src="js/connessioni.js"></script>
+<script src="js/connessioni-ui.js"></script>
+<script src="js/explain.js"></script>
+<script src="js/kb.js"></script>
+<script src="js/publish.js"></script>
+<script src="js/governance.js"></script>
+<script src="js/seed-demo.js"></script>
+<script src="js/tour.js"></script>
+<script src="js/ai-client.js"></script>
+<script src="js/chat-compose.js"></script>
+<script src="js/agent-runtime.js"></script>
+<script src="js/builder.js"></script>
+<script src="js/sfide.js"></script>
+<script src="js/lezioni-pratica.js"></script>
+<script src="js/recensioni.js"></script>
+<script src="js/recensioni-seed.js"></script>
+<script src="js/pubblicazioni.js"></script>
+<script src="js/marketplace.js"></script>
+<script src="js/pages.js"></script>
+<script src="js/lessons-piattaforma.js"></script>
+<script src="js/lessons-fondamenti.js"></script>
+<script src="js/modals.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
