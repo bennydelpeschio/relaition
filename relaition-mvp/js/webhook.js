@@ -73,7 +73,7 @@ function whAvviaAscolto(nodeId){
   WH_ASCOLTO = { nodeId:nodeId, percorso:percorso, dalle:Date.now() };
   WH_ASCOLTO.timer = setInterval(function(){ whControlla() }, 1500);
   renderProps(nodeId);
-  showToast('👂 In ascolto su ' + percorso + ' — invia una chiamata');
+  showToast('👂 In ascolto su ' + percorso + ': invia una chiamata');
 }
 
 function whFermaAscolto(){
@@ -101,7 +101,7 @@ function whControlla(){
                                   tipo:dati.tipo, campi:dati.campi };
     }
     whFermaAscolto();
-    showToast('📥 Chiamata ricevuta (' + dati.tipo + ') — avvio il flusso');
+    showToast('📥 Chiamata ricevuta (' + dati.tipo + '): avvio il flusso');
     if(typeof runAgent === 'function') runAgent();
   });
 }
@@ -121,7 +121,7 @@ function whPannello(nid, n){
 
   if(!WH_STATO.disponibile){
     return '<div class="prop-group"><div style="font-size:10.5px;color:#B45309;background:#FEF3C7;border-radius:6px;padding:8px 10px;line-height:1.5">'+
-      '⚠️ <strong>Ricevitore non attivo</strong> — il flusso si esegue con i parametri inseriti qui sopra.<br>'+
+      '⚠️ <strong>Ricevitore non attivo</strong>: il flusso si esegue con i parametri inseriti qui sopra.<br>'+
       'Per riceverli da una chiamata esterna, avvia <code>servizio-webhook/relaition-webhook.ps1</code>.'+
       '<div style="margin-top:6px"><button class="tb-btn" style="width:100%" onclick="whRiverifica('+nid+')">🔄 Ho avviato il ricevitore, ricontrolla</button></div></div></div>';
   }
@@ -138,12 +138,12 @@ function whPannello(nid, n){
     '</div>'+
     (inAscolto
       ? '<div style="font-size:10.5px;color:#1D4ED8;background:#DBEAFE;border-radius:6px;padding:8px 10px;margin-top:7px;line-height:1.5">'+
-        '👂 <strong>In ascolto</strong> — alla prima chiamata il flusso parte da solo.'+
+        '👂 <strong>In ascolto</strong>: alla prima chiamata il flusso parte da solo.'+
         '<div style="margin-top:6px"><button class="tb-btn" style="width:100%" onclick="whFermaAscolto()">Interrompi l\'ascolto</button></div></div>'
       : '<button class="tb-btn" style="width:100%;margin-top:7px" onclick="whAvviaAscolto('+nid+')">👂 Attendi una chiamata ed esegui</button>')+
     (ultima
       ? '<div style="font-size:10px;color:#047857;margin-top:6px;line-height:1.45">✅ Ultima ricevuta alle '+escHtml(ultima.quando)+
-        ' ('+escHtml(ultima.tipo)+(ultima.campi&&ultima.campi.length?' — campi: '+escHtml(ultima.campi.join(', ')):'')+')</div>'
+        ' ('+escHtml(ultima.tipo)+(ultima.campi&&ultima.campi.length?': campi: '+escHtml(ultima.campi.join(', ')):'')+')</div>'
       : '')+
   '</div>';
 }

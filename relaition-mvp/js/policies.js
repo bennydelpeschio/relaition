@@ -281,7 +281,7 @@ function suggestGuardrails(){
       // Non duplicare un suggerimento già emesso per rischio sullo stesso nodo
       if(out.some(function(s){ return s.nodeId === n.id && s.guardrail === guardName })) return;
       out.push({ nodeId:n.id, guardrail:guardName, placement: dopo ? 'after' : 'before',
-        reason:(cond.note || 'Politica organizzativa')+' — ambito: '+p.scope,
+        reason:(cond.note || 'Politica organizzativa')+': ambito: '+p.scope,
         from:'politica' });
     });
   });
@@ -319,7 +319,7 @@ function policyReasonFor(node){
   var p = dbGetOne('SELECT * FROM policies WHERE id=?', [node.policyId]);
   if(!p) return 'Controllo imposto da una politica organizzativa.';
   var cond = {}; try { cond = JSON.parse(p.condition_json || '{}') } catch(e){}
-  return (cond.note || 'Controllo imposto da una politica organizzativa.') + ' — ambito: ' + p.scope;
+  return (cond.note || 'Controllo imposto da una politica organizzativa.') + ': ambito: ' + p.scope;
 }
 
 // ── Schermata amministrativa (voce nel Profilo) ───────────────────────────
@@ -352,7 +352,7 @@ function openPoliciesModal(){
       return '<div class="validation-item list-row" style="background:'+(obbl?'#FDF4FF':'var(--bg2)')+';border-color:'+(obbl?'#F5D0FE':'var(--bo)')+';cursor:default;align-items:center">'+
         '<span class="vi-ic">'+(p.active?(obbl?'🔒':'💡'):'⚪')+'</span>'+
         '<span class="vi-msg" style="flex:1">'+
-          '<strong>'+(g?g.icon+' '+g.name:p.required_guardrail)+'</strong> — '+(place?place.label:cond.placement)+
+          '<strong>'+(g?g.icon+' '+g.name:p.required_guardrail)+'</strong>: '+(place?place.label:cond.placement)+
           ' <span class="badge '+(obbl?'badge-p':'badge-gray')+'" style="font-size:9px">'+(obbl?'obbligatoria':'consigliata')+'</span>'+
           '<div style="font-size:10px;color:var(--tx4);margin-top:2px">'+escHtml(p.scope)+(cond.note?' · '+escHtml(cond.note):'')+'</div>'+
         '</span>'+
@@ -370,8 +370,8 @@ function openPoliciesModal(){
     '<div class="prop-group"><div class="prop-label">Punto di inserimento</div><select class="prop-select" id="polPlace">'+placeOpts+'</select></div>'+
     '<div class="prop-group"><div class="prop-label">Motivazione (mostrata a chi costruisce)</div><input class="prop-input" id="polNote" placeholder="es. Gli agenti che trattano dati cliente devono..."></div>'+
     '<div class="prop-group"><div class="prop-label">Modalità</div><select class="prop-select" id="polMode">'+
-      '<option value="consigliata">💡 Consigliata — segnalata in verifica</option>'+
-      '<option value="obbligatoria">🔒 Obbligatoria — inserita e non rimovibile</option>'+
+      '<option value="consigliata">💡 Consigliata: segnalata in verifica</option>'+
+      '<option value="obbligatoria">🔒 Obbligatoria: inserita e non rimovibile</option>'+
     '</select></div>'+
     '<button class="tb-btn primary" onclick="submitPolicy()">+ Aggiungi politica</button>'+
     '<div style="background:var(--ac2-l);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--tx2);margin-top:14px">💡 Le politiche consigliate compaiono in "🔍 Verifica" nel Builder. Quelle obbligatorie vengono applicate al canvas all\'apertura del flusso.</div>';
@@ -386,7 +386,7 @@ function submitPolicy(){
   var note  = document.getElementById('polNote').value.trim();
   var mode  = document.getElementById('polMode').value;
   policyAdd(scope, place, guard, note, mode);
-  showToast(mode==='obbligatoria'?'🔒 Politica obbligatoria aggiunta':'💡 Politica aggiunta — comparirà fra i presidi consigliati');
+  showToast(mode==='obbligatoria'?'🔒 Politica obbligatoria aggiunta':'💡 Politica aggiunta: comparirà fra i presidi consigliati');
   if(typeof addAct === 'function') addAct('Aggiunta politica di controllo: '+guard);
   openPoliciesModal();
 }

@@ -34,7 +34,7 @@ function mailVerificaServizio(){
       // effettiva, invece di affermare che il servizio non e' in ascolto —
       // che quando il servizio e' avviato e' semplicemente falso.
       MAIL_STATO = { disponibile:false, verificato:true, mittente:null, server:null,
-                     errore:'Nessuna risposta da '+MAIL_URL+' \u2014 il servizio non e\u0300 avviato, oppure e\u0300 avviato ma non autorizza questa pagina ('+location.origin+')',
+                     errore:'Nessuna risposta da '+MAIL_URL+': il servizio non e\u0300 avviato, oppure e\u0300 avviato ma non autorizza questa pagina ('+location.origin+')',
                      controllatoIl:Date.now() };
       return MAIL_STATO;
     });
@@ -105,12 +105,12 @@ function mailPannelloStato(){
   // "finta" scelta dalla piattaforma. Le istruzioni sono qui, in tre passi,
   // perché è questo il punto in cui servono.
   return '<div style="font-size:10.5px;color:#B45309;background:#FEF3C7;border-radius:8px;padding:10px 12px;line-height:1.55">' +
-    '⚠️ <strong>Il servizio di invio non è avviato</strong> — finché resta spento le email vengono registrate come simulate.<br><br>' +
+    '⚠️ <strong>Il servizio di invio non è avviato</strong>: finché resta spento le email vengono registrate come simulate.<br><br>' +
     '<strong>Per inviare davvero, in tre passi:</strong>' +
     '<div style="margin:6px 0 0;padding-left:2px">' +
       '<div style="margin-bottom:5px"><strong>1.</strong> Doppio click su <code>servizio-mail/AVVIA-SERVIZIO-MAIL.cmd</code></div>' +
       '<div style="margin-bottom:5px"><strong>2.</strong> Scegli <code>1</code> (Gmail), inserisci il tuo indirizzo e la <strong>password per le app</strong> ' +
-        '(<a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="color:#B45309;text-decoration:underline">generala qui</a> — quella dell\'account viene rifiutata da Google)</div>' +
+        '(<a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="color:#B45309;text-decoration:underline">generala qui</a>: quella dell\'account viene rifiutata da Google)</div>' +
       '<div><strong>3.</strong> Ti arriva un messaggio di prova: da quel momento l\'invio è reale.</div>' +
     '</div>' +
     '<div style="display:flex;gap:6px;margin-top:9px">' +
@@ -127,7 +127,7 @@ function mailIstruzioni(){
       '<h2>📧 Inviare email davvero</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12.5px;color:var(--tx2);margin:12px 0;line-height:1.65">'+
       'Una pagina web non può aprire una connessione SMTP: SMTP viaggia su TCP, il browser parla solo HTTP. '+
-      'Il servizio incluso colma esattamente quel divario — riceve la richiesta dal builder e la inoltra al server di posta.</p>'+
+      'Il servizio incluso colma esattamente quel divario: riceve la richiesta dal builder e la inoltra al server di posta.</p>'+
     '<div style="background:var(--bg2);border-radius:10px;padding:14px 16px;font-size:12.5px;line-height:1.75">'+
       '<strong>1.</strong> Doppio click su <code>servizio-mail/AVVIA-SERVIZIO-MAIL.cmd</code><br>'+
       '<strong>2.</strong> Scegli il provider e inserisci utente e password<br>'+
@@ -174,14 +174,14 @@ function mailProvaInvio(){
 
   mostra('<span style="color:var(--tx4)">Invio a '+escHtml(a)+'\u2026</span>');
   mailInvia({
-    a:a, oggetto:'RelAItion \u2014 email di prova',
+    a:a, oggetto:'RelAItion: email di prova',
     corpo:'Questo messaggio conferma che il nodo email invia realmente.\n\n'+
           'Inviato il '+new Date().toLocaleString('it-IT')+' dal flusso "'+
           (typeof currentAgentName!=='undefined'?currentAgentName:'senza nome')+'".',
     html:false, allegati:[]
   }).then(function(r){
     if(r.ok){
-      mostra('<span style="color:#047857">\u2705 Inviata a '+escHtml(r.destinatario)+' \u2014 controlla la casella.</span>');
+      mostra('<span style="color:#047857">\u2705 Inviata a '+escHtml(r.destinatario)+': controlla la casella.</span>');
       if(typeof showToast==='function')showToast('\ud83d\udce8 Email di prova inviata a '+r.destinatario);
     }else{
       mostra('<span style="color:#B91C1C">\u274c '+escHtml(r.errore)+'</span>');

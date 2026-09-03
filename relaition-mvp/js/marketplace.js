@@ -125,7 +125,7 @@ function renderMkt(){
   // continuo, e viene dichiarato come tale.
   if(typeof pubAutoSuspendScan==='function'){
     var sosp=pubAutoSuspendScan();
-    if(sosp.length)showToast('⏸️ Sospensione automatica: '+sosp.join(', ')+' — tasso di fallimento oltre soglia');
+    if(sosp.length)showToast('⏸️ Sospensione automatica: '+sosp.join(', ')+', tasso di fallimento oltre soglia');
   }
   var reviewBtn=document.getElementById('reviewQueueBtn');
   if(reviewBtn){
@@ -276,7 +276,7 @@ function openPublishModal(){
     // D1 — l'ambito determina chi approva e quali controlli sono bloccanti
     '<div class="prop-group"><div class="prop-label">Ambito di diffusione *</div><select class="prop-select" id="pubScope" onchange="refreshPublishChecks()">'+
       Object.keys(PUB_SCOPES).map(function(k){
-        return '<option value="'+k+'"'+(k==='business_unit'?' selected':'')+'>'+PUB_SCOPES[k].lab+' — approva: '+PUB_SCOPES[k].approver+'</option>';
+        return '<option value="'+k+'"'+(k==='business_unit'?' selected':'')+'>'+PUB_SCOPES[k].lab+': approva: '+PUB_SCOPES[k].approver+'</option>';
       }).join('')+'</select>'+
       '<div id="pubScopeHint" style="font-size:10px;color:var(--tx4);margin-top:4px"></div></div>'+
     '<div class="prop-group"><div class="prop-label">Prerequisiti</div><input class="prop-input" id="pubPrereq" placeholder="es. credenziali Salesforce, accesso alla cartella condivisa" onchange="refreshPublishChecks()"></div>'+
@@ -451,7 +451,7 @@ function renderReviewCard(a){
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'+
       '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+a.icon+' '+escHtml(a.name)+' <span style="font-size:10px;color:var(--tx4)">v'+escHtml(a.version||'1.0')+'</span></div>'+
       '<div style="font-size:11px;color:var(--tx4);margin-top:2px">di '+escHtml(a.author)+' · '+escHtml(a.cat)+' · '+nodeCount+' nodi · '+new Date(a.created_at).toLocaleDateString('it-IT')+'</div>'+
-      '<div style="font-size:11px;color:var(--ac2);margin-top:3px">Ambito richiesto: <strong>'+escHtml(scope.lab)+'</strong> — approva: '+escHtml(scope.approver)+'</div>'+
+      '<div style="font-size:11px;color:var(--ac2);margin-top:3px">Ambito richiesto: <strong>'+escHtml(scope.lab)+'</strong>, approva: '+escHtml(scope.approver)+'</div>'+
       '<div style="font-size:12px;color:var(--tx2);margin-top:6px;white-space:pre-wrap">'+escHtml(a.desc)+'</div></div>'+
       '<span class="badge badge-y" style="flex-shrink:0">'+pubStateLabel(a.status)+'</span>'+
     '</div>';
@@ -535,13 +535,13 @@ function reviewPublishedAgent(id,decision){
   if(pub)dbRun('UPDATE publications SET reviewer=?,decision=?,decided_at=?,notes=? WHERE id=?',
     [profileData.name,decision,new Date().toISOString(),note,pub.id]);
   var a=dbGetOne('SELECT name,installs FROM published_agents WHERE id=?',[id]);
-  var msg={pubblicato:'✅ Approvato — ora visibile nel Marketplace pubblico',
+  var msg={pubblicato:'✅ Approvato: ora visibile nel Marketplace pubblico',
            bozza:'✏️ Riportato in bozza: l\'autore vede la richiesta di modifica',
            ritirato:'❌ Rifiutato'}[decision]||decision;
   if(decision==='pubblicato'&&a&&a.installs&&typeof addNotif==='function')
-    addNotif('🆕 "'+a.name+'" ha una nuova versione approvata — '+a.installs+' installazioni interessate');
+    addNotif('🆕 "'+a.name+'" ha una nuova versione approvata: '+a.installs+' installazioni interessate');
   showToast(msg);
-  addAct('Revisione "'+(a?a.name:'#'+id)+'": '+decision+(note?' — '+note:''));
+  addAct('Revisione "'+(a?a.name:'#'+id)+'": '+decision+(note?', '+note:''));
   // Il contatore sulla voce di menu segue la decisione appena presa: se il
   // revisore sta decidendo su un proprio agente, lo vede subito.
   if(typeof aggiornaBadgePubblicazioni==='function')aggiornaBadgePubblicazioni();

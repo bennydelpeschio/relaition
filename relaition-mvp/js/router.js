@@ -11,8 +11,12 @@
 // del mouse — tornano a funzionare. Si usa l'hash e non `pushState` perché
 // `pushState` solleva un errore di sicurezza quando la pagina è aperta da
 // `file://`, che è uno dei modi previsti per aprire questo prototipo.
-function navRegistra(page){
-  var h='#'+page;
+// L'indirizzo porta la pagina e, dove esiste, il dettaglio aperto dentro di
+// essa: `#challenges/sprint1`. Serve perche' una scheda di dettaglio che vive
+// dentro la pagina — e non in una finestra sovrapposta — deve poter essere
+// chiusa con Indietro, condivisa con un collegamento e riaperta ricaricando.
+function navRegistra(page,sotto){
+  var h='#'+page+(sotto?'/'+sotto:'');
   if(location.hash===h)return;
   try{ location.hash=h }catch(e){}
 }
@@ -22,19 +26,34 @@ function navRegistra(page){
 // Scatta solo quando l'hash cambia per volontà dell'utente — cioè Indietro,
 // Avanti, o un indirizzo incollato.
 window.addEventListener('hashchange',function(){
-  var p=(location.hash||'').replace(/^#/,'');
-  if(!p||p===currentPage)return;
-  if(document.getElementById('page-'+p))go(p);
+  var parti=(location.hash||'').replace(/^#/,'').split('/');
+  var p=parti[0], sotto=parti[1]||'';
+  if(!p)return;
+  if(!document.getElementById('page-'+p))return;
+  if(p!==currentPage)go(p,true);
+  navApplicaSotto(p,sotto);
 });
+
+// Il sotto-stato si applica DOPO che la pagina è quella giusta. Il secondo
+// argomento dice alle funzioni di non riscrivere l'hash: lo stiamo già
+// seguendo, e riscriverlo creerebbe una voce di cronologia in più a ogni
+// passo indietro.
+function navApplicaSotto(page,sotto){
+  if(page!=='challenges')return;
+  if(sotto&&typeof sfApriPagina==='function')sfApriPagina(sotto,true);
+  else if(!sotto&&typeof sfChiudiPagina==='function')sfChiudiPagina(true);
+}
 
 // All'avvio l'indirizzo comanda: aprendo un collegamento a `#monitoraggio` si
 // arriva sul Monitoraggio, non sulla dashboard.
 function navPaginaIniziale(){
-  var p=(location.hash||'').replace(/^#/,'');
+  var p=(location.hash||'').replace(/^#/,'').split('/')[0];
   return (p&&document.getElementById('page-'+p))?p:'dashboard';
 }
-
-function go(page){
+function navSottoIniziale(){
+  return (location.hash||'').replace(/^#/,'').split('/')[1]||'';
+}
+function go(page,daStoria){
   // I sovrapposti temporanei (suggerimenti dei grafici) non appartengono alla
   // pagina che si sta lasciando: senza questo restano appesi sullo schermo.
   if(typeof govTip==='function')govTip(null);
@@ -52,7 +71,10 @@ function go(page){
   // tornerebbero al nome scritto nel markup.
   if(typeof aggiornaIntestazioneUtente==='function')aggiornaIntestazioneUtente();
   currentPage=page;
-  navRegistra(page);
+  // Cambiando pagina il dettaglio eventualmente aperto non ha piu' senso: si
+  // chiude, e l'indirizzo torna alla sola pagina.
+  if(page!=='challenges'&&typeof sfChiudiPagina==='function')sfChiudiPagina(true);
+  if(!daStoria)navRegistra(page);
   if(page==='marketplace') renderMkt();
   if(page==='learning') renderLearning();
   if(page==='community') renderCommunity();
@@ -94,9 +116,46 @@ function startNewAgent(){
   go('builder');
   resetCanvasForNewAgent();
   var ci=document.getElementById('chatBuilderInput');if(ci)ci.focus();
-  showToast('🆕 Canvas pronto — costruisci da zero o usa l\'AI Chat Builder');
+  showToast('🆕 Canvas pronto: costruisci da zero o usa l\'AI Chat Builder');
 }
 
 // ══════════════════════════════════════════
 // MARKETPLACE SORTING
 // ══════════════════════════════════════════
+
+// ══════════════════════════════════════════
+// MENU LATERALE COLLASSABILE
+// ══════════════════════════════════════════
+// Il menu occupava 240px fissi anche mentre si disponevano i nodi sul canvas,
+// dove lo spazio orizzontale e' esattamente cio' che manca. Collassato resta
+// la colonna delle icone: la navigazione si comprime invece di sparire, perche'
+// doverlo riaprire a ogni spostamento sarebbe peggio del problema che risolve.
+//
+// La scelta sopravvive al ricaricamento: e' una preferenza di postazione, non
+// di sessione, e ripeterla a ogni avvio sarebbe una piccola tassa quotidiana.
+var MENU_CHIAVE='relaition_menu_compatto';
+
+function alternaMenu(compatto){
+  var sb=document.getElementById('sidebar');
+  if(!sb)return;
+  var nuovo=(compatto===undefined)?!sb.classList.contains('compatta'):!!compatto;
+  sb.classList.toggle('compatta',nuovo);
+  var b=document.getElementById('sbToggle');
+  if(b){
+    b.textContent=nuovo?'☰':'☰';
+    b.title=nuovo?'Espandi il menu':'Riduci il menu';
+    b.setAttribute('aria-label',b.title);
+    b.setAttribute('aria-expanded',nuovo?'false':'true');
+  }
+  try{localStorage.setItem(MENU_CHIAVE,nuovo?'1':'0')}catch(e){}
+  // Il canvas del Builder calcola le proprie dimensioni sulla larghezza
+  // disponibile: senza avvisarlo, i nodi restano disegnati dove stavano prima.
+  if(typeof b_render==='function'&&currentPage==='builder')setTimeout(b_render,200);
+  window.dispatchEvent(new Event('resize'));
+}
+
+function ripristinaMenu(){
+  var v=null;
+  try{v=localStorage.getItem(MENU_CHIAVE)}catch(e){}
+  if(v==='1')alternaMenu(true);
+}

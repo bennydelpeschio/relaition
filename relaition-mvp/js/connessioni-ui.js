@@ -114,7 +114,7 @@ function connForm(c,tipo){
     (tipo==='cartella'
       ? '<div class="prop-group"><div class="prop-label">Cartella <span style="color:#EF4444">*</span></div>'+
         '<button class="tb-btn" style="width:100%" onclick="connScegliCartella()">'+
-          (cfg.alias?'📂 '+escHtml(cfg.alias)+' — cambia':'Scegli cartella…')+'</button>'+
+          (cfg.alias?'📂 '+escHtml(cfg.alias)+': cambia':'Scegli cartella…')+'</button>'+
         '<input type="hidden" id="connC_alias" value="'+escHtml(cfg.alias||'')+'">'+
         '<div id="connCartellaInfo" style="font-size:10px;color:var(--tx4);margin-top:5px">'+
           (cfg.alias?'✅ Collegata':'Serve il permesso: si ottiene solo scegliendola qui.')+'</div></div>'
@@ -188,7 +188,7 @@ function connSalvaDalForm(id,tipo){
   if(box)box.innerHTML='';
 
   var nuovoId=connSalva(id,nome,tipo,cfg);
-  showToast('\ud83d\udcbe Connessione salvata \u2014 la provo subito');
+  showToast('\ud83d\udcbe Connessione salvata: la provo subito');
   openConnessioni();
   // La prova parte da sola: una connessione salvata e mai verificata e'
   // esattamente il caso che questa sezione esiste per evitare.

@@ -369,6 +369,73 @@ function seedDemoData(){
       [c[0],c[1],c[2],c[3],c[4],iso(4)]);
     dbRun('INSERT OR IGNORE INTO challenges_registered (user,challenge_id,ts) VALUES (?,?,?)',[c[1],c[0],iso(4)]);
   });
+
+  // ── 8d. Domande e voti sulle sfide ──
+  // Una sezione «domande» vuota al primo avvio sembra una funzione che nessuno
+  // usa. Qui ce ne sono gia' alcune, con voti distribuiti in modo che l'ordine
+  // per voti sia visibilmente diverso da quello cronologico: e' esattamente il
+  // comportamento che si vuole mostrare.
+  var DOMANDE=[
+    ['ama1','Marco R.','Quanto costa davvero far girare un agente ogni giorno su cento documenti? Vorrei un ordine di grandezza, non una formula.',['Mario R.','Giulia D.','Sara L.']],
+    ['ama1','Giulia D.','Come si convince il reparto legale che i dati non escono dall’azienda?',['Mario R.','Marco R.']],
+    ['ama1','Sara L.','Quando conviene un modello in locale invece di una API a consumo?',['Giulia D.']],
+    ['ama1','Mario R.','Che cosa si rompe per primo quando si passa da dieci a mille esecuzioni al giorno?',[]],
+
+    ['hack1','Giulia D.','Il tema viene comunicato all’avvio o si può preparare qualcosa prima?',['Marco R.','Sara L.']],
+    ['hack1','Marco R.','Se il team ha una persona che non usa la piattaforma, può occuparsi solo della presentazione?',['Mario R.']],
+
+    ['sprint1','Marco R.','Le esecuzioni interrotte a mano contano come fallite?',['Mario R.','Giulia D.','Sara L.']],
+    ['sprint1','Sara L.','Posso candidare un agente installato dal catalogo e poi modificato?',['Giulia D.']],
+
+    ['challenge1','Sara L.','Il tetto a dieci esecuzioni vale per periodo o in assoluto?',['Mario R.','Marco R.']],
+    ['challenge1','Mario R.','Un nodo di convalida che non blocca mai nulla conta comunque nel punteggio?',['Giulia D.']],
+
+    ['gov1','Giulia D.','L’approvazione umana vale come controllo anche se nessuno l’ha mai dovuta usare?',['Mario R.','Sara L.','Marco R.']],
+    ['gov1','Mario R.','La revisione fra pari è obbligatoria per restare in classifica?',[]],
+
+    ['ws1','Marco R.','Se non ho una chiave API riesco comunque a seguire gli esercizi?',['Sara L.','Giulia D.']],
+    ['ws1','Mario R.','Il pacchetto di modelli arriva anche a chi partecipa e poi deve andare via prima?',[]],
+
+    ['demo1','Mario R.','Sei minuti sono pochi: si può portare un video registrato al posto della demo dal vivo?',['Giulia D.','Marco R.','Sara L.']],
+    ['demo1','Giulia D.','Il voto della community è pubblico o anonimo?',['Mario R.']]
+  ];
+  DOMANDE.forEach(function(d,i){
+    dbRun('INSERT INTO challenge_questions (challenge_id,user,testo,ts) VALUES (?,?,?,?)',
+      [d[0],d[1],d[2],iso(9-Math.floor(i/2))]);
+    var qid=dbGetOne('SELECT last_insert_rowid() as id').id;
+    d[3].forEach(function(u){
+      dbRun('INSERT OR IGNORE INTO challenge_votes (tipo,ref_id,user,ts) VALUES (?,?,?,?)',
+        ['domanda',qid,u,iso(5)]);
+    });
+  });
+  // Una risposta gia' data: mostra che il ciclo si chiude, non che si accumulano
+  // domande senza seguito.
+  dbRun("UPDATE challenge_questions SET risposta=?,risposta_di=? WHERE testo LIKE 'Le esecuzioni interrotte a mano%'",
+    ['No. Le interruzioni volontarie non entrano nel tasso di successo: non sono fallimenti del flusso. Le trovi contate a parte nel Monitoraggio.','Sara L.']);
+  dbRun("UPDATE challenge_questions SET risposta=?,risposta_di=? WHERE testo LIKE 'Il voto della community è pubblico%' OR testo LIKE 'Il voto della community è pubblico%'",
+    ['Il conteggio è pubblico, chi ha votato cosa no. Ogni persona esprime un voto solo e può ritirarlo fino alla chiusura.','Sara L.']);
+
+  // ── 8e. Apprezzamenti e visualizzazioni del forum ──
+  // I «mi piace» erano un contatore cieco e le visualizzazioni numeri fissi.
+  // Ora sono righe: qui se ne semina un numero plausibile, distribuito fra i
+  // quattro profili, perche' un forum con zero apprezzamenti sembra abbandonato
+  // — e perche' il conteggio mostrato dev'essere alto E vero, non alto e basta.
+  var UTENTI_FORUM=['Mario R.','Giulia D.','Marco R.','Sara L.'];
+  for(var pid=1; pid<=15; pid++){
+    // Distribuzione irregolare: alcuni contributi piacciono a tutti, altri a
+    // nessuno. Un numero uguale ovunque si riconosce come finto a colpo d'occhio.
+    var quanti=[3,2,4,1,3,0,4,2,1,3,0,2,4,1,2][pid-1];
+    for(var k=0;k<quanti;k++){
+      dbRun('INSERT OR IGNORE INTO forum_likes (post_id,user,ts) VALUES (?,?,?)',
+        [pid,UTENTI_FORUM[k%4],iso(12-pid%7)]);
+    }
+    // Le visualizzazioni per utente si sommano al valore di partenza del post.
+    var visto=[4,3,4,2,4,1,4,3,2,4,1,3,4,2,3][pid-1];
+    for(var v=0;v<visto;v++){
+      dbRun('INSERT OR IGNORE INTO forum_views (post_id,user,ts) VALUES (?,?,?)',
+        [pid,UTENTI_FORUM[v%4],iso(10-pid%6)]);
+    }
+  }
   // ── 7. Esperienza sulla piattaforma, diversa per ciascuno ──
   // Quiz, XP, agenti installati e iscrizioni erano vuoti per tutti: ogni
   // utente entrava con lo stesso curriculum azzerato, e "utenti diversi con
@@ -450,6 +517,6 @@ function ricaricaDatiDemo(){
   dbRun('DELETE FROM published_agents WHERE name IN (\'Assistenza con conoscenza aziendale\',\'Qualificazione contatti\')');
   localStorage.removeItem(SEED_FLAG);
   var r=seedDemoData();
-  showToast('🌱 Dati dimostrativi ricaricati — '+r.flussi+' flussi, '+r.porzioni+' porzioni, '+r.esecuzioni+' esecuzioni');
+  showToast('🌱 Dati dimostrativi ricaricati: '+r.flussi+' flussi, '+r.porzioni+' porzioni, '+r.esecuzioni+' esecuzioni');
   go('myagents');
 }

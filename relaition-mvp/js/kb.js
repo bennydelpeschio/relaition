@@ -158,7 +158,7 @@ function kbChunkTable(text){
   righe.slice(iHead+1).forEach(function(r,i){
     var celle=r.split(sep);
     var coppie=head.map(function(h,k){return h+': '+((celle[k]||'').trim().replace(/^"|"$/g,''))});
-    out.push({text:coppie.join(' | '),label:'Riga '+(i+1)+' — '+(celle[0]||'').trim().substring(0,40)});
+    out.push({text:coppie.join(' | '),label:'Riga '+(i+1)+': '+(celle[0]||'').trim().substring(0,40)});
   });
   return out;
 }
@@ -414,7 +414,7 @@ function kbBuildContext(risultati){
   if(!risultati||!risultati.length)return '';
   return 'CONTESTO DALLA KNOWLEDGE BASE AZIENDALE (cita la fonte tra parentesi quadre quando la usi):\n\n'+
     risultati.map(function(r,i){
-      return '['+(i+1)+'] Fonte: "'+r.docName+'" — '+r.label+'\n'+r.text;
+      return '['+(i+1)+'] Fonte: "'+r.docName+'", '+r.label+'\n'+r.text;
     }).join('\n\n---\n\n')+
     '\n\nSe le fonti non contengono la risposta, dichiaralo invece di supporre.';
 }

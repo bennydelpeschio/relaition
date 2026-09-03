@@ -128,7 +128,7 @@ function pubOverlapCheck(name,desc,tags,excludeId){
   });
   simili.sort(function(a,b){return b.pct-a.pct});
   return simili.slice(0,3).map(function(s){
-    return 'Sovrapposizione '+s.pct+'% con "'+s.name+'" già pubblicato — valuta se contribuire a quello invece di pubblicarne un secondo';
+    return 'Sovrapposizione '+s.pct+'% con "'+s.name+'" già pubblicato: valuta se contribuire a quello invece di pubblicarne un secondo';
   });
 }
 
@@ -195,7 +195,7 @@ function runPublishChecks(payload){
   if(payload.isUpdate){
     var casi=pubRegressionCases(payload.name,payload.sourceAgentId);
     segnalazioni.push({nome:'Non regressione',ok:casi.length>0,
-      voci:casi.length?[casi.length+' casi di riferimento pronti — verranno rigiocati dal revisore']
+      voci:casi.length?[casi.length+' casi di riferimento pronti: verranno rigiocati dal revisore']
                       :['Nessuna esecuzione tracciata disponibile: la non regressione non è verificabile']});
   }
 
@@ -260,7 +260,7 @@ function pubSuspend(id,motivo,automatica){
   var a=dbGetOne('SELECT name,installs FROM published_agents WHERE id=?',[id]);
   // Chi lo ha già installato non lo perde: riceve la segnalazione e decide.
   if(a&&typeof addNotif==='function')
-    addNotif('⏸️ "'+a.name+'" sospeso — non più installabile. Chi lo usa già può continuare, valutando il motivo: '+(motivo||''));
+    addNotif('⏸️ "'+a.name+'" sospeso: non più installabile. Chi lo usa già può continuare, valutando il motivo: '+(motivo||''));
   addAct((automatica?'Sospensione automatica: ':'Sospeso agente: ')+(a?a.name:'#'+id));
   showToast('⏸️ Agente sospeso'+(automatica?' automaticamente':''));
 }
@@ -302,7 +302,7 @@ function pubRestoreVersion(versionRowId){
   dbRun('UPDATE published_agents SET workflow_json=?,version=? WHERE id=?',[JSON.stringify(def),v.version,v.agent_id]);
   var a=dbGetOne('SELECT name,installs FROM published_agents WHERE id=?',[v.agent_id]);
   if(a&&typeof addNotif==='function')
-    addNotif('↩︎ "'+a.name+'" riportato alla versione '+v.version+(a.installs?' — '+a.installs+' installazioni interessate':''));
+    addNotif('↩︎ "'+a.name+'" riportato alla versione '+v.version+(a.installs?': '+a.installs+' installazioni interessate':''));
   showToast('↩︎ Ripristinata la versione '+v.version);
   addAct('Ripristinata versione '+v.version+' di '+(a?a.name:'#'+v.agent_id));
 }
@@ -454,7 +454,7 @@ function aggiungiControlliRichiesti(scope){
     nodo.x=rif.x;
 
     pubInserisciTra(nodo,ancora?ancora.id:null,valle?valle.id:null);
-    aggiunti.push(nome+' \u2014 '+(pos.perche||''));
+    aggiunti.push(nome+': '+(pos.perche||''));
   });
 
   if(typeof fillRequiredDefaults==='function')fillRequiredDefaults();

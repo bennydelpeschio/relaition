@@ -35,7 +35,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 .ni-ic{font-size:15px;width:20px;text-align:center;flex-shrink:0}
 .ni-badge{margin-left:auto;background:rgba(16,185,129,.15);color:#10B981;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
 .sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,.06)}
-.sf-row{display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px;border-radius:8px;transition:var(--trans)}
+.sf-row{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:8px;border-radius:8px;transition:var(--trans)}
 .sf-row:hover{background:rgba(255,255,255,.06)}
 .ava{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6366F1,#4F46E5);display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
 .sf-info{flex:1;min-width:0}
@@ -97,3 +97,78 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 .account-nome{color:#E2E8F0;font-size:11.5px;font-weight:700;line-height:1.2}
 .account-ruolo{color:#7C8AA0;font-size:9.5px;line-height:1.25;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ─── BARRA LATERALE COLLASSABILE ───
+   Il menu occupava 240px fissi anche quando servivano al canvas del Builder.
+   Collassato resta la sola colonna delle icone: la navigazione non sparisce,
+   si comprime — nascondere del tutto le voci costringerebbe a riaprirlo per
+   ogni spostamento, che è peggio del problema che risolve.
+
+   La prima versione comprimeva e basta: logo e hamburger restavano affiancati
+   dentro 64px, le icone erano quelle da 15px pensate per stare accanto a del
+   testo, e i gruppi sparivano lasciando dieci voci in fila indiana. Qui la
+   colonna stretta è trattata come una disposizione a sé — verticale, centrata,
+   con icone più grandi e i gruppi conservati come separatori. */
+.sidebar{transition:width .18s ease}
+.sidebar.compatta{width:68px}
+
+/* Testi via, icone al centro. */
+.sidebar.compatta .logo-text,
+.sidebar.compatta .logo-sub,
+.sidebar.compatta .ni-testo,
+.sidebar.compatta .sf-info,
+.sidebar.compatta .sf-esci{display:none}
+
+/* Logo e comando sopra/sotto invece che affiancati: in 68px non ci stanno
+   accanto, e schiacciarli produce esattamente il disordine che si vedeva. */
+.sidebar.compatta .logo-area{padding:14px 0 12px}
+.sidebar.compatta .logo-area > div{flex-direction:column;gap:10px;align-items:center}
+.sidebar.compatta .logo-row{justify-content:center;gap:0;padding:0;margin:0;flex:none}
+.sidebar.compatta .logo-mark{width:38px;height:38px;font-size:19px}
+
+.sidebar.compatta nav{padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:2px}
+
+/* Ogni voce è un quadrato con angoli arrotondati: bersaglio ampio, allineato,
+   e uno stato attivo che si legge come un pulsante invece che come una barra. */
+.sidebar.compatta .ni{
+  position:relative;width:44px;height:44px;padding:0;margin:0;gap:0;
+  justify-content:center;border-radius:12px}
+.sidebar.compatta .ni-ic{font-size:19px;width:auto}
+.sidebar.compatta .ni.active{box-shadow:inset 0 0 0 1px rgba(16,185,129,.35)}
+
+/* I gruppi non spariscono: diventano una linea. Perdono il nome, non la
+   funzione di separare piattaforma, apprendimento, social e account. */
+.sidebar.compatta .nav-group{
+  display:block;width:26px;height:1px;padding:0;margin:9px 0;font-size:0;
+  background:rgba(255,255,255,.12);overflow:hidden}
+
+/* Il contatore diventa un punto ancorato all'angolo dell'icona: perde il
+   numero, non il fatto che qualcosa richiede attenzione. */
+.sidebar.compatta .ni-badge{
+  position:absolute;top:7px;right:7px;transform:none;
+  min-width:9px;width:9px;height:9px;padding:0;font-size:0;line-height:0;
+  border-radius:50%;background:#10B981;
+  box-shadow:0 0 0 2px #16233c}
+
+.sidebar.compatta .sidebar-footer{padding:12px 0}
+.sidebar.compatta .sf-row{justify-content:center;padding:0;gap:0}
+.sidebar.compatta .ava{width:36px;height:36px}
+
+.sb-toggle{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;cursor:pointer;
+  color:rgba(203,213,225,.7);flex-shrink:0;transition:var(--trans);font-size:15px;line-height:1;
+  background:rgba(255,255,255,.05);border:none;padding:0}
+.sb-toggle:hover{background:rgba(255,255,255,.12);color:#F1F5F9}
+
+/* Uscita: l'icona della porta non si capiva. Un controllo etichettato, con
+   la freccia che esce dal riquadro, si legge senza doverci passare sopra. */
+.sf-esci{display:flex;align-items:center;gap:6px;cursor:pointer;flex-shrink:0;
+  color:rgba(203,213,225,.6);font-size:11px;font-weight:600;padding:6px 9px;border-radius:8px;
+  transition:var(--trans);border:1px solid transparent}
+.sf-esci:hover{color:#FCA5A5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.25)}
+.sf-esci svg{width:14px;height:14px;flex-shrink:0}
+
+/* Un'etichetta non e' un contatore: «AI» accanto al Builder dice cos'e' quel
+   nodo, non che qualcosa richiede attenzione. Trasformarla in un punto verde
+   come gli avvisi la faceva leggere come un allarme, quindi nel menu compatto
+   sparisce invece di diventare un pallino. */
+.sidebar.compatta .ni-badge.ni-etichetta{display:none}

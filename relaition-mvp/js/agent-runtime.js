@@ -408,7 +408,7 @@ async function rtRunConnector(ctx, node, input){
       return { text: input,
                msg: (node.name==='Google Drive'?'☁️ Drive':'🗄️ SharePoint')+': scritto in '+esito.percorso+
                     ' · '+(dati.length>1024?Math.round(dati.length/1024*10)/10+' KB':dati.length+' byte')+
-                    (esito.note&&esito.note.length?' — '+esito.note.join(' '):''),
+                    (esito.note&&esito.note.length?': '+esito.note.join(' '):''),
                real:true };
     }catch(errC){
       // Nessuna cartella collegata o permesso revocato: si dichiara, non si
@@ -435,7 +435,7 @@ async function rtRunConnector(ctx, node, input){
     // segnaposto non risolto verrebbe preso alla lettera dal server di posta.
     if(rtSegnapostoIrrisolto(destinatario)){
       return { text: input, ok:false, error:'destinatario non risolto',
-        msg:'❌ Destinatario non risolto: "'+destinatario+'" — il dato a monte non contiene quel campo. '+
+        msg:'❌ Destinatario non risolto: "'+destinatario+'", il dato a monte non contiene quel campo. '+
             'Controlla il nome del segnaposto o usa un indirizzo fisso.' };
     }
     if(MAIL_STATO.disponibile){
@@ -451,7 +451,7 @@ async function rtRunConnector(ctx, node, input){
       if(_irrisolti && _irrisolti.length){
         _irrisolti = _irrisolti.filter(function(v,i,a){return a.indexOf(v)===i});
         _avvisoSegnaposto = '\u26a0\ufe0f Segnaposto non risolti nel messaggio: '+_irrisolti.join(', ')+
-          ' \u2014 nessun nodo a monte produce quel campo. L\u2019email parte con il segnaposto scritto tale e quale.';
+          ': nessun nodo a monte produce quel campo. L\u2019email parte con il segnaposto scritto tale e quale.';
       }
       var esitoMail = await mailInvia({
         a: destinatario, cc: rtSostituisci(cfg.cc, input, ctx.triggerData, ctx),
@@ -483,7 +483,7 @@ async function rtRunConnector(ctx, node, input){
     });
     return { text: input, real:false,
       msg:'🧪 ' + (CONNECTOR_CONFIGS['Invia email'].sim(cfgRisolto)) +
-          ' [simulato — servizio di invio non avviato]' };
+          ' [simulato: servizio di invio non avviato]' };
   }
 
   if(node.name === 'HTTP Request' && cfg.url){
@@ -504,7 +504,7 @@ async function rtRunConnector(ctx, node, input){
       var irrisolti = body.match(/\{\{[\w.]+\}\}/g);
       if(irrisolti) rtPush(ctx, node, '\u26a0\ufe0f Segnaposto non risolti nel corpo: '+
         irrisolti.filter(function(v,i,a){return a.indexOf(v)===i}).join(', ')+
-        ' \u2014 partiranno scritti cosi\u0300 verso il sistema esterno.','WARN');
+        ': partiranno scritti cosi\u0300 verso il sistema esterno.','WARN');
     }
     var t0 = Date.now();
     try{
@@ -531,8 +531,8 @@ async function rtRunConnector(ctx, node, input){
       var diagnosi = ' (endpoint irraggiungibile o CORS)';
       if(typeof sonda === 'function'){
         var s = await sonda({ tipo:'http', url:cfg.url, metodo:method });
-        if(s && s.ok) diagnosi = ' \u2014 l\u2019endpoint risponde HTTP '+s.stato+' ma il browser non pu\u00f2 chiamarlo: manca l\u2019autorizzazione CORS. L\u2019URL \u00e8 corretto';
-        else if(s) diagnosi = ' \u2014 verificato dal servizio locale: '+(s.errore||'endpoint non raggiungibile');
+        if(s && s.ok) diagnosi = ': l\u2019endpoint risponde HTTP '+s.stato+' ma il browser non pu\u00f2 chiamarlo: manca l\u2019autorizzazione CORS. L\u2019URL \u00e8 corretto';
+        else if(s) diagnosi = ': verificato dal servizio locale: '+(s.errore||'endpoint non raggiungibile');
       }
       return { text: input, ok:false, error: err.message,
                msg:'❌ HTTP Request fallita: '+err.message+diagnosi };
@@ -559,7 +559,7 @@ async function rtRunConnector(ctx, node, input){
 // l'esito, il modello prosegue. Limitato da maxIterations.
 async function rtRunAiNode(ctx, node){
   var cfg = node.config || {};
-  var sys = cfg.prompt || ('Sei un nodo AI in un workflow aziendale. Il tuo compito: '+node.name+' — '+(node.detail||'')+'. Rispondi in modo conciso e strutturato, in italiano.');
+  var sys = cfg.prompt || ('Sei un nodo AI in un workflow aziendale. Il tuo compito: '+node.name+', '+(node.detail||'')+'. Rispondi in modo conciso e strutturato, in italiano.');
   if(ctx.context && ctx.context.trim()){
     sys = 'ISTRUZIONI GENERALI DEL WORKFLOW (da rispettare sempre):\n'+ctx.context.trim()+'\n\n---\n\n'+sys;
   }
@@ -641,13 +641,13 @@ async function rtRunAiNode(ctx, node){
       msgs.push('📚 Knowledge Base: '+ric.results.length+' porzioni su '+ric.candidati+' candidate ('+ric.motore+')'+
         (ric.scartatiPermessi ? ' · '+ric.scartatiPermessi+' escluse dai permessi' : ''));
       ric.results.forEach(function(r){
-        msgs.push('   ↳ "'+r.docName+'" — '+r.label+' · punteggio '+r.score+' (BM25 '+r.bm25+', coseno '+r.cosine+')');
+        msgs.push('   ↳ "'+r.docName+'": '+r.label+' · punteggio '+r.score+' (BM25 '+r.bm25+', coseno '+r.cosine+')');
       });
     }else{
       // Nessun recupero è un esito, non un silenzio: senza questa riga il
       // modello risponderebbe a memoria e nel registro sembrerebbe fondato.
       rtEmit(ctx, 'kb:empty', node.id, { query: quesito.substring(0,160), motore: ric.motore, scartatiPermessi: ric.scartatiPermessi });
-      msgs.push('📚 Knowledge Base attiva ma nessuna porzione recuperata — '+ric.motore+
+      msgs.push('📚 Knowledge Base attiva ma nessuna porzione recuperata: '+ric.motore+
         (ric.scartatiPermessi ? ' · '+ric.scartatiPermessi+' escluse dai permessi' : ''));
     }
   }
@@ -683,7 +683,7 @@ async function rtRunAiNode(ctx, node){
     // Un ripiego cambia il fornitore a meta' esecuzione: se non comparisse nel
     // registro, l'esito risulterebbe prodotto da un modello che non e' quello
     // scritto sul nodo, senza che nulla lo dica.
-    if(res.ripiego)msgs.push('\u21bb Ripiego: '+res.ripiego.da+' non ha risposto \u2014 richiesta servita da '+res.ripiego.a);
+    if(res.ripiego)msgs.push('\u21bb Ripiego: '+res.ripiego.da+' non ha risposto, richiesta servita da '+res.ripiego.a);
     if(res.ripiegoTentato)msgs.push('\u26a0\ufe0f Anche i fornitori di riserva hanno fallito: '+res.ripiegoTentato.join(', '));
     ctx.gr.aiCalls++;
     rtRecordCall(ctx, node.id, 'ai', { system:sys, user:user, tools:strumenti.map(function(t){return t.name}), iter:iter }, res.text);
@@ -706,7 +706,7 @@ async function rtRunAiNode(ctx, node){
         break;
       }
       rtEmit(ctx, 'tool:invoked', node.id, { tool: res.toolCall.name, args: res.toolCall.args, chosenBy: res.demo ? 'simulato' : 'modello' });
-      msgs.push((res.demo?'[Demo] ':'')+'🔧 Il modello invoca lo strumento "'+target.name+'"'+(res.toolCall.reason?' — '+res.toolCall.reason:''));
+      msgs.push((res.demo?'[Demo] ':'')+'🔧 Il modello invoca lo strumento "'+target.name+'"'+(res.toolCall.reason?': '+res.toolCall.reason:''));
       var esito = await rtRunConnector(ctx, target, ctx.pipeline);
       msgs.push('   ↳ '+esito.msg);
       target._toolInvoked = true;
@@ -724,7 +724,7 @@ async function rtRunAiNode(ctx, node){
   // Convalida del vincolo quando il fornitore non lo garantisce nativamente
   if(vincolo === 'json' && !caps.structuredOutput){
     try{ JSON.parse(String(testo).replace(/```json|```/g,'').trim()) }
-    catch(e){ msgs.push('⚠️ Output non conforme al vincolo JSON — un nodo "Convalida output" a valle lo intercetterebbe') }
+    catch(e){ msgs.push('⚠️ Output non conforme al vincolo JSON: un nodo "Convalida output" a valle lo intercetterebbe') }
   }
   return { text: testo, msgs: msgs };
 }
@@ -733,14 +733,14 @@ async function rtRunAiNode(ctx, node){
 async function rtRunSubAgent(ctx, node){
   var nome = (node.config && node.config.agentName) || '';
   if(!nome) return { text: ctx.pipeline, msgs:['⚠️ Nessun agente selezionato in questo nodo'] };
-  if(ctx.depth >= 2) return { text: ctx.pipeline, msgs:['⛔ Profondità massima di delega raggiunta — chiamata non eseguita'] };
+  if(ctx.depth >= 2) return { text: ctx.pipeline, msgs:['⛔ Profondità massima di delega raggiunta, chiamata non eseguita'] };
 
   var row = null;
   try{ row = dbGetOne('SELECT * FROM agents WHERE name=?', [nome]) }catch(e){}
   if(!row) return { text: ctx.pipeline, msgs:['⚠️ Agente "'+nome+'" non trovato fra quelli salvati'] };
 
   rtEmit(ctx, 'agent:handoff', node.id, { to: nome, direction:'out' });
-  var msgs = ['🤝 Delega a "'+nome+'" — passaggio di controllo'];
+  var msgs = ['🤝 Delega a "'+nome+'": passaggio di controllo'];
   var sub;
   try{
     sub = await executeGraph({
@@ -753,7 +753,7 @@ async function rtRunSubAgent(ctx, node){
     return { text: ctx.pipeline, msgs: msgs.concat(['❌ Il sotto-agente ha generato un errore: '+e.message]) };
   }
   rtEmit(ctx, 'agent:handoff', node.id, { to: nome, direction:'in', status: sub.status, nodes: sub.stepsCount });
-  msgs.push('   ↳ "'+nome+'" ha completato '+sub.stepsCount+' nodi ('+sub.status+') — controllo restituito');
+  msgs.push('   ↳ "'+nome+'" ha completato '+sub.stepsCount+' nodi ('+sub.status+'): controllo restituito');
   return { text: sub.pipeline || ctx.pipeline, msgs: msgs, subTrace: sub.trace };
 }
 
@@ -814,7 +814,7 @@ async function executeGraph(spec){
     ctx.steps.push({ time: rtNow(), type:'SISTEMA', status:'WARN',
       msg:'🚫 '+ctx.esclusi.length+' nodo/i escluso/i dall\'esecuzione: '+
           ctx.esclusi.map(function(n){ return n.icon+' '+n.name }).join(', ')+
-          ' — il flusso prosegue collegando i nodi a monte con quelli a valle' });
+          ': il flusso prosegue collegando i nodi a monte con quelli a valle' });
   }
 
   // Interruzione richiesta dall'utente. Si controlla fra un'ondata e l'altra:
@@ -826,7 +826,7 @@ async function executeGraph(spec){
   while(guardia++ < 200){
     if(ctx.abort){
       rtEmit(ctx, 'execution:aborted', null, { eseguiti: eseguiti, richiestaDa: 'utente' });
-      ctx.steps.push({ time: rtNow(), type:'SISTEMA', msg:'⏹️ Esecuzione interrotta su richiesta — '+eseguiti+' nodi completati, i restanti non sono stati avviati', status:'WARN' });
+      ctx.steps.push({ time: rtNow(), type:'SISTEMA', msg:'⏹️ Esecuzione interrotta su richiesta, '+eseguiti+' nodi completati, i restanti non sono stati avviati', status:'WARN' });
       delete RUNNING_CTX[ctx.execId];
       return rtFinalize(ctx, 'aborted', eseguiti);
     }
@@ -1008,7 +1008,7 @@ async function rtExecuteNode(ctx, node, stato){
       if(g.waiting){
         stato[node.id] = 'waiting';
         rtEmit(ctx, 'node:waiting', node.id, { approvatore: (node.config&&node.config.approver)||'—', messaggio:(node.config&&node.config.message)||'' });
-        rtPush(ctx, node, '⏸️ Esecuzione sospesa — in attesa di autorizzazione', 'WARN');
+        rtPush(ctx, node, '⏸️ Esecuzione sospesa: in attesa di autorizzazione', 'WARN');
         return { waiting:true, nodeId:node.id, counted:true };
       }
       if(g.pass === false){
@@ -1030,7 +1030,7 @@ async function rtExecuteNode(ctx, node, stato){
       // Se il modello l'ha già invocato come strumento, non si riesegue:
       // sarebbe un secondo effetto sullo stesso sistema esterno.
       if(node._toolInvoked){
-        rtPush(ctx, node, '↩︎ Già eseguito come strumento dal nodo AI — non ripetuto', 'OK');
+        rtPush(ctx, node, '↩︎ Già eseguito come strumento dal nodo AI: non ripetuto', 'OK');
         delete node._toolInvoked;
       }else{
         var e = await rtRunConnector(ctx, node, ctx.pipeline);
@@ -1039,7 +1039,7 @@ async function rtExecuteNode(ctx, node, stato){
         rtPush(ctx, node, e.msg, e.ok === false ? 'ERR' : 'OK');
       }
 
-    }else{ // ou — nodi terminali
+    }else{ // ou: nodi terminali
       await rtRunOutputNode(ctx, node);
     }
 
@@ -1073,7 +1073,7 @@ async function rtRunLogicNode(ctx, node, stato){
   if(node.name === 'Retry'){ rtPush(ctx, node, '🔁 Retry: max '+(cfg.attempts||3)+' tentativi, backoff '+(cfg.backoff||2)+'s', 'OK'); return }
   if(node.name === 'Switch'){
     var casi=(cfg.cases||'').split('\n').filter(Boolean);
-    rtPush(ctx, node, '🔃 Switch: '+(casi.length||3)+' rami — routing sul primo corrispondente', 'OK'); return;
+    rtPush(ctx, node, '🔃 Switch: '+(casi.length||3)+' rami, routing sul primo corrispondente', 'OK'); return;
   }
   if(node.name === 'Merge'){
     rtPush(ctx, node, '🔗 Convergenza: uniti gli output dei rami a monte ('+(cfg.strategy||'Concatena')+')', 'OK'); return;
@@ -1141,7 +1141,7 @@ async function rtRunOutputNode(ctx, node){
   }else if(node.name === 'Analytics'){
     rtPush(ctx, node, '📈 Metrica "'+(cfg.metric||'workflow_completato')+'" incrementata (+1)', 'OK');
   }else if(node.name === 'Fine'){
-    rtPush(ctx, node, '🏁 Ramo terminato — nessuna azione ulteriore', 'OK');
+    rtPush(ctx, node, '🏁 Ramo terminato: nessuna azione ulteriore', 'OK');
   }else if(node.name === 'Esito positivo'){
     rtPush(ctx, node, '✅ Ramo chiuso con esito positivo', 'OK');
   }else if(node.name === 'Esito negativo'){
@@ -1166,7 +1166,7 @@ async function rtRunOutputNode(ctx, node){
         rtPush(ctx, node, '☁️ File scritto in '+f.cloudPercorso+peso, 'OK');
       }else if(f.cloudSimulato){
         // Un esito simulato non deve mai somigliare a uno reale nel registro.
-        rtPush(ctx, node, '🧪 Caricamento simulato su '+f.cloudServizio+' — '+f.cloudPercorso+peso, 'OK');
+        rtPush(ctx, node, '🧪 Caricamento simulato su '+f.cloudServizio+': '+f.cloudPercorso+peso, 'OK');
         rtPush(ctx, node, 'ℹ️ '+f.cloudNota, 'OK');
       }else if(f.cloudErrore){
         ctx.hasError = true; ctx.gr.lastError = f.cloudErrore;
@@ -1220,7 +1220,7 @@ async function resumeSuspendedRun(execId, autorizzato){
   if(!autorizzato){
     stato[nodeId] = 'error'; ctx.hasError = true;
     rtEmit(ctx, 'node:error', nodeId, { motivo:'autorizzazione negata' });
-    rtPush(ctx, { id:nodeId, type:'gr' }, '⛔ Autorizzazione negata — esecuzione interrotta', 'ERR');
+    rtPush(ctx, { id:nodeId, type:'gr' }, '⛔ Autorizzazione negata: esecuzione interrotta', 'ERR');
     return rtFinalize(ctx, 'error', ctx.waiting.eseguiti);
   }
 
@@ -1229,7 +1229,7 @@ async function resumeSuspendedRun(execId, autorizzato){
   ctx.ordineOutput.push(nodeId);
   ctx.waiting = null;
   rtEmit(ctx, 'node:complete', nodeId, { autorizzato:true });
-  rtPush(ctx, { id:nodeId, type:'gr' }, '✅ Autorizzato — l\'esecuzione riprende', 'OK');
+  rtPush(ctx, { id:nodeId, type:'gr' }, '✅ Autorizzato: l\'esecuzione riprende', 'OK');
 
   var eseguiti = s.ctx.waiting ? s.ctx.waiting.eseguiti : 0, guardia = 0;
   while(guardia++ < 200){

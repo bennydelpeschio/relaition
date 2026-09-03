@@ -203,12 +203,12 @@ function guidaFine(completata){
   if(completata){
     localStorage.setItem('relaition_tour_fatto','1');
     localStorage.removeItem('relaition_tour_passo');
-    showToast('🎓 Guida completata — puoi rifarla dal Learning Hub');
+    showToast('🎓 Guida completata: puoi rifarla dal Learning Hub');
     addAct('Completata la guida interattiva');
     if(typeof addXP==='function')addXP(50,'Guida interattiva completata');
     go('learning');
   }else{
-    showToast('Guida interrotta — riprenderà da dove eri rimasto');
+    showToast('Guida interrotta: riprenderà da dove eri rimasto');
     go(GUIDA.paginaIniziale||'dashboard');
   }
 }
@@ -255,7 +255,7 @@ function openSandbox(){
   go('builder');
   b_render();
   sandboxBanner(true);
-  showToast('🧪 Sandbox attiva — '+PALETTE.length+' componenti, nessun dato reale toccato');
+  showToast('🧪 Sandbox attiva: '+PALETTE.length+' componenti, nessun dato reale toccato');
 }
 
 function closeSandbox(){
@@ -283,7 +283,7 @@ function closeSandbox(){
   sandboxBanner(false);
   if(typeof renderPalette==='function')renderPalette();
   b_render();renderProps(-1);
-  showToast('✅ Uscito dalla sandbox — il tuo agente è tornato com\'era');
+  showToast('✅ Uscito dalla sandbox: il tuo agente è tornato com\'era');
 }
 
 function sandboxBanner(mostra){
@@ -296,7 +296,7 @@ function sandboxBanner(mostra){
   b.id='sandboxBanner';
   b.style.cssText='position:absolute;top:0;left:0;right:0;z-index:35;background:linear-gradient(90deg,#FEF3C7,#FDE68A);border-bottom:1px solid #FCD34D;padding:7px 14px;display:flex;align-items:center;gap:10px;font-size:11.5px;color:#78350F';
   b.innerHTML='<span style="font-size:14px">🧪</span>'+
-    '<div style="flex:1;line-height:1.45"><strong>Sandbox didattica</strong> — palette ridotta a '+PALETTE.length+' componenti, nessuna scrittura su sistemi esterni, niente salvataggio automatico. Sbaglia pure.</div>'+
+    '<div style="flex:1;line-height:1.45"><strong>Sandbox didattica</strong>: palette ridotta a '+PALETTE.length+' componenti, nessuna scrittura su sistemi esterni, niente salvataggio automatico. Sbaglia pure.</div>'+
     '<button class="tb-btn" style="font-size:11px;height:26px" onclick="closeSandbox()">Esci dalla sandbox</button>';
   ca.appendChild(b);
 }

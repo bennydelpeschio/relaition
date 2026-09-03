@@ -1,4 +1,4 @@
-# RelAItion — AI Agent Marketplace (MVP)
+# RelAItion · AI Agent Marketplace (MVP)
 
 Piattaforma no-code per costruire, eseguire, pubblicare e portare con sé workflow di
 agenti AI. Questo documento è la guida di riferimento del progetto: architettura,

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RelAItion — AI Agent Marketplace</title>
+<title>RelAItion · AI Agent Marketplace</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
@@ -43,7 +43,7 @@
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)">
       <div style="color:#94A3B8;font-size:10.5px;font-weight:600;margin-bottom:10px;letter-spacing:.02em">Oppure entra con un profilo di prova</div>
       <div id="accountDemo" class="account-griglia"></div>
-      <div style="color:#64748B;font-size:9.5px;text-align:center;margin-top:14px;line-height:1.5">Demo — l'autenticazione non è reale.<br>Nessun dato lascia il tuo browser.</div>
+      <div style="color:#64748B;font-size:9.5px;text-align:center;margin-top:14px;line-height:1.5">Demo: l'autenticazione non è reale.<br>Nessun dato lascia il tuo browser.</div>
     </div>
   </div>
 </div>
@@ -53,35 +53,44 @@
 </div>
 <div class="app">
 <!-- SIDEBAR -->
-<aside class="sidebar">
+<aside class="sidebar" id="sidebar">
   <div class="logo-area">
-    <div class="logo-row" onclick="go('dashboard')" title="Torna alla Dashboard">
-      <div class="logo-mark">⚡</div>
-      <div><div class="logo-text">RelAItion</div><div class="logo-sub">AI Agent Marketplace</div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="logo-row" style="flex:1;min-width:0" onclick="go('dashboard')" title="Torna alla Dashboard">
+        <div class="logo-mark">⚡</div>
+        <div><div class="logo-text">RelAItion</div><div class="logo-sub">AI Agent Marketplace</div></div>
+      </div>
+      <button class="sb-toggle" id="sbToggle" onclick="alternaMenu()" title="Riduci il menu" aria-label="Riduci il menu">☰</button>
     </div>
   </div>
   <nav>
     <div class="nav-group">Piattaforma</div>
-    <div class="ni active" data-page="dashboard" onclick="go('dashboard')"><span class="ni-ic">📊</span>Dashboard</div>
-    <div class="ni" data-page="marketplace" onclick="go('marketplace')"><span class="ni-ic">🏪</span>Marketplace<span class="ni-badge" id="mktBadge">18</span></div>
-    <div class="ni" data-page="builder" onclick="go('builder')"><span class="ni-ic">🔧</span>Builder<span class="ni-badge" style="background:rgba(99,102,241,.15);color:#6366F1">AI</span></div>
-    <div class="ni" data-page="myagents" onclick="go('myagents')"><span class="ni-ic">📁</span>I miei agenti<span class="ni-badge" id="pubBadge" style="display:none;background:#FEF3C7;color:#B45309"></span></div>
-    <div class="ni" data-page="execlog" onclick="go('execlog')"><span class="ni-ic">📜</span>Log Esecuzioni</div>
-    <div class="ni" data-page="monitoraggio" onclick="go('monitoraggio')"><span class="ni-ic">📡</span>Monitoraggio<span class="ni-badge" id="monBadge" style="background:rgba(239,68,68,.15);color:#EF4444;display:none">0</span></div>
+    <div class="ni active" data-page="dashboard" onclick="go('dashboard')" title="Dashboard"><span class="ni-ic">📊</span><span class="ni-testo">Dashboard</span></div>
+    <div class="ni" data-page="marketplace" onclick="go('marketplace')" title="Marketplace"><span class="ni-ic">🏪</span><span class="ni-testo">Marketplace</span><span class="ni-badge" id="mktBadge">18</span></div>
+    <div class="ni" data-page="builder" onclick="go('builder')" title="Builder"><span class="ni-ic">🔧</span><span class="ni-testo">Builder</span><span class="ni-badge ni-etichetta" style="background:rgba(99,102,241,.15);color:#6366F1">AI</span></div>
+    <div class="ni" data-page="myagents" onclick="go('myagents')" title="I miei agenti"><span class="ni-ic">📁</span><span class="ni-testo">I miei agenti</span><span class="ni-badge" id="pubBadge" style="display:none;background:#FEF3C7;color:#B45309"></span></div>
+    <div class="ni" data-page="execlog" onclick="go('execlog')" title="Log Esecuzioni"><span class="ni-ic">📜</span><span class="ni-testo">Log Esecuzioni</span></div>
+    <div class="ni" data-page="monitoraggio" onclick="go('monitoraggio')" title="Monitoraggio"><span class="ni-ic">📡</span><span class="ni-testo">Monitoraggio</span><span class="ni-badge" id="monBadge" style="background:rgba(239,68,68,.15);color:#EF4444;display:none">0</span></div>
     <div class="nav-group">Apprendimento</div>
-    <div class="ni" data-page="learning" onclick="go('learning')"><span class="ni-ic">🎓</span>Learning Hub</div>
-    <div class="ni" data-page="challenges" onclick="go('challenges')"><span class="ni-ic">🏆</span>Sfide & Eventi</div>
+    <div class="ni" data-page="learning" onclick="go('learning')" title="Learning Hub"><span class="ni-ic">🎓</span><span class="ni-testo">Learning Hub</span></div>
+    <div class="ni" data-page="challenges" onclick="go('challenges')" title="Sfide &amp; Eventi"><span class="ni-ic">🏆</span><span class="ni-testo">Sfide &amp; Eventi</span></div>
     <div class="nav-group">Social</div>
-    <div class="ni" data-page="community" onclick="go('community')"><span class="ni-ic">💬</span>Community</div>
-    <div class="ni" data-page="profile" onclick="go('profile')"><span class="ni-ic">👤</span>Profilo</div>
+    <div class="ni" data-page="community" onclick="go('community')" title="Community"><span class="ni-ic">💬</span><span class="ni-testo">Community</span></div>
+    <div class="nav-group">Account</div>
+    <div class="ni" data-page="profile" onclick="go('profile')" title="Profilo"><span class="ni-ic">👤</span><span class="ni-testo">Profilo</span></div>
   </nav>
   <div class="sidebar-footer">
-    <div class="sf-row" style="justify-content:space-between">
-      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0" onclick="go('profile')">
+    <div class="sf-row">
+      <div style="display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0" onclick="go('profile')" title="Apri il profilo">
         <div class="ava">MR</div>
         <div class="sf-info"><div class="sf-name">Mario R.</div><div class="sf-role">AI Agent Builder</div></div>
       </div>
-      <span onclick="logout()" title="Esci" style="cursor:pointer;color:rgba(203,213,225,.6);font-size:15px;padding:6px;flex-shrink:0">🚪</span>
+      <span class="sf-esci" onclick="logout()" title="Esci dall&apos;account">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>Esci</span>
     </div>
   </div>
 </aside>
@@ -165,7 +174,7 @@
           </div>
           <div style="display:flex;gap:8px;margin-top:16px">
             <button class="tb-btn primary" onclick="go('builder')">+ Crea il tuo agente</button>
-            <button class="tb-btn" onclick="showToast('📖 Documentazione integrazioni — 63 connettori disponibili')">📖 Guida integrazioni</button>
+            <button class="tb-btn" onclick="showToast('📖 Documentazione integrazioni: 63 connettori disponibili')">📖 Guida integrazioni</button>
             <button class="tb-btn" onclick="openReviewQueue()" id="reviewQueueBtn" style="color:#D97706;border-color:#FDE68A">🛡️ Revisiona pubblicazioni</button>
             <button class="tb-btn" onclick="openPublishHealthPanel()" id="pubHealthBtn" style="display:none">📈 Salute pubblicazioni</button>
           </div>
@@ -224,10 +233,10 @@
               </div>
               <div id="localeAIFields" style="display:none;margin-bottom:8px">
                 <select class="prop-select" id="localePreset" onchange="onLocalePresetChange()" style="margin-bottom:6px">
-                  <option value="ollama">Ollama — http://localhost:11434</option>
-                  <option value="lmstudio">LM Studio — http://localhost:1234</option>
-                  <option value="localai">LocalAI — http://localhost:8080</option>
-                  <option value="jan">Jan — http://localhost:1337</option>
+                  <option value="ollama">Ollama: http://localhost:11434</option>
+                  <option value="lmstudio">LM Studio: http://localhost:1234</option>
+                  <option value="localai">LocalAI: http://localhost:8080</option>
+                  <option value="jan">Jan: http://localhost:1337</option>
                   <option value="altro">Altro (indica l'indirizzo)</option>
                 </select>
                 <input class="ai-key-input" style="width:100%;margin-bottom:6px" id="localeUrl" placeholder="http://localhost:11434">
@@ -250,14 +259,14 @@
               </div>
               <div style="font-size:10px;color:var(--ac2);cursor:pointer;text-decoration:underline;margin-bottom:4px" onclick="openConnectionGuide()">ℹ️ Guida connessione e problemi CORS</div>
               <div class="ai-status" id="aiStatus"><span class="ai-dot idle"></span> Non configurato</div>
-              <div style="font-size:10px;color:var(--tx4);margin-top:4px;line-height:1.5">💡 Puoi collegare più fornitori: ogni nodo AI sceglie il proprio, e se quello scelto non risponde la richiesta passa a un altro collegato.<br>🔑 La chiave resta in <strong>questa scheda</strong> finché non la chiudi — non viene scritta su disco né inclusa negli export. <span style="text-decoration:underline;cursor:pointer" onclick="dimenticaChiaviAI()">Rimuovila ora</span></div>
+              <div style="font-size:10px;color:var(--tx4);margin-top:4px;line-height:1.5">💡 Puoi collegare più fornitori: ogni nodo AI sceglie il proprio, e se quello scelto non risponde la richiesta passa a un altro collegato.<br>🔑 La chiave resta in <strong>questa scheda</strong> finché non la chiudi, non viene scritta su disco né inclusa negli export. <span style="text-decoration:underline;cursor:pointer" onclick="dimenticaChiaviAI()">Rimuovila ora</span></div>
             </div>
           </div>
         </div>
 
         <!-- Colonna centrale: intestazione con la chat, poi il canvas.
              La barra stava SOPRA il canvas in posizione assoluta e copriva i
-             nodi in alto — proprio dove sta il trigger, cioè l'inizio del
+             nodi in alto: proprio dove sta il trigger, cioè l'inizio del
              flusso. Ora occupa una fascia propria e il canvas comincia sotto:
              non c'è più modo che i due si sovrappongano. -->
         <!-- Maniglia palette↔canvas: la larghezza della palette dipende da
@@ -281,7 +290,7 @@
                 <input id="chatBuilderInput" placeholder="Descrivi l'agente che vuoi creare... es: 'qualifica i lead in arrivo e notifica il sales team'" onkeydown="if(event.key==='Enter')aiGenerateWorkflow()">
                 <button class="chat-builder-btn" id="chatBuilderBtn" onclick="aiGenerateWorkflow()">Genera</button>
               </div>
-              <div class="chat-builder-hint" id="chatBuilderHint">🤖 AI Chat Builder — crea o modifica il workflow in linguaggio naturale</div>
+              <div class="chat-builder-hint" id="chatBuilderHint">🤖 AI Chat Builder: crea o modifica il workflow in linguaggio naturale</div>
               <div class="chat-sugg-wrap" id="chatSuggWrap">
                 <div id="chatSuggestions" class="chat-sugg"></div>
               </div>
@@ -303,7 +312,7 @@
             <span class="zoom-label" id="zoomLabel">100%</span>
             <button onclick="bZoom(1)">+</button>
             <button onclick="bResetView()" title="Reset vista">⊙</button>
-            <button id="btnOrientamento" onclick="cambiaOrientamento()" title="Flusso verticale — clicca per passare a orizzontale">⇅</button>
+            <button id="btnOrientamento" onclick="cambiaOrientamento()" title="Flusso verticale: clicca per passare a orizzontale">⇅</button>
             <button onclick="bAutoLayout()" title="Riordina il flusso">⊞</button>
             <button onclick="bFitView()" title="Adatta vista">⛶</button>
           </div>
@@ -347,7 +356,7 @@
             <div class="props-toolbar">
               <button class="tb-btn" onclick="checkWorkflow()" title="Verifica struttura e presidi consigliati">🔍 Verifica</button>
               <button class="tb-btn" onclick="newBlankAgent()" title="Svuota il canvas e inizia un nuovo agente">🆕 Nuovo</button>
-              <button class="tb-btn" onclick="openContextModal()" title="Contesto generale del workflow — istruzioni che tutti i nodi AI rispettano" style="color:#7C3AED;border-color:#EDE9FE">📋 Contesto</button>
+              <button class="tb-btn" onclick="openContextModal()" title="Contesto generale del workflow: istruzioni che tutti i nodi AI rispettano" style="color:#7C3AED;border-color:#EDE9FE">📋 Contesto</button>
               <button class="tb-btn" onclick="saveAgent()" title="Salva con un nome nel database">💾 Salva</button>
               <button class="tb-btn" onclick="exportAgent()" title="Scarica il workflow come file JSON">📄 Esporta</button>
               <button class="tb-btn" onclick="generatePythonCode()" title="Genera uno script Python eseguibile" style="color:#3776AB;border-color:#DBEAFE">🐍 Python</button>
@@ -380,7 +389,7 @@
     <div class="page" id="page-execlog">
       <div class="page-pad">
         <div class="section-title">📜 Log Esecuzioni</div>
-        <div class="section-sub">Storico completo delle esecuzioni dei tuoi agenti — audit trail personale con esito, durata e dettaglio nodi.</div>
+        <div class="section-sub">Storico completo delle esecuzioni dei tuoi agenti: audit trail personale con esito, durata e dettaglio nodi.</div>
         <div id="execlog-content"></div>
       </div>
     </div>
@@ -404,7 +413,7 @@
             <p style="font-size:14px;color:var(--tx2);max-width:560px;line-height:1.6">Percorsi adattivi basati sul tuo ruolo. Progredisci attraverso i 4 livelli di certificazione: da AI Aspirant ad AI Ambassador.</p>
             <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap" id="levelTrack">
               <div style="flex:1;min-width:130px;background:var(--card);border:2px solid var(--ac);border-radius:12px;padding:12px;position:relative"><div style="font-size:18px">🌱</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Aspirant</div><div style="font-size:10px;color:var(--tx4)">Livello 1 · Completato ✓</div></div>
-              <div style="flex:1;min-width:130px;background:var(--card);border:2px solid var(--ac3);border-radius:12px;padding:12px"><div style="font-size:18px">⚙️</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Practitioner</div><div style="font-size:10px;color:#D97706;font-weight:600">Livello 2 · In corso — 40%</div></div>
+              <div style="flex:1;min-width:130px;background:var(--card);border:2px solid var(--ac3);border-radius:12px;padding:12px"><div style="font-size:18px">⚙️</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Practitioner</div><div style="font-size:10px;color:#D97706;font-weight:600">Livello 2 · In corso: 40%</div></div>
               <div style="flex:1;min-width:130px;background:var(--bg2);border:2px solid var(--bo);border-radius:12px;padding:12px;opacity:.7"><div style="font-size:18px">🏆</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Champion</div><div style="font-size:10px;color:var(--tx4)">Livello 3 · Bloccato 🔒</div></div>
               <div style="flex:1;min-width:130px;background:var(--bg2);border:2px solid var(--bo);border-radius:12px;padding:12px;opacity:.7"><div style="font-size:18px">👑</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Ambassador</div><div style="font-size:10px;color:var(--tx4)">Livello 4 · Bloccato 🔒</div></div>
             </div>
@@ -433,6 +442,7 @@
         <div class="section-title">🏆 Sfide & Eventi</div>
         <div class="section-sub">Hackathon, competizioni e sfide a tema per guadagnare XP e badge.</div>
         <div id="challenges-content"></div>
+        <div id="challenges-detail" class="lesson-view"></div>
       </div>
     </div>
 
@@ -443,9 +453,14 @@
         <div class="section-sub">Condividi, chiedi e impara dalla community di AI agent builders.</div>
         <div class="community-grid">
           <div>
-            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap" id="forumFilters"></div>
+            <!-- Il pulsante stava in fondo alla lista: con quindici post
+                 significava scorrere quasi cinquemila pixel per scrivere.
+                 Chi vuole pubblicare lo decide prima di leggere, non dopo. -->
+            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;flex:1" id="forumFilters"></div>
+              <button class="tb-btn primary" style="height:32px;font-size:12px;white-space:nowrap" onclick="openNewPost()">+ Nuovo post</button>
+            </div>
             <div id="posts-list"></div>
-            <button class="tb-btn primary mt-16" onclick="openNewPost()">+ Nuovo post</button>
           </div>
           <div>
             <div class="com-sidebar-card">
@@ -547,6 +562,9 @@
 <script src="js/connessioni-ui.js"></script>
 <script src="js/explain.js"></script>
 <script src="js/kb.js"></script>
+<script src="js/community.js"></script>
+<script src="js/sfide-contenuti.js"></script>
+<script src="js/lezioni-risorse.js"></script>
 <script src="js/publish.js"></script>
 <script src="js/governance.js"></script>
 <script src="js/seed-demo.js"></script>

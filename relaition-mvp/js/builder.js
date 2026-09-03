@@ -39,7 +39,7 @@ var PALETTE=[
   {cat:'erp',type:'ac',icon:'📒',name:'QuickBooks',desc:'Fatture/spese'},
   {cat:'erp',type:'ac',icon:'💳',name:'Stripe',desc:'Pagamenti/fatture'},
 
-  {cat:'action',type:'ac',icon:'🌐',name:'HTTP Request',desc:'REST API call — esecuzione REALE'},
+  {cat:'action',type:'ac',icon:'🌐',name:'HTTP Request',desc:'REST API call: esecuzione REALE'},
   {cat:'action',type:'ac',icon:'📊',name:'Google Sheets',desc:'Scrivi/leggi foglio'},
   {cat:'action',type:'ac',icon:'📄',name:'Google Docs',desc:'Genera documento'},
   {cat:'action',type:'ac',icon:'📋',name:'Notion',desc:'Crea/aggiorna pagine'},
@@ -189,11 +189,11 @@ function initBuilder(){
 // ══════════════════════════════════════════
 
 var TOUR_STEPS=[
-  {title:'👋 Benvenuto nel Builder',body:'In meno di un minuto ti mostriamo come costruire il tuo primo agente AI — nessuna competenza di programmazione richiesta.'},
-  {title:'1. Trascina i componenti',body:'Nella palette a sinistra trovi Trigger (eventi di partenza), nodi AI, Azioni verso sistemi esterni e blocchi di Logica. Trascina un componente sul canvas per aggiungerlo — ogni workflow deve iniziare con un Trigger.'},
+  {title:'👋 Benvenuto nel Builder',body:'In meno di un minuto ti mostriamo come costruire il tuo primo agente AI: nessuna competenza di programmazione richiesta.'},
+  {title:'1. Trascina i componenti',body:'Nella palette a sinistra trovi Trigger (eventi di partenza), nodi AI, Azioni verso sistemi esterni e blocchi di Logica. Trascina un componente sul canvas per aggiungerlo: ogni workflow deve iniziare con un Trigger.'},
   {title:'2. Collega i nodi',body:'Trascina dal pallino di uscita di un nodo fino al pallino di ingresso del successivo per creare il flusso. Su una connessione già disegnata puoi trascinare i pallini alle estremità per ricollegarla altrove, o cliccarla per eliminarla.'},
   {title:'3. Configura ogni nodo',body:'Clicca su un nodo per aprire il pannello Proprietà a destra: lì imposti il prompt per i nodi AI, i campi dei connettori (i campi con l\'asterisco * sono obbligatori), o la condizione per i nodi Logica.'},
-  {title:'4. Prova la Chat AI',body:'Nella barra sopra il canvas puoi descrivere in linguaggio naturale cosa vuoi costruire — la Chat AI genera l\'intero workflow. Con un nodo selezionato, invece, modifica solo quello.'},
+  {title:'4. Prova la Chat AI',body:'Nella barra sopra il canvas puoi descrivere in linguaggio naturale cosa vuoi costruire: la Chat AI genera l\'intero workflow. Con un nodo selezionato, invece, modifica solo quello.'},
   {title:'5. Esegui, salva, pubblica',body:'▶️ Esegui testa il workflow con dati di esempio. Il salvataggio è automatico, ma 💾 ti permette di dargli un nome. Da lì puoi esportarlo, generarne il codice Python, pianificarne l\'esecuzione automatica (⏱️) o pubblicarlo nel Marketplace (🚀).'}
 ];
 var tourStepIdx=0;
@@ -364,9 +364,9 @@ function b_render(){
     }else{
       ports+='<div class="b-port b-port-out" data-nid="'+n.id+'" data-port="out"></div>';
     }
-    var titolo=n.escluso?'Nodo escluso dall\'esecuzione — verrà saltato, il flusso passa oltre'
-              :isInvalid?'Nodo non valido — apri i dettagli errore'
-              :(n.locked?'Controllo imposto da politica organizzativa — configurabile ma non rimovibile':'');
+    var titolo=n.escluso?'Nodo escluso dall\'esecuzione: verrà saltato, il flusso passa oltre'
+              :isInvalid?'Nodo non valido: apri i dettagli errore'
+              :(n.locked?'Controllo imposto da politica organizzativa: configurabile ma non rimovibile':'');
     // Un nodo escluso deve essere riconoscibile a colpo d'occhio: resta al suo
     // posto, con le sue connessioni, ma smorzato — come una riga commentata.
     if(n.escluso)sel+=' escluso';
@@ -497,14 +497,14 @@ function b_render(){
   var hint=document.getElementById('chatBuilderHint');
   if(hint){
     var selNode=B.selId>0?B.nodes.find(function(n){return n.id===B.selId}):null;
-    var modeTxt=selNode?'🎯 Modalità <strong>modifica singolo nodo</strong> — stai modificando solo "'+escHtml(selNode.name)+'" (deseleziona per modificare tutto il workflow)':
-      B.nodes.length>0?'✏️ Modalità <strong>modifica workflow</strong> — es: "aggiungi una notifica Slack", oppure scrivi "da zero" per ricominciare':
-      '✨ Modalità <strong>creazione</strong> — descrivi l\'agente che vuoi costruire';
+    var modeTxt=selNode?'🎯 Modalità <strong>modifica singolo nodo</strong>: stai modificando solo "'+escHtml(selNode.name)+'" (deseleziona per modificare tutto il workflow)':
+      B.nodes.length>0?'✏️ Modalità <strong>modifica workflow</strong>: es: "aggiungi una notifica Slack", oppure scrivi "da zero" per ricominciare':
+      '✨ Modalità <strong>creazione</strong>: descrivi l\'agente che vuoi costruire';
     // La chat è AI-only: senza provider non si annuncia una modalità che non
     // è disponibile, si dice cosa manca.
     hint.innerHTML=provReady
       ? modeTxt+' · <span style="color:var(--ac)">AI attiva ('+providerLabel(provReady)+')</span>'
-      : '🔌 <strong>Builder conversazionale disattivato</strong> — configura un provider AI nel pannello a sinistra. Il canvas resta utilizzabile trascinando i nodi dalla palette.';
+      : '🔌 <strong>Builder conversazionale disattivato</strong>, configura un provider AI nel pannello a sinistra. Il canvas resta utilizzabile trascinando i nodi dalla palette.';
   }
   // Esempi cliccabili. A canvas vuoto sono spunti di partenza; a canvas
   // popolato diventano completamenti letti dal grafo reale (G6).
@@ -561,7 +561,7 @@ function useChatSuggestion(idx){
   // resta pronto per quando la chiave ci sarà) e si indica cosa manca.
   if(typeof anyProviderReady==='function'&&!anyProviderReady()){
     input.value=testo;
-    showToast('🔌 Testo inserito, ma manca un provider AI — apri il pannello <strong>Integrazione AI</strong> a sinistra, inserisci una API key e premi Testa.');
+    showToast('🔌 Testo inserito, ma manca un provider AI: apri il pannello <strong>Integrazione AI</strong> a sinistra, inserisci una API key e premi Testa.');
     var panel=document.querySelector('.ai-panel');
     if(panel){
       panel.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -577,7 +577,7 @@ function useChatSuggestion(idx){
   input.focus();
   // Il cursore va in fondo: il testo è una bozza da poter rifinire.
   try{input.setSelectionRange(testo.length,testo.length)}catch(e){}
-  showToast('✍️ Inserito nella barra — modifica se serve, poi premi <strong>Genera</strong>');
+  showToast('✍️ Inserito nella barra: modifica se serve, poi premi <strong>Genera</strong>');
 }
 
 function onNodeDown(e,nid){
@@ -956,12 +956,12 @@ function renderProps(nid){
         // fornitore che l'utente ha effettivamente collegato. Prima ricadeva su
         // Claude in silenzio, e chi configurava Gemini o GPT si trovava il
         // flusso bloccato su un fornitore che non aveva mai selezionato.
-        '<option value="auto"'+(!n.config.model||n.config.model==='auto'?' selected':'')+'>⚡ Automatico — usa il fornitore collegato</option>'+
-        '<option value="claude"'+(n.config.model==='claude'?' selected':'')+'>Claude — Anthropic</option>'+
-        '<option value="openai"'+(n.config.model==='openai'||n.config.model==='gpt'?' selected':'')+'>GPT — OpenAI</option>'+
-        '<option value="gemini"'+(n.config.model==='gemini'?' selected':'')+'>Gemini — Google</option>'+
+        '<option value="auto"'+(!n.config.model||n.config.model==='auto'?' selected':'')+'>⚡ Automatico: usa il fornitore collegato</option>'+
+        '<option value="claude"'+(n.config.model==='claude'?' selected':'')+'>Claude: Anthropic</option>'+
+        '<option value="openai"'+(n.config.model==='openai'||n.config.model==='gpt'?' selected':'')+'>GPT: OpenAI</option>'+
+        '<option value="gemini"'+(n.config.model==='gemini'?' selected':'')+'>Gemini: Google</option>'+
         '<option value="mistral"'+(n.config.model==='mistral'?' selected':'')+'>Mistral AI</option>'+
-        '<option value="locale"'+(n.config.model==='locale'?' selected':'')+'>💻 Modello in locale'+((aiConfig.providers.locale&&aiConfig.providers.locale.model)?' — '+escHtml(aiConfig.providers.locale.model):'')+'</option>'+
+        '<option value="locale"'+(n.config.model==='locale'?' selected':'')+'>💻 Modello in locale'+((aiConfig.providers.locale&&aiConfig.providers.locale.model)?': '+escHtml(aiConfig.providers.locale.model):'')+'</option>'+
         '<option value="custom"'+(n.config.model==='custom'?' selected':'')+'>🔧 Open source / Custom</option>'+
       '</select></div>'+
       // In automatico si mostra lo stato del fornitore che verrà usato davvero.
@@ -996,7 +996,7 @@ function renderProps(nid){
       if(n.type==='ac'){cfgDef=getConnectorConfig(n.name);label='Configurazione '+n.name}
       else if(n.type==='tr'){cfgDef=TRIGGER_CONFIGS[n.name];label='Configurazione trigger'}
       else if(n.type==='cd'||n.type==='ou'){cfgDef=LOGIC_CONFIGS[n.name];label='Parametri '+n.name}
-      else if(n.type==='gr'){cfgDef=getGuardrailConfig(n.name);label='Controllo — '+n.name}
+      else if(n.type==='gr'){cfgDef=getGuardrailConfig(n.name);label='Controllo: '+n.name}
       if(!cfgDef&&n.type!=='tr'&&n.type!=='ac')return '';
       var extra='';
       if(n.type==='tr'&&n.name==='File upload'){
@@ -1013,7 +1013,7 @@ function renderProps(nid){
           '<input type="file" id="nodeFileInput-'+nid+'" accept=".txt,.csv,.tsv,.json,.md,.log,.xml,.html,.yml,.yaml,.pdf,.docx,.xlsx,.pptx" style="display:none" onchange="loadNodeFile('+nid+',this)">'+
           '<div style="display:flex;gap:6px">'+
             '<button class="tb-btn" style="flex:1;min-width:0" onclick="document.getElementById(\'nodeFileInput-'+nid+'\').click()">'+
-              '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(n.config.filename?'📄 '+escHtml(n.config.filename)+' — cambia':'Carica un file da elaborare')+'</span></button>'+
+              '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(n.config.filename?'📄 '+escHtml(n.config.filename)+': cambia':'Carica un file da elaborare')+'</span></button>'+
             // Togliere l'allegato deve essere possibile: senza, per passare a un
             // documento della Knowledge Base bisognava caricare un altro file
             // qualsiasi, e quello di prima restava comunque la sorgente.
@@ -1028,7 +1028,7 @@ function renderProps(nid){
             ? '<div style="font-size:10px;color:#B45309;background:#FEF3C7;border-radius:6px;padding:6px 8px;margin-top:6px;line-height:1.45">⚠️ Serve una sorgente: allega un file <strong>oppure</strong> scegli un documento della Knowledge Base qui sotto. Senza, il flusso girerebbe su dati campione.</div>'
             : '')+
           (n.config.filedata
-            ? '<div style="font-size:10px;color:#047857;margin-top:5px">✅ '+escHtml(n.config.filetipo||'Testo')+' — '+n.config.filedata.length.toLocaleString('it-IT')+' caratteri estratti'+
+            ? '<div style="font-size:10px;color:#047857;margin-top:5px">✅ '+escHtml(n.config.filetipo||'Testo')+': '+n.config.filedata.length.toLocaleString('it-IT')+' caratteri estratti'+
               '</div><details style="margin-top:5px"><summary style="font-size:10px;color:var(--tx4);cursor:pointer">Anteprima del testo estratto</summary>'+
               '<pre style="font-size:10px;max-height:150px;overflow:auto;background:var(--bg2);padding:8px;border-radius:6px;white-space:pre-wrap;margin:5px 0 0">'+escHtml(n.config.filedata.slice(0,1200))+(n.config.filedata.length>1200?'\n…':'')+'</pre></details>'
             : ((n.config.kbDocIds||n.config.kbDocId)?'<div style="font-size:10px;color:#047857;margin-top:5px">✅ Sorgente: Knowledge Base</div>':''))+
@@ -1164,7 +1164,7 @@ function renderKBPanel(nid,n){
     '</label>'+
     '<div style="font-size:10px;color:var(--tx4);margin-top:4px">'+
       (st.porzioni?st.documenti+' documenti · '+st.porzioni+' porzioni indicizzate':
-       '<span style="color:#EF4444">Nessun documento indicizzato</span> — <span style="text-decoration:underline;cursor:pointer" onclick="openKBDocsModal()">caricane uno</span>')+
+       '<span style="color:#EF4444">Nessun documento indicizzato</span>: <span style="text-decoration:underline;cursor:pointer" onclick="openKBDocsModal()">caricane uno</span>')+
     '</div>';
   if(attivo){
     h+='<div style="margin-top:10px"><div class="prop-label">Business unit</div>'+
@@ -1270,7 +1270,7 @@ function applyMarqueeSelection(){
   if(B.selIds.length===1){B.selId=B.selIds[0];B.selIds=[];renderProps(B.selId)}
   else if(B.selIds.length>1){B.selId=-1;renderProps(-1)}
   b_render();
-  if(B.selIds.length>1)showToast('◻️ '+B.selIds.length+' nodi selezionati — Canc per eliminarli');
+  if(B.selIds.length>1)showToast('◻️ '+B.selIds.length+' nodi selezionati: Canc per eliminarli');
 }
 
 function isNodeSelected(nid){
@@ -1317,7 +1317,7 @@ function copySelection(){
   // nodi collegati e ritrovarli scollegati costringerebbe a rifare il lavoro.
   B_CLIPBOARD.edges=B.edges.filter(function(e){return ids.indexOf(e.from)>=0&&ids.indexOf(e.to)>=0})
     .map(function(e){return JSON.parse(JSON.stringify(e))});
-  showToast('📋 '+B_CLIPBOARD.nodes.length+' nodi copiati — Ctrl+V per incollare');
+  showToast('📋 '+B_CLIPBOARD.nodes.length+' nodi copiati: Ctrl+V per incollare');
 }
 
 function pasteSelection(){
@@ -1537,7 +1537,7 @@ function builderRuntimeListener(evt,ctx){
     addExecEntry('LOGIC','⚡ '+evt.payload.conteggio+' nodi indipendenti avviati in parallelo','OK');
   }
   else if(evt.event_type==='capability:degraded'){
-    addExecEntry('LLM AI','⚠️ Capacità "'+evt.payload.capability+'" non supportata da '+evt.payload.provider+' — ripiego: '+evt.payload.fallback,'WARN');
+    addExecEntry('LLM AI','⚠️ Capacità "'+evt.payload.capability+'" non supportata da '+evt.payload.provider+': ripiego: '+evt.payload.fallback,'WARN');
   }
 }
 
@@ -1587,16 +1587,16 @@ function finalizeBuilderRun(res,_t0){
   toggleRunControls(false);
 
   if(interrotta){
-    addExecEntry('OUTPUT','⏹️ ═══ Esecuzione interrotta — '+res.stepsCount+' nodi completati ═══','WARN');
+    addExecEntry('OUTPUT','⏹️ ═══ Esecuzione interrotta: '+res.stepsCount+' nodi completati ═══','WARN');
     showToast('⏹️ Esecuzione interrotta: '+res.stepsCount+' nodi completati, i restanti non sono partiti');
     addAct('Interrotta esecuzione: '+res.stepsCount+' nodi');
     hideApprovalPrompt();
   }else if(inAttesa){
-    addExecEntry('CONTROLLO','⏸️ ═══ Esecuzione sospesa — in attesa di autorizzazione ═══','WARN');
+    addExecEntry('CONTROLLO','⏸️ ═══ Esecuzione sospesa: in attesa di autorizzazione ═══','WARN');
     showToast('⏸️ Esecuzione sospesa: serve un\'autorizzazione');
     renderApprovalPrompt(res);
   }else{
-    addExecEntry('OUTPUT','═══ Workflow '+(res.status==='error'?'terminato con errori':'completato')+' — '+res.stepsCount+' nodi ═══',
+    addExecEntry('OUTPUT','═══ Workflow '+(res.status==='error'?'terminato con errori':'completato')+': '+res.stepsCount+' nodi ═══',
       res.status==='error'?'ERR':'OK');
     showToast(res.status==='error'?'⚠️ Workflow con errori':'✅ Workflow eseguito: '+res.stepsCount+' nodi');
     addAct('Eseguito workflow: '+res.stepsCount+' nodi');
@@ -1614,7 +1614,7 @@ function finalizeBuilderRun(res,_t0){
   // si chiede perché sia venuto così, non mezz'ora dopo nel registro storico.
   if(!inAttesa&&typeof explainExecution==='function'){
     window.__ultimaEsecuzione=res;
-    addExecEntry('SISTEMA','🔍 <span style="text-decoration:underline;cursor:pointer" onclick="explainExecution(window.__ultimaEsecuzione)">Perché questo risultato?</span> — fonti usate, decisioni prese, controlli intervenuti','OK');
+    addExecEntry('SISTEMA','🔍 <span style="text-decoration:underline;cursor:pointer" onclick="explainExecution(window.__ultimaEsecuzione)">Perché questo risultato?</span>: fonti usate, decisioni prese, controlli intervenuti','OK');
   }
 
   // I file prodotti restano riscaricabili: un download partito e perso
@@ -1623,7 +1623,7 @@ function finalizeBuilderRun(res,_t0){
   if(typeof LAST_RUN_FILES!=='undefined'&&LAST_RUN_FILES.length){
     addExecEntry('OUTPUT','📦 '+LAST_RUN_FILES.length+' file prodotti in questa esecuzione:','OK');
     LAST_RUN_FILES.forEach(function(f,i){
-      addExecEntry('OUTPUT','   💾 <span style="text-decoration:underline;cursor:pointer" onclick="foRedownload('+i+')">'+escHtml(f.nome)+'</span> — clicca per riscaricare','OK');
+      addExecEntry('OUTPUT','   💾 <span style="text-decoration:underline;cursor:pointer" onclick="foRedownload('+i+')">'+escHtml(f.nome)+'</span>: clicca per riscaricare','OK');
     });
   }
 
@@ -1645,7 +1645,7 @@ function stopAgentRun(){
   if(!n){showToast('Nessuna esecuzione in corso');toggleRunControls(false);return}
   // L'interruzione tronca anche le chiamate di rete già partite: il registro
   // lo dice subito, nello stesso istante in cui succede.
-  addExecEntry('SISTEMA','⏹️ Esecuzione interrotta dall\'utente — chiamate in corso annullate, i nodi successivi non partiranno','WARN');
+  addExecEntry('SISTEMA','⏹️ Esecuzione interrotta dall\'utente: chiamate in corso annullate, i nodi successivi non partiranno','WARN');
   showToast('⏹️ Esecuzione interrotta');
 }
 
@@ -1696,7 +1696,7 @@ async function resolveApproval(execId,autorizzato){
 function openContextModal(){
   openModal(
     '<div style="display:flex;justify-content:space-between;align-items:center"><h2>📋 Contesto del workflow</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
-    '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Istruzioni generali che si applicano a <strong>tutti</strong> i nodi AI di questo agente — tono di voce, terminologia aziendale, vincoli, cosa evitare. Vengono anteposte al system prompt di ogni singolo nodo AI durante l\'esecuzione, così non devi ripeterle nodo per nodo.</p>'+
+    '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Istruzioni generali che si applicano a <strong>tutti</strong> i nodi AI di questo agente: tono di voce, terminologia aziendale, vincoli, cosa evitare. Vengono anteposte al system prompt di ogni singolo nodo AI durante l\'esecuzione, così non devi ripeterle nodo per nodo.</p>'+
     '<textarea class="prop-input" id="workflowContextInput" rows="8" placeholder="Es: Rispondi sempre in italiano, tono professionale e diretto. Non inventare mai numeri o dati che non sono nel contesto fornito. Il nome azienda è \'Acme SpA\', non usare altri nomi. Non menzionare mai i concorrenti per nome.">'+escHtml(B.context||'')+'</textarea>'+
     '<button class="tb-btn primary mt-16" onclick="saveContext()">💾 Salva contesto</button>'
   ,true);
@@ -1706,7 +1706,7 @@ function saveContext(){
   B.context=document.getElementById('workflowContextInput').value.trim();
   closeModal();
   scheduleAutosave();
-  showToast(B.context?'📋 Contesto salvato — verrà applicato a tutti i nodi AI':'📋 Contesto rimosso');
+  showToast(B.context?'📋 Contesto salvato: verrà applicato a tutti i nodi AI':'📋 Contesto rimosso');
   addAct('Aggiornato contesto workflow: '+currentAgentName);
 }
 
@@ -1759,7 +1759,7 @@ function openDeployModal(){
       )+
     '</div>'+
     '<div style="display:flex;align-items:center;gap:8px;margin:12px 0"><input type="checkbox" id="deployActive" '+(row.active?'checked':'')+' style="width:16px;height:16px"><label for="deployActive" style="font-size:12px">Attiva subito</label></div>'+
-    '<div style="background:var(--ac2-l);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--tx2);margin-bottom:16px">⚠️ Intervallo/orario/evento funzionano finché questa scheda del browser resta aperta (nessun server dietro le quinte — scelta di design del POC). Per esecuzione reale 24/7 su server: genera lo script Python (🐍) e pianificalo con cron / Task Scheduler / CI — guida nel README, sezione 5.</div>'+
+    '<div style="background:var(--ac2-l);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--tx2);margin-bottom:16px">⚠️ Intervallo/orario/evento funzionano finché questa scheda del browser resta aperta (nessun server dietro le quinte: scelta di design del POC). Per esecuzione reale 24/7 su server: genera lo script Python (🐍) e pianificalo con cron / Task Scheduler / CI, guida nel README, sezione 5.</div>'+
     (row.last_run_at?'<div style="font-size:11px;color:var(--tx4);margin-bottom:12px">Ultima esecuzione automatica: '+new Date(row.last_run_at).toLocaleString('it-IT')+'</div>':'')+
     '<button class="tb-btn primary" onclick="saveDeploySettings()">💾 Salva impostazioni</button>'
   ,true);
@@ -1796,7 +1796,7 @@ function saveDeploySettings(){
   }
   dbRun('UPDATE agents SET active=?,schedule_type=?,schedule_value=? WHERE id=?',[active,type,val,B.dbAgentId]);
   closeModal();
-  showToast(active?'🚀 Agente in produzione — verrà eseguito automaticamente':'⏸️ Pianificazione disattivata');
+  showToast(active?'🚀 Agente in produzione: verrà eseguito automaticamente':'⏸️ Pianificazione disattivata');
   addAct((active?'Attivato':'Disattivato')+' in produzione: '+currentAgentName);
   if(currentPage==='execlog')renderExecLogPage();
 }
@@ -1924,7 +1924,7 @@ function descriviPianificazione(tipo,valore){
     if(c[2]!=='*')return 'Il giorno '+c[2]+' di ogni mese alle '+ora;
     return 'Ogni giorno alle '+ora;
   }
-  return 'Manuale — non parte da sola';
+  return 'Manuale: non parte da sola';
 }
 
 var _schedulerTimer=null;
@@ -1968,7 +1968,7 @@ async function runAgentHeadless(row){
   var stato=res.status==='waiting'?'waiting':(res.status==='error'?'err':'ok');
   if(res.status==='waiting'){
     res.steps.push({time:new Date().toTimeString().substring(0,8),type:'CONTROLLO',
-      msg:'⏸️ Sospeso in attesa di approvazione — nessun operatore in esecuzione automatica',status:'WARN'});
+      msg:'⏸️ Sospeso in attesa di approvazione: nessun operatore in esecuzione automatica',status:'WARN'});
   }
 
   // Attribuita all'autore dell'agente: è il suo flusso che è partito, non
@@ -2001,7 +2001,7 @@ function validateWorkflow(){
   if(nodes.length===0){
     errors.push({nodeId:null,msg: B.nodes.length
       ? 'Tutti i nodi del flusso sono esclusi dall\'esecuzione: reinseriscine almeno uno (Ctrl+E).'
-      : 'Il canvas è vuoto — aggiungi almeno un nodo trigger per iniziare.'});
+      : 'Il canvas è vuoto, aggiungi almeno un nodo trigger per iniziare.'});
     return errors;
   }
 
@@ -2009,7 +2009,7 @@ function validateWorkflow(){
   var hasIncoming={},outByNode={};
   edges.forEach(function(e){
     if(!ids[e.from]||!ids[e.to]){
-      errors.push({nodeId:null,msg:'Una connessione punta a un nodo che non esiste più (edge orfano) — rimuovila e ricollega.'});
+      errors.push({nodeId:null,msg:'Una connessione punta a un nodo che non esiste più (edge orfano): rimuovila e ricollega.'});
       return;
     }
     hasIncoming[e.to]=true;
@@ -2062,7 +2062,7 @@ function validateWorkflow(){
 
   nodes.forEach(function(n){
     if(n.type!=='tr'&&!hasIncoming[n.id]){
-      errors.push({nodeId:n.id,msg:'"'+n.name+'" non ha nessuna freccia in ingresso — collegalo al resto del workflow o eliminalo.'});
+      errors.push({nodeId:n.id,msg:'"'+n.name+'" non ha nessuna freccia in ingresso: collegalo al resto del workflow o eliminalo.'});
     }
     // NB: la chiusura del ramo è verificata più sotto da un'unica regola sui
     // nodi terminali. Qui resta solo il caso della condizione, che ha due
@@ -2121,7 +2121,7 @@ function validateWorkflow(){
         td.reqAny.forEach(function(g){
           var soddisfatto=g.ks.some(function(k){return n.config&&n.config[k]&&String(n.config[k]).trim()});
           if(!soddisfatto){
-            errors.push({nodeId:n.id,msg:'"'+n.name+'": serve '+g.l+' — senza sorgente il flusso girerebbe su dati campione.'});
+            errors.push({nodeId:n.id,msg:'"'+n.name+'": serve '+g.l+', senza sorgente il flusso girerebbe su dati campione.'});
           }
         });
       }
@@ -2148,7 +2148,7 @@ function validateWorkflow(){
       var dest=(typeof connCartellaDelNodo==='function')
         ? connCartellaDelNodo(n.config||{}) : {alias:(n.config||{}).cloudAlias,provata:false};
       if(dst.reale&&csSupportata()&&!dest.alias){
-        errors.push({nodeId:n.id,msg:'"'+n.name+'": scegli una connessione a cartella — senza, il file non può essere scritto. Creane una dal pannello del nodo.'});
+        errors.push({nodeId:n.id,msg:'"'+n.name+'": scegli una connessione a cartella, senza, il file non può essere scritto. Creane una dal pannello del nodo.'});
       }else if(dst.reale&&dest.alias&&dest.nome&&!dest.provata){
         // Non è bloccante: la connessione potrebbe funzionare comunque. È però
         // il momento giusto per dirlo, invece di scoprirlo a esecuzione fallita.
@@ -2189,7 +2189,7 @@ function validateWorkflow(){
     });
     nodes.forEach(function(n){
       if(!raggiunti[n.id]){
-        errors.push({nodeId:n.id,msg:'"'+n.name+'" non è raggiungibile dal trigger — fa parte di un ramo scollegato dal resto del flusso e non verrebbe mai eseguito.'});
+        errors.push({nodeId:n.id,msg:'"'+n.name+'" non è raggiungibile dal trigger: fa parte di un ramo scollegato dal resto del flusso e non verrebbe mai eseguito.'});
       }
     });
   }
@@ -2234,7 +2234,7 @@ function showValidationErrors(errors){
       '</div>';
   }else{
     html+='<div style="display:flex;gap:10px;align-items:center;background:var(--ac-l);border-radius:8px;padding:12px 14px;margin:12px 0">'+
-      '<span style="font-size:18px">✅</span><span style="font-size:12px;color:var(--ac-d);font-weight:600">Struttura valida — il flusso è eseguibile</span></div>';
+      '<span style="font-size:18px">✅</span><span style="font-size:12px;color:var(--ac-d);font-weight:600">Struttura valida: il flusso è eseguibile</span></div>';
   }
 
   // Condizioni che citano campi inesistenti: non impediscono l'esecuzione (il
@@ -2355,7 +2355,7 @@ function updateSuggestionBadge(){
   var n=(typeof suggestGuardrails==='function'&&B.nodes.length)?suggestGuardrails().length:0;
   el.style.display=n?'inline-flex':'none';
   el.textContent='🛡️ '+n;
-  el.title=n+' presidio/i consigliato/i per questo flusso — clicca per vederli';
+  el.title=n+' presidio/i consigliato/i per questo flusso: clicca per vederli';
 }
 
 function jumpToNode(nid){
@@ -2385,9 +2385,9 @@ function resetCanvasForNewAgent(){
 }
 
 function newBlankAgent(){
-  if(B.nodes.length>0&&!confirm('Svuotare il canvas e iniziare un nuovo agente da zero?\n(Il workflow attuale resta salvato in "I miei agenti" — questo pulisce solo il canvas)'))return;
+  if(B.nodes.length>0&&!confirm('Svuotare il canvas e iniziare un nuovo agente da zero?\n(Il workflow attuale resta salvato in "I miei agenti": questo pulisce solo il canvas)'))return;
   resetCanvasForNewAgent();
-  showToast('🆕 Canvas pronto — trascina i blocchi dalla palette o usa l\'AI Chat Builder');
+  showToast('🆕 Canvas pronto: trascina i blocchi dalla palette o usa l\'AI Chat Builder');
   addAct('Nuovo agente da zero');
 }
 
@@ -2403,7 +2403,7 @@ function newBlankAgent(){
 // Timeout e tentativi hanno senso solo per chi attende una risposta dalla rete;
 // su una scrittura locale sono parametri privi di significato, e mostrarli
 // suggerisce un comportamento che il nodo non ha.
-var ADV_CONDIZIONE={k:'condition',l:'Esegui solo se (opzionale)',ph:'result.score > 50 — vuoto = esegui sempre'};
+var ADV_CONDIZIONE={k:'condition',l:'Esegui solo se (opzionale)',ph:'result.score > 50: vuoto = esegui sempre'};
 var ADV_TIMEOUT   ={k:'timeout',l:'Timeout risposta (secondi)',ph:'30'};
 var ADV_ONERROR   ={k:'onerror',l:'In caso di errore',ph:'Ferma il workflow',opts:['Ferma il workflow','Salta e continua','Riprova poi ferma']};
 var ADV_RETRIES   ={k:'retries',l:'Tentativi in caso di errore',ph:'0'};
@@ -2455,7 +2455,7 @@ var CONNECTOR_CONFIGS={
       {k:'bodytype',l:'Formato corpo',ph:'Testo',opts:['Testo','HTML']},
       {k:'attach',l:'Allega i file generati dal flusso',ph:'No',opts:['No','Sì']}],
     servizioMail:true,
-    sim:function(c){return '📧 → '+(c.to||'destinatario')+' — "'+(c.subject||'Notifica')+'"'+
+    sim:function(c){return '📧 → '+(c.to||'destinatario')+': "'+(c.subject||'Notifica')+'"'+
       (c.attach==='Sì'?' con allegati':'')}},
   'WhatsApp':{fields:[{k:'to',l:'Numero',ph:'+39 333 1234567'},{k:'template',l:'Template',ph:'notifica_ordine'}],
     sim:function(c){return '📱 WhatsApp inviato a '+(c.to||'+39 3xx xxxxxxx')+' via Twilio (SID: SM'+Math.random().toString(36).substring(2,12)+')'}},
@@ -2468,14 +2468,14 @@ var CONNECTOR_CONFIGS={
       {k:'operation',l:'Operazione',ph:'Crea',opts:['Crea','Aggiorna','Aggiorna o crea','Leggi'],req:true},
       {k:'keyfield',l:'Campo chiave per aggiornamento',ph:'emailaddress1'},
       {k:'mapping',l:'Mappatura campi (uno per riga: campo = valore)',ph:'name = {{result.azienda}}\nrevenue = {{result.fatturato}}',ta:true,req:true}],
-    sim:function(c){return '📈 Dynamics: '+(c.operation||'Crea')+' su '+(c.entity||'lead')+' — id '+Math.random().toString(36).substring(2,10)}},
+    sim:function(c){return '📈 Dynamics: '+(c.operation||'Crea')+' su '+(c.entity||'lead')+', id '+Math.random().toString(36).substring(2,10)}},
   'Pipedrive':{fields:[
       {k:'pipeline',l:'Pipeline',ph:'Vendite dirette',req:true},
       {k:'stage',l:'Fase',ph:'Qualificato',opts:['Contatto iniziale','Qualificato','Proposta inviata','Negoziazione','Vinto','Perso'],req:true},
       {k:'dealtitle',l:'Titolo trattativa',ph:'{{result.azienda}}',req:true},
       {k:'value',l:'Valore in euro',ph:'{{result.importo}}'},
       {k:'owner',l:'Assegnata a',ph:'nome@azienda.it'}],
-    sim:function(c){return '🟢 Pipedrive: "'+(c.dealtitle||'trattativa')+'" in '+(c.pipeline||'Pipeline')+' › '+(c.stage||'Qualificato')+(c.value?' — €'+c.value:'')}},
+    sim:function(c){return '🟢 Pipedrive: "'+(c.dealtitle||'trattativa')+'" in '+(c.pipeline||'Pipeline')+' › '+(c.stage||'Qualificato')+(c.value?', €'+c.value:'')}},
   'Google Sheets':{fields:[
       {k:'sheet',l:'Spreadsheet',ph:'Lead Tracker 2026',req:true},
       {k:'tab',l:'Foglio',ph:'Foglio1',req:true},
@@ -2494,7 +2494,7 @@ var CONNECTOR_CONFIGS={
        mostraSe:{campo:'operation',vale:['Aggiungi riga','Aggiorna riga']},
        reqSe:{campo:'operation',vale:['Aggiungi riga','Aggiorna riga']}}],
     sim:function(c){return '📊 Sheets: '+(c.operation||'Aggiungi riga')+' su "'+(c.sheet||'Spreadsheet')+'" › '+(c.tab||'Foglio1')+
-      ' — riga #'+Math.floor(Math.random()*400+100)}},
+      ': riga #'+Math.floor(Math.random()*400+100)}},
   'Google Docs':{fields:[
       {k:'operation',l:'Operazione',ph:'Crea da template',opts:['Crea da template','Crea vuoto','Aggiungi in coda'],req:true},
       {k:'template',l:'Documento template',ph:'Proposta commerciale v3',req:true},
@@ -2523,7 +2523,7 @@ var CONNECTOR_CONFIGS={
        aiuto:'I nomi devono corrispondere alle colonne del database in Notion.'},
       {k:'content',l:'Contenuto del corpo',ph:'{{result}}',ta:true,
        mostraSe:{campo:'operation',vale:['Crea pagina','Aggiorna pagina']}}],
-    sim:function(c){return '📋 Notion: '+(c.operation||'Crea pagina')+' in "'+(c.database||'Database')+'" — "'+(c.title||c.pageid||'senza titolo')+'"'}},
+    sim:function(c){return '📋 Notion: '+(c.operation||'Crea pagina')+' in "'+(c.database||'Database')+'", "'+(c.title||c.pageid||'senza titolo')+'"'}},
   'Jira':{fields:[
       {k:'baseurl',l:'URL istanza Jira',ph:'https://azienda.atlassian.net'},
       {k:'project',l:'Chiave progetto',ph:'OPS',req:true},
@@ -2543,7 +2543,7 @@ var CONNECTOR_CONFIGS={
       {k:'assignee',l:'Assegnatario',ph:'nome@azienda.it'},
       {k:'duedate',l:'Scadenza (giorni da oggi)',ph:'7'}],
     sim:function(c){return '📌 Asana: "'+(c.taskname||'attività')+'" creata in '+(c.project||'Progetto')+
-      (c.section?' › '+c.section:'')+(c.duedate?' — scadenza fra '+c.duedate+' giorni':'')}},
+      (c.section?' › '+c.section:'')+(c.duedate?': scadenza fra '+c.duedate+' giorni':'')}},
   'Trello':{fields:[
       {k:'board',l:'Board',ph:'Pipeline Vendite',req:true},
       {k:'list',l:'Lista',ph:'In lavorazione',req:true},
@@ -2574,7 +2574,7 @@ var CONNECTOR_CONFIGS={
       {k:'query',l:'Query SQL (parametrica)',ph:'INSERT INTO leads (nome, score) VALUES ($1, $2)',ta:true,req:true},
       {k:'params',l:'Parametri, uno per riga',ph:'{{result.nome}}\n{{result.score}}',ta:true}],
     limite:'Connessione simulata: il browser non può aprire socket TCP verso un database. I parametri sono completi e lo script Python esportato si connette realmente.',
-    sim:function(c){return '🐘 PostgreSQL '+(c.host||'host')+':'+(c.port||'5432')+'/'+(c.database||'db')+' — query eseguita, '+Math.floor(Math.random()*5+1)+' righe interessate ('+Math.floor(Math.random()*40+5)+'ms) [simulato]'}},
+    sim:function(c){return '🐘 PostgreSQL '+(c.host||'host')+':'+(c.port||'5432')+'/'+(c.database||'db')+': query eseguita, '+Math.floor(Math.random()*5+1)+' righe interessate ('+Math.floor(Math.random()*40+5)+'ms) [simulato]'}},
   'MongoDB':{fields:[
       {k:'uri',l:'Connection string',ph:'mongodb+srv://cluster.mongodb.net',req:true},
       {k:'database',l:'Database',ph:'produzione',req:true},
@@ -2592,7 +2592,7 @@ var CONNECTOR_CONFIGS={
       {k:'limit',l:'Numero massimo di risultati',ph:'50',
        mostraSe:{campo:'operation',vale:['find'],seVuoto:false}}],
     limite:'Connessione simulata: nessun driver MongoDB può girare nel browser. Parametri completi e utilizzabili dallo script Python esportato.',
-    sim:function(c){return '🍃 MongoDB '+(c.database||'db')+'.'+(c.collection||'collection')+': '+(c.operation||'insertOne')+' — ack: true [simulato]'}},
+    sim:function(c){return '🍃 MongoDB '+(c.database||'db')+'.'+(c.collection||'collection')+': '+(c.operation||'insertOne')+', ack: true [simulato]'}},
   'Redis':{fields:[
       {k:'host',l:'Host',ph:'cache.azienda.it',req:true},
       {k:'port',l:'Porta',ph:'6379'},
@@ -2601,7 +2601,7 @@ var CONNECTOR_CONFIGS={
       {k:'value',l:'Valore',ph:'{{result}}'},
       {k:'ttl',l:'TTL (secondi)',ph:'3600'}],
     limite:'Connessione simulata: Redis usa un protocollo su TCP non raggiungibile dal browser.',
-    sim:function(c){return '⚡ Redis '+(c.host||'host')+': '+(c.operation||'SET')+' '+(c.key||'key')+(c.ttl?' (TTL '+c.ttl+'s)':'')+' — OK [simulato]'}},
+    sim:function(c){return '⚡ Redis '+(c.host||'host')+': '+(c.operation||'SET')+' '+(c.key||'key')+(c.ttl?' (TTL '+c.ttl+'s)':'')+', OK [simulato]'}},
   'AWS S3':{fields:[
       {k:'bucket',l:'Bucket',ph:'relaition-documents',req:true},
       {k:'region',l:'Regione',ph:'eu-south-1',req:true},
@@ -2638,14 +2638,14 @@ var CONNECTOR_CONFIGS={
       {k:'query',l:'Query (JSON)',ph:'{"match":{"esito":"errore"}}',ta:true,
        mostraSe:{campo:'operation',vale:['Cerca','Elimina'],seVuoto:false},
        reqSe:{campo:'operation',vale:['Cerca','Elimina']}}],
-    sim:function(c){return '🔎 Elasticsearch: '+(c.operation||'Indicizza documento')+' su "'+(c.index||'index')+'" — _id '+Math.random().toString(36).substring(2,12)}},
+    sim:function(c){return '🔎 Elasticsearch: '+(c.operation||'Indicizza documento')+' su "'+(c.index||'index')+'", _id '+Math.random().toString(36).substring(2,12)}},
   'Supabase':{fields:[
       {k:'projecturl',l:'URL progetto',ph:'https://xyz.supabase.co',req:true},
       {k:'table',l:'Tabella',ph:'esecuzioni',req:true},
       {k:'operation',l:'Operazione',ph:'Inserisci',opts:['Inserisci','Aggiorna','Inserisci o aggiorna','Seleziona','Elimina'],req:true},
       {k:'filter',l:'Filtro (colonna = valore)',ph:'id = {{result.id}}'},
       {k:'columns',l:'Colonne (una per riga: nome = valore)',ph:'cliente = {{result.cliente}}\nesito = {{result.esito}}',ta:true}],
-    sim:function(c){return '🟩 Supabase: '+(c.operation||'Inserisci')+' su "'+(c.table||'table')+'" — 201 Created'}},
+    sim:function(c){return '🟩 Supabase: '+(c.operation||'Inserisci')+' su "'+(c.table||'table')+'", 201 Created'}},
   'GitHub':{fields:[{k:'repo',l:'Repository',ph:'org/repo'},{k:'action',l:'Azione',ph:'create issue / comment'}],
     sim:function(c){return '🐙 GitHub: '+(c.action||'issue creata')+' su '+(c.repo||'org/repo')+' (#'+Math.floor(Math.random()*400+1)+')'}},
   'GitLab':{fields:[
@@ -2662,9 +2662,9 @@ var CONNECTOR_CONFIGS={
       {k:'tags',l:'Tag (separati da virgola)',ph:'agente:{{agentName}}, ambiente:produzione'}],
     sim:function(c){return '🐕 Datadog: '+(c.type||'gauge')+' '+(c.metric||'metric')+' = '+(c.value||Math.floor(Math.random()*900+100))}},
   'PagerDuty':{fields:[{k:'service',l:'Servizio',ph:'Production API'},{k:'severity',l:'Severity',ph:'critical / warning'}],
-    sim:function(c){return '📟 PagerDuty: incident aperto su "'+(c.service||'Service')+'" ('+(c.severity||'warning')+') — on-call notificato'}},
+    sim:function(c){return '📟 PagerDuty: incident aperto su "'+(c.service||'Service')+'" ('+(c.severity||'warning')+'), on-call notificato'}},
   'Docker/K8s':{fields:[{k:'deployment',l:'Deployment',ph:'api-server'},{k:'namespace',l:'Namespace',ph:'production'}],
-    sim:function(c){return '🐳 K8s: rollout di '+(c.deployment||'deployment')+' in '+(c.namespace||'default')+' — 3/3 repliche ready'}},
+    sim:function(c){return '🐳 K8s: rollout di '+(c.deployment||'deployment')+' in '+(c.namespace||'default')+', 3/3 repliche ready'}},
   'Vercel':{fields:[
       {k:'project',l:'Progetto',ph:'relaition-app',req:true},
       {k:'environment',l:'Ambiente',ph:'production',opts:['production','preview','development'],req:true},
@@ -2672,31 +2672,31 @@ var CONNECTOR_CONFIGS={
       {k:'waitready',l:'Attendi il completamento del deploy',ph:'Sì',opts:['Sì','No']}],
     sim:function(c){return '▲ Vercel: deploy '+(c.environment||'production')+' di '+(c.project||'project')+
       ' → '+(c.project||'app')+'-'+Math.random().toString(36).substring(2,8)+'.vercel.app'}},
-  'HTTP Request':{fields:[{k:'url',l:'URL',ph:'https://api.example.com/v1/data'},{k:'method',l:'Metodo',ph:'POST',opts:['GET','POST','PUT','PATCH','DELETE']},{k:'headers',l:'Headers (JSON)',ph:'{"Authorization":"Bearer ..."}',ta:true},{k:'body',l:'Body (JSON, per POST/PUT/PATCH — {{result}} = output nodo precedente)',ph:'{"score":"{{result}}"}',ta:true}],
+  'HTTP Request':{fields:[{k:'url',l:'URL',ph:'https://api.example.com/v1/data'},{k:'method',l:'Metodo',ph:'POST',opts:['GET','POST','PUT','PATCH','DELETE']},{k:'headers',l:'Headers (JSON)',ph:'{"Authorization":"Bearer ..."}',ta:true},{k:'body',l:'Body (JSON, per POST/PUT/PATCH: {{result}} = output nodo precedente)',ph:'{"score":"{{result}}"}',ta:true}],
     sim:function(c){return '🌐 '+(c.method||'POST')+' '+(c.url||'https://api...')+' → 200 OK ('+Math.floor(Math.random()*300+50)+'ms)'}},
   'GraphQL':{fields:[{k:'endpoint',l:'Endpoint',ph:'https://api.example.com/graphql'},{k:'query',l:'Query',ph:'mutation { ... }',ta:true}],
-    sim:function(c){return '🔗 GraphQL: mutation eseguita — data returned'}},
+    sim:function(c){return '🔗 GraphQL: mutation eseguita, data returned'}},
   'Python Script':{fields:[{k:'code',l:'Codice',ph:'def process(data):\n    return transform(data)',ta:true}],
-    sim:function(c){return '🐍 Script eseguito — exit code 0, output: processed'}},
+    sim:function(c){return '🐍 Script eseguito: exit code 0, output: processed'}},
   'n8n Workflow':{fields:[
       {k:'baseurl',l:'URL istanza n8n',ph:'https://n8n.azienda.it',req:true},
       {k:'workflow',l:'ID workflow',ph:'wf_abc123',req:true},
       {k:'mode',l:'Modalità',ph:'Attendi il risultato',opts:['Attendi il risultato','Avvia e prosegui'],req:true},
       {k:'payload',l:'Dati da passare (JSON)',ph:'{"origine":"relaition","dati":"{{result}}"}',ta:true}],
-    sim:function(c){return '🔗 n8n: workflow '+(c.workflow||'wf')+' avviato ('+(c.mode||'Attendi il risultato')+') — exec '+Math.floor(Math.random()*90000+10000)}},
+    sim:function(c){return '🔗 n8n: workflow '+(c.workflow||'wf')+' avviato ('+(c.mode||'Attendi il risultato')+'), exec '+Math.floor(Math.random()*90000+10000)}},
   'SAP':{fields:[
       {k:'system',l:'Sistema',ph:'PRD',opts:['DEV','QAS','PRD'],req:true},
       {k:'module',l:'Modulo',ph:'FI (contabilità)',opts:['FI (contabilità)','CO (controlling)','MM (materiali)','SD (vendite)','HR'],req:true},
       {k:'bapi',l:'BAPI o servizio OData',ph:'BAPI_ACC_DOCUMENT_POST',req:true},
       {k:'company',l:'Codice società',ph:'IT01',req:true},
       {k:'params',l:'Parametri (uno per riga: nome = valore)',ph:'DOC_DATE = {{result.data}}\nAMOUNT = {{result.importo}}',ta:true}],
-    sim:function(c){return '🏢 SAP '+(c.system||'PRD')+'/'+(c.module||'FI')+': '+(c.bapi||'BAPI')+' eseguita — documento '+Math.floor(Math.random()*9000000+1000000)}},
+    sim:function(c){return '🏢 SAP '+(c.system||'PRD')+'/'+(c.module||'FI')+': '+(c.bapi||'BAPI')+' eseguita, documento '+Math.floor(Math.random()*9000000+1000000)}},
   'Oracle ERP':{fields:[
       {k:'module',l:'Modulo',ph:'AP',opts:['AP (fornitori)','AR (clienti)','GL (contabilità generale)','INV (magazzino)'],req:true},
       {k:'operation',l:'Operazione',ph:'Crea',opts:['Crea','Aggiorna','Interroga'],req:true},
       {k:'businessunit',l:'Business unit',ph:'Italia',req:true},
       {k:'payload',l:'Dati (uno per riga: campo = valore)',ph:'Supplier = {{result.fornitore}}\nAmount = {{result.importo}}',ta:true}],
-    sim:function(c){return '🔶 Oracle ERP '+(c.module||'AP')+': '+(c.operation||'Crea')+' su '+(c.businessunit||'BU')+' — rif. '+Math.floor(Math.random()*90000+10000)}},
+    sim:function(c){return '🔶 Oracle ERP '+(c.module||'AP')+': '+(c.operation||'Crea')+' su '+(c.businessunit||'BU')+', rif. '+Math.floor(Math.random()*90000+10000)}},
   'QuickBooks':{fields:[
       {k:'type',l:'Documento',ph:'Fattura',opts:['Fattura','Nota spese','Pagamento ricevuto','Cliente','Fornitore'],req:true},
       {k:'operation',l:'Operazione',ph:'Crea',opts:['Crea','Aggiorna','Annulla'],req:true},
@@ -2704,7 +2704,7 @@ var CONNECTOR_CONFIGS={
       {k:'amount',l:'Importo',ph:'{{result.totale}}',req:true},
       {k:'account',l:'Conto contabile',ph:'Ricavi da servizi'},
       {k:'duedate',l:'Scadenza (giorni)',ph:'30'}],
-    sim:function(c){return '💰 QuickBooks: '+(c.operation||'Crea')+' '+(c.type||'Fattura')+' per '+(c.customer||'cliente')+' — n. '+Math.floor(Math.random()*9000+1000)}},
+    sim:function(c){return '💰 QuickBooks: '+(c.operation||'Crea')+' '+(c.type||'Fattura')+' per '+(c.customer||'cliente')+', n. '+Math.floor(Math.random()*9000+1000)}},
   // Ogni azione ha i suoi parametri: un rimborso parte da un pagamento, non da
   // un importo e una valuta; creare un cliente non ha un importo affatto.
   'Stripe':{fields:[
@@ -2727,7 +2727,7 @@ var CONNECTOR_CONFIGS={
       {k:'metadata',l:'Metadati (uno per riga: chiave = valore)',ph:'agente = {{agentName}}',ta:true}],
     sim:function(c){
       var imp=c.amount?((parseInt(c.amount,10)/100).toFixed(2)+' '+(c.currency||'eur').toUpperCase()):'importo totale';
-      return '💳 Stripe: '+(c.action||'Crea fattura')+' — '+imp+' · '+(c.customer||'cliente')}},
+      return '💳 Stripe: '+(c.action||'Crea fattura')+', '+imp+' · '+(c.customer||'cliente')}},
   'File operation':{fields:[{k:'operation',l:'Operazione',ph:'move / copy / rename'},{k:'path',l:'Path',ph:'/archive/2026/'}],
     sim:function(c){return '📁 File '+(c.operation||'spostato')+' in '+(c.path||'/path/')}},
   'Push Notification':{fields:[
@@ -2736,7 +2736,7 @@ var CONNECTOR_CONFIGS={
       {k:'title',l:'Titolo',ph:'Nuovo lead assegnato',req:true},
       {k:'message',l:'Testo',ph:'{{result}}',ta:true,req:true},
       {k:'deeplink',l:'Apri al tocco',ph:'app://lead/{{result.id}}'}],
-    sim:function(c){return '🔔 Push "'+(c.title||'Notifica')+'" → '+(c.audience||'Tutti')+(c.segment?' ('+c.segment+')':'')+' — '+Math.floor(Math.random()*400+30)+' dispositivi'}},
+    sim:function(c){return '🔔 Push "'+(c.title||'Notifica')+'" → '+(c.audience||'Tutti')+(c.segment?' ('+c.segment+')':'')+': '+Math.floor(Math.random()*400+30)+' dispositivi'}},
 };
 
 
@@ -2815,7 +2815,7 @@ function buildPythonCode(){
   L.push('#!/usr/bin/env python3');
   L.push('# ═══════════════════════════════════════════════');
   L.push('# Agente: '+(currentAgentName||'RelAItion Agent'));
-  L.push('# Generato da RelAItion Builder — '+new Date().toISOString().substring(0,16).replace('T',' '));
+  L.push('# Generato da RelAItion Builder: '+new Date().toISOString().substring(0,16).replace('T',' '));
   L.push('# Esecuzione:  pip install requests  →  python agent.py');
   L.push('# ═══════════════════════════════════════════════');
   L.push('import os, sys, json, requests');
@@ -2828,7 +2828,7 @@ function buildPythonCode(){
     L.push('    r = requests.post("https://api.anthropic.com/v1/messages",');
     L.push('        headers={"x-api-key": API_KEY, "anthropic-version": "2023-06-01",');
     L.push('                 "content-type": "application/json"},');
-    L.push('        json={"model": "claude-sonnet-4-6", "max_tokens": 1024,');
+    L.push('        json={"model": "claude-opus-5", "max_tokens": 1024,');
     L.push('              "system": system_prompt, "temperature": temperature,');
     L.push('              "messages": [{"role": "user", "content": user_prompt}]}, timeout=60)');
     L.push('    r.raise_for_status()');
@@ -2921,7 +2921,7 @@ function buildPythonCode(){
       L.push('        with open(sys.argv[1]) as f: return f.read()');
       L.push('    return json.dumps({"esempio": "dati di test", "fonte": "'+(n.name||'trigger')+'"})');
     } else if(n.type==='ai'){
-      var sp=(cfg.prompt||('Sei un nodo AI in un workflow aziendale. Compito: '+n.name+' — '+(n.detail||'')+'. Rispondi in modo conciso e strutturato in italiano.')).replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\n');
+      var sp=(cfg.prompt||('Sei un nodo AI in un workflow aziendale. Compito: '+n.name+', '+(n.detail||'')+'. Rispondi in modo conciso e strutturato in italiano.')).replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\n');
       L.push('def '+safe+'(data: str) -> str:');
       L.push('    """['+n.name+'] Nodo AI: '+(n.detail||'')+'"""');
       L.push('    system_prompt = "'+sp+'"');
@@ -3025,12 +3025,12 @@ function downloadPythonCode(){
   a.download=(currentAgentName||'agent').toLowerCase().replace(/[^a-z0-9]+/g,'_')+'.py';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url)},1000);
-  showToast('📥 agent.py scaricato — pronto per l\'esecuzione');
+  showToast('📥 agent.py scaricato: pronto per l\'esecuzione');
 }
 
 function copyPythonCode(){
   var code=window._lastPyCode||buildPythonCode();
-  navigator.clipboard.writeText(code).then(function(){showToast('📋 Codice copiato negli appunti')},function(){showToast('⚠️ Copia non riuscita — usa Scarica')});
+  navigator.clipboard.writeText(code).then(function(){showToast('📋 Codice copiato negli appunti')},function(){showToast('⚠️ Copia non riuscita: usa Scarica')});
 }
 
 
@@ -3090,7 +3090,7 @@ var TRIGGER_CONFIGS={
        ph:'cliente | Ragione sociale | si\nimporto | Importo | si\nnote | Note | no',ta:true},
       {k:'auth',l:'Autenticazione',ph:'Bearer token',opts:['Nessuna','Bearer token','API Key header','HMAC signature']}],
     parametri:true,
-    sim:function(c){return '📥 Webhook '+(c.method||'POST')+' '+(c.path||'/hooks/...')+' — payload ricevuto'}},
+    sim:function(c){return '📥 Webhook '+(c.method||'POST')+' '+(c.path||'/hooks/...')+': payload ricevuto'}},
   'Scheduler':{fields:[{k:'cron',l:'Espressione cron',ph:'0 8 * * 1-5 (8:00 lun-ven)',req:true},{k:'timezone',l:'Timezone',ph:'Europe/Rome'},{k:'onmiss',l:'Se il sistema era spento',ph:'Esegui al riavvio',opts:['Esegui al riavvio','Salta','Notifica soltanto']}],
     sim:function(c){return '⏰ Trigger schedulato: '+(c.cron||'0 8 * * *')+' ('+(c.timezone||'Europe/Rome')+')'}},
   'Email trigger':{fields:[{k:'mailbox',l:'Casella monitorata',ph:'support@azienda.it',req:true},{k:'filter',l:'Filtro oggetto/mittente',ph:'oggetto contiene "urgente"'},{k:'attachments',l:'Allegati',ph:'Includi',opts:['Includi','Ignora']}],
@@ -3312,7 +3312,7 @@ function cloudFolderPanel(nid,n){
     if(scelta){
       sel+='<div style="font-size:10.5px;color:'+(scelta._stato==='ok'?'#047857':'#B45309')+';margin:-4px 0 10px;line-height:1.45">'+
         (scelta._stato==='ok'?'✅ Connessione provata':'⚠️ Connessione non ancora verificata: aprila e premi Prova')+
-        ' — cartella "'+escHtml(scelta.alias||'?')+'"'+(scelta.percorso?' › '+escHtml(scelta.percorso):'')+'</div>';
+        ': cartella "'+escHtml(scelta.alias||'?')+'"'+(scelta.percorso?' › '+escHtml(scelta.percorso):'')+'</div>';
     }
     return sel;
   }
@@ -3337,7 +3337,7 @@ function cloudFolderPanel(nid,n){
 
   return testa+
     '<button class="tb-btn" style="width:100%" onclick="scegliCartellaNodo('+nid+')">'+
-      (alias?'📂 '+escHtml(alias)+' — cambia':'Scegli cartella…')+'</button>'+
+      (alias?'📂 '+escHtml(alias)+': cambia':'Scegli cartella…')+'</button>'+
     (alias
       ? '<div style="font-size:10px;color:#047857;margin-top:5px;line-height:1.45">✅ Il file verra\' scritto in <code>'+escHtml(alias+(cfg.cloudPath?'/'+String(cfg.cloudPath).replace(/^\/+|\/+$/g,''):''))+'</code></div>'
       : '<div style="font-size:10px;color:#B45309;background:#FEF3C7;border-radius:6px;padding:6px 8px;margin-top:6px;line-height:1.45">⚠️ Nessuna cartella collegata: senza, il nodo non puo\' scrivere. Scegli la cartella locale sincronizzata dal servizio (es. <code>Google Drive</code> o <code>OneDrive</code>).</div>')+
@@ -3565,8 +3565,8 @@ function impostaOrientamento(v){
   if(b){
     b.textContent = orizzontale() ? '⇄' : '⇅';
     b.title = orizzontale()
-      ? 'Flusso orizzontale — clicca per passare a verticale'
-      : 'Flusso verticale — clicca per passare a orizzontale';
+      ? 'Flusso orizzontale: clicca per passare a verticale'
+      : 'Flusso verticale, clicca per passare a orizzontale';
   }
   try{ localStorage.setItem('relaition_orientamento', B.orientamento) }catch(e){}
   b_render();
@@ -3922,7 +3922,7 @@ function svuotaFileNodo(nid){
   n.config.filedata='';n.config.filename='';n.config.filetipo='';
   delete n.config.filestato; delete n.config.fileerrore; delete n.config.lottoEsito;
   b_render(); renderProps(nid);
-  showToast('🗑️ Sorgente rimossa — scegli un file o un documento della Knowledge Base');
+  showToast('🗑️ Sorgente rimossa: scegli un file o un documento della Knowledge Base');
 }
 
 // ══════════════════════════════════════════
@@ -3981,7 +3981,7 @@ function esportaRegistro(formato){
       },null,2));
   }
   else{
-    var L=['# Registro di esecuzione — '+(currentAgentName||'flusso'),'',
+    var L=['# Registro di esecuzione: '+(currentAgentName||'flusso'),'',
       '**Eseguito il** '+quando.toLocaleString('it-IT'),
       '**Esito** '+esito+'  ·  **Nodi** '+B.nodes.length+'  ·  **Passi** '+execEntries.length,'',
       '| Ora | Tipo | Esito | Nodo | Messaggio |','|---|---|---|---|---|'];
@@ -4005,7 +4005,7 @@ function menuEsportaRegistro(e){
     '<div style="display:flex;justify-content:space-between;align-items:center">'+
       '<h2>\ud83d\udce5 Esporta il registro</h2><button class="modal-close" onclick="closeModal()">\u2715</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px;line-height:1.6">'+
-      'L\u2019esecuzione appena conclusa di <strong>'+escHtml(currentAgentName||'flusso')+'</strong> \u2014 '+
+      'L\u2019esecuzione appena conclusa di <strong>'+escHtml(currentAgentName||'flusso')+'</strong>: '+
       execEntries.length+' passi. Non l\u2019intero storico: per quello c\u2019\u00e8 l\u2019esportazione dal Log Esecuzioni.</p>'+
     '<div style="display:grid;gap:8px">'+
       ['<button class="tb-btn" style="justify-content:flex-start;height:auto;padding:10px 12px" onclick="closeModal();esportaRegistro(\'Markdown\')">'+

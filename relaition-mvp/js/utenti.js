@@ -168,7 +168,7 @@ function renderAccountDisponibili(){
   // occupava mezza schermata e mostrava una credenziale che non serve leggere.
   box.innerHTML=UTENTI.map(function(u){
     return '<button type="button" class="account-scheda" onclick="accediComeDemo(\''+u.email+'\')" '+
-      'title="Entra come '+escHtml(u.name)+' — '+escHtml(u.role)+'">'+
+      'title="Entra come '+escHtml(u.name)+': '+escHtml(u.role)+'">'+
       '<span class="account-ava" style="background:'+u.colore+'">'+u.iniziali+'</span>'+
       '<span class="account-testo">'+
         '<span class="account-nome">'+escHtml(u.name)+'</span>'+
@@ -233,8 +233,21 @@ var IDENTITA_COLONNE=[
   ['exec_log','user'], ['my_agents','user'], ['xp_log','user'],
   ['forum_posts','user'], ['forum_comments','user'],
   ['learn_progress','user'], ['quiz_done','user'], ['challenges_registered','user'],
-  ['connessioni','user'], ['profili','user']
+  ['connessioni','user'], ['profili','user'],
+  // Aggiunte dopo: recensioni, candidature alle sfide, voti, revisione fra
+  // pari, domande (e chi ha risposto), «mi piace» e visualizzazioni del forum.
+  // Sono nate come tabelle separate proprio perche' ogni riga appartiene a
+  // qualcuno: dimenticarle qui significava che chi si rinominava perdeva la
+  // paternita' delle proprie recensioni e delle proprie candidature, che
+  // restavano nel database intestate a un nome non piu' esistente.
+  ['recensioni','autore'],
+  ['challenge_submissions','user'], ['challenge_votes','user'],
+  ['challenge_feedback','user'],
+  ['challenge_questions','user'], ['challenge_questions','risposta_di'],
+  ['challenge_winners','vincitore'],
+  ['forum_likes','user'], ['forum_views','user']
 ];
+
 
 // Quante righe cambierebbero intestatario. Serve a dirlo PRIMA, invece di
 // eseguire una riscrittura estesa senza avvisare.
@@ -243,7 +256,10 @@ function conteggioAttribuzioni(nome){
   IDENTITA_COLONNE.forEach(function(c){
     try{
       var r=dbGetOne('SELECT COUNT(*) n FROM '+c[0]+' WHERE '+c[1]+'=?',[nome]);
-      if(r&&r.n){per[c[0]]=r.n;tot+=r.n}
+      // Somma invece di assegnare: una tabella puo' comparire due volte
+      // (challenge_questions porta sia chi domanda sia chi risponde), e
+      // l'assegnazione faceva sparire il primo conteggio dal riepilogo.
+      if(r&&r.n){per[c[0]]=(per[c[0]]||0)+r.n;tot+=r.n}
     }catch(e){}
   });
   return {totale:tot,dettaglio:per};

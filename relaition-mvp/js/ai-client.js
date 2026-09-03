@@ -13,7 +13,7 @@ var MISTRAL_URL='https://api.mistral.ai/v1/chat/completions';
 // il 404 sul modello veniva riportato come errore di connessione. Un solo
 // punto da aggiornare quando un fornitore ritira una versione.
 var AI_MODELS={
-  claude:'claude-sonnet-4-6',
+  claude:'claude-opus-5',
   openai:'gpt-4o-mini',
   // Alias mobile di Google: segue la generazione corrente senza richiedere
   // una modifica al codice a ogni ritiro.
@@ -25,28 +25,42 @@ var MISTRAL_MODEL=AI_MODELS.mistral;   // retro-compatibilità
 // ══════════════════════════════════════════
 // MODELLI SELEZIONABILI PER FORNITORE
 // ══════════════════════════════════════════
-// Collegare una chiave dà accesso a più modelli dello stesso fornitore, che
+// Collegare una chiave da accesso a piu' modelli dello stesso fornitore, che
 // costano e rendono in modo diverso: un'estrazione di campi non ha bisogno del
-// modello più capace, una stesura di testo sì. Il nodo può quindi scegliere.
-// La descrizione accanto serve a decidere senza andare a cercare i listini.
+// modello piu' capace, una sintesi legale si'. La scelta e' quindi sul NODO,
+// mentre la chiave resta sul fornitore — la stessa impostazione di n8n.
+//
+// ATTENZIONE alla manutenzione: questo elenco e' scritto nel codice, quindi
+// invecchia quando un fornitore ritira una versione. E' gia' successo con
+// `gemini-2.0-flash`, e il 404 sul modello arrivava all'utente come «chiave non
+// valida». Dove il fornitore offre un alias mobile — Gemini — si usa quello,
+// perche' segue la generazione corrente senza modifiche al codice.
+//
+// I modelli locali non sono qui: il loro elenco lo si chiede al server, che e'
+// l'unico a sapere cosa sia installato (`discoverLocalModels`).
 var AI_MODELLI_DISPONIBILI={
   claude:[
-    {id:'claude-sonnet-4-6',    nome:'Claude Sonnet 4.6',   nota:'equilibrio fra qualità e costo — predefinito'},
-    {id:'claude-opus-4-1',      nome:'Claude Opus 4.1',     nota:'il più capace, per compiti di ragionamento'},
-    {id:'claude-haiku-4-5',     nome:'Claude Haiku 4.5',    nota:'rapido ed economico, per classificazioni'}
+    {id:'claude-opus-5',    nome:'Claude Opus 5',    nota:'equilibrio fra capacità e costo: predefinito'},
+    {id:'claude-sonnet-5',  nome:'Claude Sonnet 5',  nota:'più economico, adatto a estrazione e classificazione'},
+    {id:'claude-haiku-4-5', nome:'Claude Haiku 4.5', nota:'il più rapido ed economico, per compiti semplici'},
+    {id:'claude-fable-5',   nome:'Claude Fable 5',   nota:'il più capace, per ragionamento e compiti lunghi'}
   ],
   openai:[
-    {id:'gpt-4o-mini',          nome:'GPT-4o mini',         nota:'economico, adatto a estrazione e classificazione'},
-    {id:'gpt-4o',               nome:'GPT-4o',              nota:'più capace, per sintesi e testi lunghi'},
-    {id:'gpt-4.1-mini',         nome:'GPT-4.1 mini',        nota:'contesto ampio a costo contenuto'}
+    {id:'gpt-4o-mini',   nome:'GPT-4o mini',   nota:'economico, adatto a estrazione e classificazione'},
+    {id:'gpt-4o',        nome:'GPT-4o',        nota:'più capace, per sintesi e testi lunghi'},
+    {id:'gpt-4.1',       nome:'GPT-4.1',       nota:'contesto ampio, buono sui documenti lunghi'},
+    {id:'gpt-4.1-mini',  nome:'GPT-4.1 mini',  nota:'contesto ampio a costo contenuto'}
   ],
   gemini:[
-    {id:'gemini-flash-latest',  nome:'Gemini Flash',        nota:'veloce ed economico — predefinito'},
-    {id:'gemini-pro-latest',    nome:'Gemini Pro',          nota:'più capace su compiti complessi'}
+    // Alias mobili di Google: seguono la generazione corrente senza richiedere
+    // una modifica al codice a ogni ritiro.
+    {id:'gemini-flash-latest',      nome:'Gemini Flash',      nota:'veloce ed economico: predefinito'},
+    {id:'gemini-pro-latest',        nome:'Gemini Pro',        nota:'più capace su compiti complessi'},
+    {id:'gemini-flash-lite-latest', nome:'Gemini Flash Lite', nota:'il più rapido, per classificazioni ad alto volume'}
   ],
   mistral:[
-    {id:'mistral-large-latest', nome:'Mistral Large',       nota:'il più capace di Mistral'},
-    {id:'mistral-small-latest', nome:'Mistral Small',       nota:'economico, per compiti semplici'}
+    {id:'mistral-large-latest', nome:'Mistral Large', nota:'il più capace di Mistral'},
+    {id:'mistral-small-latest', nome:'Mistral Small', nota:'economico, per compiti semplici'}
   ],
   locale:[],    // popolati da discoverLocalModels(): dipendono da cosa è installato
   custom:[]
@@ -112,11 +126,11 @@ function aiErrorHint(status,data,provider){
   var msg=(data&&data.error&&(data.error.message||data.error.status))||(data&&data.message)||'';
   var base=String(msg).substring(0,140);
   if(status===401||status===403||/api key not valid|invalid_api_key|unauthorized/i.test(msg))
-    return {tipo:'chiave',testo:'Chiave rifiutata da '+providerLabel(provider)+' — controlla di averla copiata per intero e che sia attiva. '+base};
+    return {tipo:'chiave',testo:'Chiave rifiutata da '+providerLabel(provider)+': controlla di averla copiata per intero e che sia attiva. '+base};
   if(status===429&&/quota|credit|billing/i.test(msg))
     return {tipo:'credito',testo:'Chiave valida, ma il piano '+providerLabel(provider)+' non ha credito residuo: aggiungi credito nella console del fornitore. '+base};
   if(status===429)
-    return {tipo:'frequenza',testo:'Troppe richieste verso '+providerLabel(provider)+' — riprova tra qualche secondo. '+base};
+    return {tipo:'frequenza',testo:'Troppe richieste verso '+providerLabel(provider)+': riprova tra qualche secondo. '+base};
   if(status===404||/not found|is not supported|deprecated/i.test(msg))
     return {tipo:'modello',testo:'Il modello "'+(AI_MODELS[provider]||'?')+'" non è più disponibile su '+providerLabel(provider)+': aggiorna AI_MODELS in js/ai-client.js. '+base};
   return {tipo:'altro',testo:base||('HTTP '+status)};
@@ -129,8 +143,8 @@ function aiProviderStatusHint(model){
   var p=normalizeProviderName(model);
   var pc=aiConfig.providers&&aiConfig.providers[p];
   if(pc&&pc.status==='ok')return '✅ '+providerLabel(p)+' configurato e pronto per questo nodo';
-  if(pc&&pc.status==='err')return '❌ '+providerLabel(p)+' configurato ma non connesso — testa di nuovo la key nel pannello AI';
-  return '⚠️ '+providerLabel(p)+' non ancora configurato — apri il pannello AI a sinistra e testa una API key per questo provider (esecuzione in demo mode nel frattempo)';
+  if(pc&&pc.status==='err')return '❌ '+providerLabel(p)+' configurato ma non connesso: testa di nuovo la key nel pannello AI';
+  return '⚠️ '+providerLabel(p)+' non ancora configurato: apri il pannello AI a sinistra e testa una API key per questo provider (esecuzione in demo mode nel frattempo)';
 }
 
 function providerLabel(p){
@@ -190,14 +204,14 @@ async function discoverLocalModels(){
     var attuale=aiConfig.providers.locale.model;
     sel.innerHTML=elenco.map(function(m){return '<option'+(m===attuale?' selected':'')+'>'+escHtml(m)+'</option>'}).join('');
     aiConfig.providers.locale.model=sel.value;
-    st.innerHTML='<span class="ai-dot ok"></span> '+elenco.length+' modelli trovati — premi Test per verificare la generazione';
+    st.innerHTML='<span class="ai-dot ok"></span> '+elenco.length+' modelli trovati: premi Test per verificare la generazione';
     showToast('💻 '+elenco.length+' modelli locali trovati');
   }catch(e){
     var pr=LOCAL_PRESETS[aiConfig.providers.locale.preset]||LOCAL_PRESETS.altro;
     // Un errore di rete verso localhost è quasi sempre CORS o server spento:
     // dirlo con l'azione concreta evita il giro di tentativi alla cieca.
     st.innerHTML='<span class="ai-dot err"></span> ❌ Non raggiungibile. '+escHtml(pr.aiuto);
-    showToast('❌ Server locale non raggiungibile — '+pr.aiuto);
+    showToast('❌ Server locale non raggiungibile: '+pr.aiuto);
   }
 }
 
@@ -311,7 +325,7 @@ async function testAIKey(){
       var data=await resp.json();
       if(resp.ok&&data.choices){
         commitProviderStatus(provider,'ok');
-        st.innerHTML='<span class="ai-dot ok"></span> ✅ Connesso ('+(Date.now()-t0)+'ms) — '+customModel;
+        st.innerHTML='<span class="ai-dot ok"></span> ✅ Connesso ('+(Date.now()-t0)+'ms): '+customModel;
         showToast('✅ Endpoint custom verificato con chiamata reale');
       }else{
         commitProviderStatus(provider,'err');
@@ -331,7 +345,7 @@ async function testAIKey(){
     var pcL=aiConfig.providers.locale;
     var base=localeBase();
     if(!base){st.innerHTML='<span class="ai-dot err"></span> Indica l\'indirizzo del server locale';return}
-    if(!pcL.model){st.innerHTML='<span class="ai-dot err"></span> Scegli un modello — premi 🔄 per cercare quelli installati';return}
+    if(!pcL.model){st.innerHTML='<span class="ai-dot err"></span> Scegli un modello: premi 🔄 per cercare quelli installati';return}
     st.innerHTML='<span class="ai-dot running"></span> Generazione di prova su '+escHtml(pcL.model)+'…';
     var tL=Date.now();
     try{
@@ -342,7 +356,7 @@ async function testAIKey(){
       var dL=await rL.json();
       if(rL.ok&&dL.choices&&dL.choices[0]){
         commitProviderStatus('locale','ok');
-        st.innerHTML='<span class="ai-dot ok"></span> ✅ '+escHtml(pcL.model)+' risponde ('+(Date.now()-tL)+'ms) — nessun dato esce dal computer';
+        st.innerHTML='<span class="ai-dot ok"></span> ✅ '+escHtml(pcL.model)+' risponde ('+(Date.now()-tL)+'ms): nessun dato esce dal computer';
         showToast('✅ Modello locale "'+pcL.model+'" verificato con una generazione reale');
       }else{
         commitProviderStatus('locale','err');
@@ -392,7 +406,7 @@ async function testAIKey(){
       });
       data=await resp.json();
       ok=resp.ok&&!!data.choices;
-      if(ok&&data.model)dettaglio=' — '+data.model;
+      if(ok&&data.model)dettaglio=': '+data.model;
     }
     if(ok){
       commitProviderStatus(provider,'ok');
@@ -414,7 +428,7 @@ async function testAIKey(){
     // Un fallimento di rete qui è connettività, proxy aziendale o blocco
     // dell'estensione — non più il CORS di OpenAI.
     if(e.message.indexOf('fetch')>=0){
-      st.innerHTML='<span class="ai-dot err"></span> ❌ Endpoint non raggiungibile (rete o CORS) — <span style="text-decoration:underline;cursor:pointer" onclick="openConnectionGuide()">guida</span>';
+      st.innerHTML='<span class="ai-dot err"></span> ❌ Endpoint non raggiungibile (rete o CORS): <span style="text-decoration:underline;cursor:pointer" onclick="openConnectionGuide()">guida</span>';
     }else{
       st.innerHTML='<span class="ai-dot err"></span> ❌ Errore: '+e.message.substring(0,50);
     }
@@ -678,7 +692,7 @@ async function aiGenerateWorkflow(){
 
 async function aiModifySingleNode(nodeId,desc,btn,input,prov){
   var node=B.nodes.find(function(n){return n.id===nodeId});
-  if(!node){showToast('⚠️ Nodo non trovato — deseleziona e riprova');return}
+  if(!node){showToast('⚠️ Nodo non trovato: deseleziona e riprova');return}
   if(!prov)prov=anyProviderReady();
   if(!prov){showToast('🔌 Il builder conversazionale richiede un provider AI configurato');return}
   btn.dataset.busy='1';btn.disabled=true;btn.textContent='Modifico...';
@@ -696,7 +710,7 @@ async function aiModifySingleNode(nodeId,desc,btn,input,prov){
   if(!parsed){
     // Senza ripiego euristico: una modifica non compresa non deve produrre un
     // cambiamento arbitrario sul nodo che l'utente aveva già configurato.
-    showToast('⚠️ Il modello non ha restituito una modifica leggibile — riformula la richiesta');
+    showToast('⚠️ Il modello non ha restituito una modifica leggibile: riformula la richiesta');
     return;
   }
   // Anche la modifica di un singolo nodo passa dall'anteprima: stessa regola
@@ -726,14 +740,14 @@ function openConnectionGuide(){
     '<div class="lesson-content" style="border:none;padding:0;margin-top:12px">'+
     '<h3>Perché "Failed to fetch"?</h3>'+
     '<p>I browser bloccano le chiamate verso API che non autorizzano esplicitamente le richieste da pagine web (<strong>CORS</strong>). Non è un problema della tua key: è il server del provider che rifiuta chiamate dirette dal browser.</p>'+
-    '<div class="concept-box">✅ <strong>Funzionano direttamente dal browser:</strong><br>· <strong>Anthropic Claude</strong> — supporto ufficiale via header dedicato (consigliato per la demo)<br>· <strong>Google Gemini</strong> — funziona con key nell\'URL<br>· <strong>Ollama locale</strong> — provider Custom con base URL <code>http://localhost:11434/v1</code> (avvia con <code>OLLAMA_ORIGINS=* ollama serve</code>)</div>'+
+    '<div class="concept-box">✅ <strong>Funzionano direttamente dal browser:</strong><br>· <strong>Anthropic Claude</strong>: supporto ufficiale via header dedicato (consigliato per la demo)<br>· <strong>Google Gemini</strong>, funziona con key nell\'URL<br>· <strong>Ollama locale</strong>, provider Custom con base URL <code>http://localhost:11434/v1</code> (avvia con <code>OLLAMA_ORIGINS=* ollama serve</code>)</div>'+
     '<div class="warning-box">❌ <strong>OpenAI blocca le chiamate browser-direct.</strong> La key funziona da server/terminale ma non da una pagina web. Due soluzioni:</div>'+
-    '<h3>Soluzione 1 — Proxy locale (2 minuti)</h3>'+
+    '<h3>Soluzione 1: Proxy locale (2 minuti)</h3>'+
     '<p>Avvia questo micro-proxy sul tuo computer, poi inserisci <code>http://localhost:8010/</code> nel campo "Proxy CORS":</p>'+
     '<div class="code-block"># Con Node.js (npx, senza installare nulla):\nnpx local-cors-proxy --proxyUrl https://api.openai.com --port 8010 --proxyPartial \'\'\n\n# In alternativa con Python 3:\npip install proxy.py && proxy --port 8010 --plugins proxy.plugin.CorsPlugin</div>'+
     '<p>Oppure proxy Node custom (salva come <code>proxy.js</code>, poi <code>node proxy.js</code>):</p>'+
     '<div class="code-block">const http=require("http"),https=require("https");\nhttp.createServer((req,res)=>{\n  res.setHeader("Access-Control-Allow-Origin","*");\n  res.setHeader("Access-Control-Allow-Headers","*");\n  res.setHeader("Access-Control-Allow-Methods","*");\n  if(req.method==="OPTIONS"){res.end();return}\n  const url=req.url.replace(/^\\//,"");\n  const p=https.request(url,{method:req.method,headers:{\n    "content-type":"application/json",\n    "authorization":req.headers.authorization||""}},r=>{r.pipe(res)});\n  req.pipe(p);\n}).listen(8010,()=>console.log("CORS proxy su http://localhost:8010/"));</div>'+
-    '<h3>Soluzione 2 — Usa Claude o Gemini per la demo browser</h3>'+
+    '<h3>Soluzione 2: Usa Claude o Gemini per la demo browser</h3>'+
     '<p>Il codice Python generato (🐍) funziona invece con <strong>tutti</strong> i provider senza proxy, perché gira da terminale dove il CORS non esiste. Per la demo live: Claude nel browser, OpenAI nel codice esportato.</p>'+
     '<h3>Test di rete rapido</h3>'+
     '<p>Il bottone qui sotto verifica quali endpoint sono raggiungibili dal tuo browser in questo momento:</p>'+
@@ -761,9 +775,9 @@ async function runReachabilityTest(btn){
     try{
       var resp=await fetch(t.url,{method:t.method,headers:t.headers,body:t.body});
       // Qualsiasi risposta HTTP (anche 401) = endpoint raggiungibile, CORS ok
-      row+='<span style="color:#10B981;font-weight:700">✅</span> <strong>'+t.name+'</strong>: '+t.ok+' (HTTP '+resp.status+' — con una key valida funzionerà)';
+      row+='<span style="color:#10B981;font-weight:700">✅</span> <strong>'+t.name+'</strong>: '+t.ok+' (HTTP '+resp.status+', con una key valida funzionerà)';
     }catch(e){
-      row+='<span style="color:#EF4444;font-weight:700">❌</span> <strong>'+t.name+'</strong>: bloccato dal browser (CORS) — serve il proxy o usa il codice Python esportato';
+      row+='<span style="color:#EF4444;font-weight:700">❌</span> <strong>'+t.name+'</strong>: bloccato dal browser (CORS), serve il proxy o usa il codice Python esportato';
     }
     row+='</div>';
     out.innerHTML+=row;

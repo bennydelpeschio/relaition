@@ -201,7 +201,7 @@ function applicaImport(data){
   if(typeof bResetView==='function')bResetView();
   if(typeof aggiornaTitoloBuilder==='function')aggiornaTitoloBuilder();
 
-  showToast('\u2705 "'+currentAgentName+'" importato \u2014 '+B.nodes.length+' nodi. Premi \ud83d\udcbe Salva per conservarlo');
+  showToast('\u2705 "'+currentAgentName+'" importato: '+B.nodes.length+' nodi. Premi \ud83d\udcbe Salva per conservarlo');
   addAct('Importato workflow: '+currentAgentName);
   return true;
 }
@@ -362,7 +362,7 @@ function addKBDocsFromFiles(fileList){
     });
   },Promise.resolve()).then(function(){
     if(riusciti){
-      showToast('📚 '+riusciti+' documento/i indicizzato/i — '+porzioni+' porzioni');
+      showToast('📚 '+riusciti+' documento/i indicizzato/i: '+porzioni+' porzioni');
       addAct('Caricati documenti nella Knowledge Base');
       if(typeof fireEvent==='function')fireEvent('kbdoc_uploaded');
     }
@@ -418,14 +418,14 @@ function previewKBDoc(id,tab){
         '<div style="font-size:10px;color:var(--tx4);margin:3px 0 5px;font-style:italic">'+escHtml(c.context_prefix||'')+'</div>'+
         '<div style="font-size:11px;color:var(--tx2);line-height:1.5;white-space:pre-wrap">'+escHtml(c.text.substring(0,500))+(c.text.length>500?'…':'')+'</div>'+
       '</div>';
-    }).join(''):'<div style="font-size:11px;color:#EF4444;padding:10px 0">Documento non ancora indicizzato — <span style="text-decoration:underline;cursor:pointer" onclick="kbIndexDocument(\''+id+'\');previewKBDoc(\''+id+'\')">indicizzalo ora</span></div>';
+    }).join(''):'<div style="font-size:11px;color:#EF4444;padding:10px 0">Documento non ancora indicizzato: <span style="text-decoration:underline;cursor:pointer" onclick="kbIndexDocument(\''+id+'\');previewKBDoc(\''+id+'\')">indicizzalo ora</span></div>';
   }else{
     corpo='<pre style="white-space:pre-wrap;font-size:11px;background:var(--bg2);border-radius:8px;padding:12px;max-height:400px;overflow:auto">'+escHtml(d.content.substring(0,6000))+(d.content.length>6000?'\n\n… ('+(d.content.length-6000)+' caratteri troncati)':'')+'</pre>';
   }
   var tabBtn=function(k,l){return '<span onclick="previewKBDoc(\''+id+'\',\''+k+'\')" style="font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;cursor:pointer;'+(tab===k?'background:var(--ac2-l);color:var(--ac2)':'color:var(--tx4)')+'">'+l+'</span>'};
   openModal(
     '<div style="display:flex;justify-content:space-between;align-items:center"><h2>📄 '+escHtml(d.name)+'</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
-    '<div style="font-size:10.5px;color:var(--tx4);margin:6px 0 10px">'+tipo+(unita?' — segmentato per '+unita:'')+' · '+escHtml(d.business_unit||'Tutte')+' · '+escHtml(d.confidentiality||'interno')+' · '+chunks.length+' porzioni</div>'+
+    '<div style="font-size:10.5px;color:var(--tx4);margin:6px 0 10px">'+tipo+(unita?': segmentato per '+unita:'')+' · '+escHtml(d.business_unit||'Tutte')+' · '+escHtml(d.confidentiality||'interno')+' · '+chunks.length+' porzioni</div>'+
     '<div style="display:flex;gap:4px;margin-bottom:10px">'+tabBtn('porzioni','🧩 Porzioni ('+chunks.length+')')+tabBtn('testo','📄 Testo originale')+'</div>'+
     corpo
   ,true);
@@ -457,7 +457,7 @@ function saveKBPaste(){
     [id,/\.\w+$/.test(nome)?nome:nome+'.txt',testo.length,testo,new Date().toISOString(),
      document.getElementById('kbPasteBU').value,document.getElementById('kbPasteConf').value]);
   var r=kbIndexDocument(id);
-  showToast('📚 "'+nome+'" aggiunto — '+r.chunks+' porzioni ('+((typeof KB_TYPE_LABEL!=='undefined'&&KB_TYPE_LABEL[r.tipo])||r.tipo)+')');
+  showToast('📚 "'+nome+'" aggiunto: '+r.chunks+' porzioni ('+((typeof KB_TYPE_LABEL!=='undefined'&&KB_TYPE_LABEL[r.tipo])||r.tipo)+')');
   addAct('Aggiunto testo alla Knowledge Base: '+nome);
   openKBDocsModal();
 }
@@ -491,7 +491,7 @@ function renderKBDocsList(){
 
 function kbReindexAllUI(){
   var r=kbReindexAll();
-  showToast('🔁 Reindicizzati '+r.documenti+' documenti — '+r.porzioni+' porzioni');
+  showToast('🔁 Reindicizzati '+r.documenti+' documenti: '+r.porzioni+' porzioni');
   renderKBDocsList();
 }
 
@@ -516,7 +516,7 @@ function runKBTestSearch(){
     res.results.map(function(r){
       return '<div style="background:var(--bg2);border:1px solid var(--bo);border-radius:8px;padding:9px 11px;margin-bottom:6px">'+
         '<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">'+
-          '<div style="font-size:11px;font-weight:700">'+escHtml(r.docName)+' — '+escHtml(r.label)+'</div>'+
+          '<div style="font-size:11px;font-weight:700">'+escHtml(r.docName)+': '+escHtml(r.label)+'</div>'+
           '<div style="font-size:10px;color:var(--ac2);font-weight:700;white-space:nowrap">'+r.score+'</div>'+
         '</div>'+
         '<div style="font-size:10px;color:var(--tx4);margin:2px 0 5px">BM25 '+r.bm25+' · coseno '+r.cosine+' · '+escHtml(r.businessUnit)+' · '+escHtml(r.confidentiality)+'</div>'+
@@ -527,8 +527,8 @@ function runKBTestSearch(){
 
 function openKBDocsModal(){
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>📚 Knowledge Base — Documenti aziendali</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
-    '<p style="font-size:12px;color:var(--tx3);margin:10px 0 14px">Carica normative, contratti, procedure, FAQ, listini o liste clienti: ogni documento viene segmentato secondo la propria struttura e indicizzato per il recupero. Formati: txt, csv, json, md, xml, html — PDF e DOCX vanno convertiti in testo.</p>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>📚 Knowledge Base: Documenti aziendali</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<p style="font-size:12px;color:var(--tx3);margin:10px 0 14px">Carica normative, contratti, procedure, FAQ, listini o liste clienti: ogni documento viene segmentato secondo la propria struttura e indicizzato per il recupero. Formati: txt, csv, json, md, xml, html, PDF e DOCX vanno convertiti in testo.</p>'+
     '<div style="display:flex;gap:8px;margin-bottom:10px">'+
       '<div style="flex:1"><div class="prop-label">Business unit</div>'+
         '<select class="prop-select" id="kbUploadBU">'+KB_BUSINESS_UNITS.map(function(b){return '<option>'+b+'</option>'}).join('')+'</select></div>'+
@@ -586,7 +586,7 @@ function renderKBDocPicker(nid,config){
   var scelti=kbDocSelezionati(config);
   if(!docs.length){
     return '<div class="prop-group"><div class="prop-label">📚 Documenti dalla Knowledge Base</div>'+
-      '<div style="font-size:10px;color:var(--tx4)">Nessun documento caricato — aprila dal pulsante 📦 Knowledge Base nella barra in alto.</div></div>';
+      '<div style="font-size:10px;color:var(--tx4)">Nessun documento caricato: aprila dal pulsante 📦 Knowledge Base nella barra in alto.</div></div>';
   }
   var righe=docs.map(function(d){
     var on=scelti.indexOf(d.id)>=0;
@@ -675,9 +675,45 @@ function useKBDocAsTrigger(nid,docId){
 // 📚 Markdown (pensato per essere letto da un umano, non per il re-import).
 // ══════════════════════════════════════════
 
+// Le connessioni erano l'unica tabella dello schema esclusa dal pacchetto
+// JSON, e l'esclusione non era dichiarata da nessuna parte: chi esportava il
+// proprio backup e lo reimportava si ritrovava senza, e nulla glielo diceva.
+//
+// Ora ci sono, ma SENZA i campi che possono contenere un segreto. La
+// configurazione di una connessione non ha campi password — la connessione al
+// database chiede l'utente e non la password, l'SMTP tiene le credenziali nel
+// servizio locale — ma l'intestazione HTTP e' un testo libero dove qualcuno
+// puo' aver incollato un `Authorization: Bearer ...`. Un backup e' un file che
+// si gira: e' esattamente il posto in cui una credenziale non deve finire.
+var CONN_CAMPI_SEGRETI=['headers','token','apikey','api_key','password','secret','authorization'];
+
+function connessioniPerExport(){
+  return dbAll('SELECT * FROM connessioni').map(function(c){
+    var copia={},rimossi=[];
+    Object.keys(c).forEach(function(k){ copia[k]=c[k] });
+    try{
+      var cfg=JSON.parse(c.config_json||'{}');
+      Object.keys(cfg).forEach(function(k){
+        if(CONN_CAMPI_SEGRETI.indexOf(String(k).toLowerCase())>=0&&cfg[k]){
+          delete cfg[k]; rimossi.push(k);
+        }
+      });
+      copia.config_json=JSON.stringify(cfg);
+    }catch(e){}
+    // Dichiarato nel file stesso: chi reimporta deve sapere che quel campo va
+    // ricompilato, invece di scoprirlo quando la connessione non funziona.
+    if(rimossi.length)copia._campi_esclusi=rimossi;
+    return copia;
+  });
+}
+
 function exportKnowledgeBase(){
-  var kb={schema:'relaition.kb.v2',exported:new Date().toISOString(),profile:profileData,data:{}};
-  DB_TABLES.forEach(function(t){kb.data[t]=dbAll('SELECT * FROM '+t)});
+  var kb={schema:'relaition.kb.v2',exported:new Date().toISOString(),profile:profileData,
+          nota:'Le connessioni sono incluse senza i campi che possono contenere credenziali (intestazioni HTTP, token): vanno ricompilate dopo l\'importazione. Le chiavi dei fornitori AI non sono mai nel database e quindi non sono in questo file.',
+          data:{}};
+  DB_TABLES.forEach(function(t){
+    kb.data[t]= (t==='connessioni') ? connessioniPerExport() : dbAll('SELECT * FROM '+t);
+  });
   var json=JSON.stringify(kb,null,2);
   var blob=new Blob([json],{type:'application/json'});
   var url=URL.createObjectURL(blob);
@@ -685,8 +721,8 @@ function exportKnowledgeBase(){
   a.download='relaition_knowledge_base_'+new Date().toISOString().substring(0,10)+'.json';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url)},1000);
-  showToast('📦 Knowledge base esportata — tutti i tuoi dati sono in questo file');
-  addAct('Esportata knowledge base completa');
+  showToast('📦 Dati esportati: connessioni incluse senza credenziali');
+  addAct('Esportato il pacchetto dati completo');
 }
 
 function importKnowledgeBase(input){
@@ -700,7 +736,7 @@ function importKnowledgeBase(input){
       DB_TABLES.forEach(function(t){dbRun('DELETE FROM '+t)});
       DB_TABLES.forEach(function(t){(kb.data[t]||[]).forEach(function(row){dbInsertRow(t,row)})});
       if(kb.profile)profileData=kb.profile;
-      showToast('✅ Knowledge base importata — ricarico...');
+      showToast('✅ Knowledge base importata: ricarico...');
       setTimeout(function(){location.reload()},900);
     }catch(ex){showToast('❌ Errore import: '+ex.message)}
   };
@@ -737,7 +773,7 @@ function workflowToMarkdown(nodes,edges){
 
 function exportWikiMarkdown(){
   var now=new Date();
-  var md='# 📚 RelAItion — Wiki della Knowledge Base\n\n';
+  var md='# 📚 RelAItion: Wiki della Knowledge Base\n\n';
   md+='Generato il '+now.toLocaleString('it-IT')+' da **'+(profileData.name||'utente')+'**\n\n---\n\n';
 
   md+='## Profilo\n\n';
@@ -747,7 +783,7 @@ function exportWikiMarkdown(){
   md+='- **Bio:** '+(profileData.bio||'—')+'\n\n---\n\n';
 
   var builder=null;try{builder=JSON.parse(localStorage.getItem('relaition_builder')||'null')}catch(e){}
-  md+='## Workflow corrente nel Builder — '+(currentAgentName||'Senza nome')+'\n\n';
+  md+='## Workflow corrente nel Builder: '+(currentAgentName||'Senza nome')+'\n\n';
   md+=builder?workflowToMarkdown(builder.nodes,builder.edges):'_Nessun workflow nel builder._\n';
   md+='\n---\n\n';
 
@@ -766,7 +802,7 @@ function exportWikiMarkdown(){
   if(!published.length)md+='_Nessun agente pubblicato._\n\n';
   published.forEach(function(a){
     var wf=JSON.parse(a.workflow_json||'{}');
-    md+='### '+a.icon+' '+a.name+' — '+a.cat+'\n\n';
+    md+='### '+a.icon+' '+a.name+': '+a.cat+'\n\n';
     md+=(a.desc||'')+'\n\n';
     md+='Integrazioni: '+JSON.parse(a.tags_json||'[]').join(', ')+' · Prezzo: '+a.price+'\n\n';
     md+=workflowToMarkdown(wf.nodes,wf.edges);
@@ -777,7 +813,7 @@ function exportWikiMarkdown(){
   var myagents=dbAll('SELECT * FROM my_agents');
   md+='## Agenti installati dal Marketplace ('+myagents.length+')\n\n';
   if(myagents.length){
-    myagents.forEach(function(m){md+='- ID catalogo `'+m.catalog_id+'` — installato il '+new Date(m.installed_at).toLocaleDateString('it-IT')+'\n'});
+    myagents.forEach(function(m){md+='- ID catalogo `'+m.catalog_id+'`: installato il '+new Date(m.installed_at).toLocaleDateString('it-IT')+'\n'});
   }else{md+='_Nessun agente installato._\n'}
   md+='\n---\n\n';
 
@@ -786,7 +822,7 @@ function exportWikiMarkdown(){
   if(docs.length){
     docs.forEach(function(d){
       md+='### 📄 '+d.name+'\n\n';
-      md+='_'+Math.round(d.size/1024*10)/10+' KB — caricato il '+new Date(d.uploaded).toLocaleDateString('it-IT')+'_\n\n';
+      md+='_'+Math.round(d.size/1024*10)/10+' KB: caricato il '+new Date(d.uploaded).toLocaleDateString('it-IT')+'_\n\n';
       md+='```\n'+d.content.substring(0,1000)+(d.content.length>1000?'\n… (troncato)':'')+'\n```\n\n';
     });
   }else{md+='_Nessun documento caricato._\n\n'}
@@ -821,9 +857,9 @@ function openKnowledgeBaseModal(){
   });
   openModal(
     '<div style="display:flex;justify-content:space-between;align-items:center"><h2>🗄️ Il tuo Database</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
-    '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Tutto ciò che crei su RelAItion (workflow, agenti, log, pubblicazioni, documenti caricati, progressi Learning Hub e Community) vive in un vero database SQLite eseguito nel tuo browser (nessun server). Puoi esportarlo in qualsiasi momento e portarlo con te — anche se lasci la piattaforma.</p>'+
+    '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Tutto ciò che crei su RelAItion (workflow, agenti, log, pubblicazioni, documenti caricati, progressi Learning Hub e Community) vive in un vero database SQLite eseguito nel tuo browser (nessun server). Puoi esportarlo in qualsiasi momento e portarlo con te: anche se lasci la piattaforma.</p>'+
     '<div class="validation-list" style="margin-top:0">'+
-    sizeInfo.map(function(s){return '<div class="validation-item" style="background:var(--bg2);border-color:var(--bo);cursor:default"><span class="vi-ic">🗂️</span><span class="vi-msg">'+(KB_TABLE_LABELS[s.t]||s.t)+' — '+s.n+' righe</span></div>'}).join('')+
+    sizeInfo.map(function(s){return '<div class="validation-item" style="background:var(--bg2);border-color:var(--bo);cursor:default"><span class="vi-ic">🗂️</span><span class="vi-msg">'+(KB_TABLE_LABELS[s.t]||s.t)+': '+s.n+' righe</span></div>'}).join('')+
     '</div>'+
     '<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">'+
       '<button class="tb-btn primary" onclick="openKBDocsModal()">📚 Carica/gestisci documenti</button>'+
@@ -837,7 +873,7 @@ function openKnowledgeBaseModal(){
       '<button class="tb-btn" onclick="document.getElementById(\'kbImportInput\').click()">📤 Importa JSON</button>'+
     '</div>'+
     '<input type="file" id="dbImportInput" accept=".sqlite,.db" style="display:none" onchange="importDatabaseFile(this)">'+
-    '<div style="font-size:11px;color:var(--tx4);margin-top:8px">Il file <strong>.sqlite</strong> è un backup 1:1 apribile con qualunque client SQLite standard (DB Browser for SQLite, ecc.) — la forma più portabile, nessun vendor lock-in. Il JSON è leggibile e re-importabile su un\'altra installazione di RelAItion. Il Markdown è pensato per essere letto da un umano, non re-importato.</div>'+
+    '<div style="font-size:11px;color:var(--tx4);margin-top:8px">Il file <strong>.sqlite</strong> è un backup 1:1 apribile con qualunque client SQLite standard (DB Browser for SQLite, ecc.): la forma più portabile, nessun vendor lock-in. Il JSON è leggibile e re-importabile su un\'altra installazione di RelAItion. Il Markdown è pensato per essere letto da un umano, non re-importato.</div>'+
     '<input type="file" id="kbImportInput" accept=".json" style="display:none" onchange="importKnowledgeBase(this)">'+
     '<div style="background:var(--ac2-l);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--tx2);margin-top:14px">💡 Nessun dato lascia il tuo browser finché non esporti tu stesso il file: il database è locale e sotto il tuo controllo.</div>'
   ,true);

@@ -71,7 +71,7 @@ var GUARDRAIL_CONFIGS = {
       if(!hit.length) return { pass:true, msg:'🛡️ Nessuna categoria vietata rilevata ('+cats.length+' regole)' };
       var blocca = (cfg.action||'Blocca il flusso') === 'Blocca il flusso';
       return { pass: !blocca, severity: blocca?'block':'warn',
-               msg:'🛡️ Categoria non ammessa rilevata: '+hit.join(', ')+(blocca?' — flusso bloccato':' — segnalato, prosegue') };
+               msg:'🛡️ Categoria non ammessa rilevata: '+hit.join(', ')+(blocca?', flusso bloccato':', segnalato, prosegue') };
     }
   },
 
@@ -130,7 +130,7 @@ var GUARDRAIL_CONFIGS = {
       if(hits.length < soglia) return { pass:true, msg:'🚧 Nessun tentativo di manipolazione rilevato' };
       var blocca = (cfg.action||'Blocca il flusso') === 'Blocca il flusso';
       return { pass: !blocca, severity: blocca?'block':'warn',
-               msg:'🚧 Possibile istruzione ostile nel contenuto in ingresso ('+hits.length+' indizi)'+(blocca?' — bloccato':' — segnalato') };
+               msg:'🚧 Possibile istruzione ostile nel contenuto in ingresso ('+hits.length+' indizi)'+(blocca?': bloccato':', segnalato') };
     }
   },
 
@@ -157,10 +157,10 @@ var GUARDRAIL_CONFIGS = {
       var supportate = parole.filter(function(p){ return fonte.indexOf(p) >= 0 }).length;
       var pct = Math.round(supportate / parole.length * 100);
       var soglia = parseInt(cfg.threshold || '40', 10);
-      if(pct >= soglia) return { pass:true, msg:'🔎 Fondatezza '+pct+'% (soglia '+soglia+'%) — output supportato dalle fonti' };
+      if(pct >= soglia) return { pass:true, msg:'🔎 Fondatezza '+pct+'% (soglia '+soglia+'%): output supportato dalle fonti' };
       var blocca = cfg.action === 'Blocca il flusso';
       return { pass: !blocca, severity: blocca?'block':'warn',
-               msg:'🔎 Fondatezza '+pct+'% sotto la soglia '+soglia+'% — affermazioni non supportate dalle fonti'+(blocca?' — bloccato':'') };
+               msg:'🔎 Fondatezza '+pct+'% sotto la soglia '+soglia+'%: affermazioni non supportate dalle fonti'+(blocca?', bloccato':'') };
     }
   },
 
@@ -187,7 +187,7 @@ var GUARDRAIL_CONFIGS = {
       var blocca = (cfg.onfail||'Blocca il flusso') === 'Blocca il flusso';
       if(!obj || typeof obj !== 'object'){
         return { pass: !blocca, severity: blocca?'block':'warn',
-                 msg:'📐 L\'output non è JSON valido — convalida non superata' };
+                 msg:'📐 L\'output non è JSON valido: convalida non superata' };
       }
       var problemi = [];
       String(cfg.required||'').split(',').map(function(s){return s.trim()}).filter(Boolean).forEach(function(f){
@@ -207,11 +207,11 @@ var GUARDRAIL_CONFIGS = {
         // sia stato verificato qualcosa che nessuno ha dichiarato.
         var nulla=!String(cfg.required||'').trim()&&!String(cfg.rules||'').trim();
         return { pass:true, msg: nulla
-          ? '📐 Output JSON valido — nessun campo o regola dichiarati: indica cosa verificare nel pannello del nodo'
-          : '📐 Convalida superata — schema e intervalli conformi' };
+          ? '📐 Output JSON valido: nessun campo o regola dichiarati: indica cosa verificare nel pannello del nodo'
+          : '📐 Convalida superata, schema e intervalli conformi' };
       }
       return { pass: !blocca, severity: blocca?'block':'warn',
-               msg:'📐 Convalida fallita: '+problemi.join(' · ')+(blocca?' — bloccato':' — segnalato') };
+               msg:'📐 Convalida fallita: '+problemi.join(' · ')+(blocca?', bloccato':', segnalato') };
     }
   },
 
@@ -228,15 +228,15 @@ var GUARDRAIL_CONFIGS = {
       var campo = cfg.field || 'confidence';
       var v = obj && obj[campo];
       if(typeof v !== 'number'){
-        return { pass:true, severity:'warn', msg:'📊 Campo "'+campo+'" assente o non numerico — soglia non applicabile' };
+        return { pass:true, severity:'warn', msg:'📊 Campo "'+campo+'" assente o non numerico: soglia non applicabile' };
       }
       var soglia = parseFloat(cfg.threshold || '0.7');
       // Tollera sia 0-1 sia 0-100 senza chiedere all'utente quale usa.
       var norm = v > 1 ? v/100 : v, sogliaNorm = soglia > 1 ? soglia/100 : soglia;
-      if(norm >= sogliaNorm) return { pass:true, msg:'📊 Confidenza '+v+' ≥ soglia '+soglia+' — prosegue in automatico' };
+      if(norm >= sogliaNorm) return { pass:true, msg:'📊 Confidenza '+v+' ≥ soglia '+soglia+': prosegue in automatico' };
       var devia = (cfg.route||'Devia a revisione umana') === 'Devia a revisione umana';
       return { pass:true, severity:'warn', route: devia?'review':null,
-               msg:'📊 Confidenza '+v+' sotto la soglia '+soglia+(devia?' — deviato a revisione umana':' — segnalato') };
+               msg:'📊 Confidenza '+v+' sotto la soglia '+soglia+(devia?': deviato a revisione umana':', segnalato') };
     }
   },
 
@@ -255,7 +255,7 @@ var GUARDRAIL_CONFIGS = {
     ],
     run: function(text, cfg){
       return { pass:true, waiting:true, severity:'warn',
-               msg:'✋ Sospensione richiesta — in attesa di approvazione da "'+(cfg.approver||'approvatore')+'"' };
+               msg:'✋ Sospensione richiesta: in attesa di approvazione da "'+(cfg.approver||'approvatore')+'"' };
     }
   },
 
@@ -279,7 +279,7 @@ var GUARDRAIL_CONFIGS = {
       if(!problemi.length){
         return { pass:true, msg:'⏲️ Entro i limiti (chiamate '+(c.aiCalls||0)+(maxCalls?'/'+maxCalls:'')+', '+_grText(text).length+' caratteri)' };
       }
-      return { pass:false, severity:'block', msg:'⏲️ Limite superato: '+problemi.join(' · ')+' — esecuzione interrotta' };
+      return { pass:false, severity:'block', msg:'⏲️ Limite superato: '+problemi.join(' · ')+', esecuzione interrotta' };
     }
   },
 
@@ -303,7 +303,7 @@ var GUARDRAIL_CONFIGS = {
       // flusso in stato di errore, il registro mente e la verifica di non
       // regressione segnala divergenze che non esistono.
       return { pass:true, severity:'warn', handled: strategia !== 'Solo notifica',
-               msg:'🧯 Errore intercettato ("'+String(err).substring(0,60)+'") — strategia: '+strategia };
+               msg:'🧯 Errore intercettato ("'+String(err).substring(0,60)+'"): strategia: '+strategia };
     }
   }
 };
@@ -346,7 +346,7 @@ function defaultGuardrailConfig(name){
 function runGuardrail(node, text, ctx){
   var def = getGuardrailConfig(node.name);
   if(!def || typeof def.run !== 'function'){
-    return { pass:true, msg:'⚠️ Controllo "'+node.name+'" non riconosciuto — ignorato' };
+    return { pass:true, msg:'⚠️ Controllo "'+node.name+'" non riconosciuto: ignorato' };
   }
   try{
     var r = def.run(text, node.config || {}, ctx || {}) || {};

@@ -97,6 +97,31 @@ var SCHEMA=[
   // contenuto redazionale accanto a un prodotto, non parte del prodotto.
   "CREATE TABLE IF NOT EXISTS challenge_submissions (id INTEGER PRIMARY KEY AUTOINCREMENT, challenge_id TEXT NOT NULL, user TEXT NOT NULL, agent_id INTEGER, agent_name TEXT NOT NULL, nota TEXT, ts TEXT NOT NULL)",
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_sub_uno ON challenge_submissions (challenge_id, user)",
+  // Una sfida senza contenuto e' un annuncio: si legge una volta e non ci si
+  // torna. Le domande e i voti sono cio' che la rende un luogo dove succede
+  // qualcosa fra una scadenza e l'altra — e in dimostrazione sono l'unica parte
+  // che si puo' mostrare mentre accade, invece di raccontarla.
+  "CREATE TABLE IF NOT EXISTS challenge_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, challenge_id TEXT NOT NULL, user TEXT NOT NULL, testo TEXT NOT NULL, risposta TEXT, risposta_di TEXT, ts TEXT NOT NULL)",
+  // Un voto per persona e per oggetto: senza il vincolo, «il piu' votato»
+  // misurerebbe soltanto chi ha cliccato piu' volte.
+  "CREATE TABLE IF NOT EXISTS challenge_votes (tipo TEXT NOT NULL, ref_id INTEGER NOT NULL, user TEXT NOT NULL, ts TEXT NOT NULL, PRIMARY KEY (tipo, ref_id, user))",
+  // Il regolamento della sfida sul presidio dichiara una «revisione fra pari»:
+  // ogni partecipante commenta il presidio di un altro agente candidato. Era
+  // scritto nel regolamento e non esisteva da nessuna parte.
+  "CREATE TABLE IF NOT EXISTS challenge_feedback (id INTEGER PRIMARY KEY AUTOINCREMENT, challenge_id TEXT NOT NULL, submission_id INTEGER NOT NULL, user TEXT NOT NULL, testo TEXT NOT NULL, ts TEXT NOT NULL)",
+  // Gli obiettivi erano otto righe scritte nel codice, con soglie fisse: un
+  // reparto che parte da zero e uno che ha gia' venti agenti non hanno lo
+  // stesso traguardo sensato. La soglia, l'attivazione e i punti diventano
+  // configurabili; il MODO di misurarli resta nel codice, perche' e' quello
+  // che rende l'obiettivo verificabile invece che dichiarato.
+  "CREATE TABLE IF NOT EXISTS obiettivi_config (chiave TEXT PRIMARY KEY, obiettivo INTEGER, xp INTEGER, attivo INTEGER DEFAULT 1, aggiornato TEXT)",
+  // Il «mi piace» era `p.likes++`: un contatore cieco che saliva a ogni clic
+  // della stessa persona e non si poteva togliere. Misurava i clic, non chi
+  // aveva apprezzato. Una riga per persona e per post lo rende un conteggio.
+  "CREATE TABLE IF NOT EXISTS forum_likes (post_id INTEGER NOT NULL, user TEXT NOT NULL, ts TEXT NOT NULL, PRIMARY KEY (post_id, user))",
+  // Le visualizzazioni erano numeri fissi scritti nel seme: 142, 89, 287, e
+  // restavano quelli anche aprendo il post cento volte.
+  "CREATE TABLE IF NOT EXISTS forum_views (post_id INTEGER NOT NULL, user TEXT NOT NULL, ts TEXT NOT NULL, PRIMARY KEY (post_id, user))",
   // I vincitori delle edizioni passate erano scritti nel markup della pagina:
   // una "Hall of Fame" che non e' un dato non si puo' ne' interrogare ne'
   // estendere quando una sfida si chiude.
@@ -296,10 +321,15 @@ function dbGetOne(sql,params){var r=dbAll(sql,params);return r.length?r[0]:null}
 // Elenco usato da export/import JSON e dal reset: ogni tabella nuova va
 // aggiunta qui, altrimenti resterebbe fuori dal pacchetto di uscita (D6).
 var DB_TABLES=['agents','exec_log','published_agents','my_agents','kb_docs','forum_posts','forum_comments','learn_progress','quiz_done','challenges_registered','xp_log',
-  'agent_versions','kb_chunks','agent_memory','publications','policies','execution_events','recensioni','challenge_submissions','challenge_winners','identita','profili'];
+  'agent_versions','kb_chunks','agent_memory','publications','policies','connessioni','execution_events','recensioni','challenge_submissions','challenge_winners','challenge_questions','challenge_votes','challenge_feedback','obiettivi_config','forum_likes','forum_views','identita','profili'];
 
 function dbInsertRow(table,row){
-  var cols=Object.keys(row);
+  // Le chiavi che iniziano con `_` sono annotazioni del pacchetto di export,
+  // non colonne: `_campi_esclusi` dice quali campi sono stati tolti da una
+  // connessione perche' potevano contenere una credenziale. Senza questo
+  // filtro la reimportazione falliva con «no column named _campi_esclusi», e
+  // le connessioni sparivano nel silenzio.
+  var cols=Object.keys(row).filter(function(c){return c.charAt(0)!=='_'});
   var placeholders=cols.map(function(){return '?'}).join(',');
   dbRun('INSERT INTO '+table+' ('+cols.join(',')+') VALUES ('+placeholders+')',cols.map(function(c){return row[c]}));
 }
@@ -380,7 +410,7 @@ function exportDatabaseFile(){
   a.download='relaition_'+new Date().toISOString().substring(0,10)+'.sqlite';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url)},1000);
-  showToast('🗄️ Database esportato (.sqlite) — apribile con qualunque client SQLite');
+  showToast('🗄️ Database esportato (.sqlite): apribile con qualunque client SQLite');
   if(typeof addAct==='function')addAct('Esportato database SQLite');
 }
 
@@ -394,7 +424,7 @@ function importDatabaseFile(input){
         newDb.exec('SELECT 1 FROM agents LIMIT 1'); // sanity check schema
         DB=newDb;
         persistDatabase();
-        showToast('✅ Database importato — ricarico...');
+        showToast('✅ Database importato: ricarico...');
         setTimeout(function(){location.reload()},900);
       }catch(ex){showToast('❌ File .sqlite non valido o schema incompatibile: '+ex.message)}
     });

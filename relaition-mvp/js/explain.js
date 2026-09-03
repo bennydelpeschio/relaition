@@ -69,7 +69,7 @@ function explainExecution(fonte){
       '<div style="color:var(--tx4);font-size:10.5px;margin:2px 0 5px">Ricerca: «'+escHtml(String(e.payload.query||'').substring(0,120))+'» · motore '+escHtml(e.payload.motore||'—')+
       (e.payload.scartatiPermessi?' · <strong>'+e.payload.scartatiPermessi+' porzioni escluse dai permessi</strong>':'')+'</div>'+
       (e.payload.porzioni||[]).map(function(p,i){
-        return '<div>'+(i+1)+'. <strong>'+escHtml(p.doc)+'</strong> — '+escHtml(p.sezione)+' <span style="color:var(--ac2);font-weight:700">'+p.punteggio+'</span></div>';
+        return '<div>'+(i+1)+'. <strong>'+escHtml(p.doc)+'</strong>: '+escHtml(p.sezione)+' <span style="color:var(--ac2);font-weight:700">'+p.punteggio+'</span></div>';
       }).join(''));
   });
   kbVuoto.forEach(function(e){

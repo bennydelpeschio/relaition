@@ -136,7 +136,7 @@ async function connProvaCartella(c,cfg){
   var nome='.relaition-prova-'+Date.now()+'.txt';
   try{
     var r=await csScrivi(cfg.alias,cfg.percorso,nome,
-      'Verifica di scrittura RelAItion — '+new Date().toLocaleString('it-IT'),'text/plain');
+      'Verifica di scrittura RelAItion: '+new Date().toLocaleString('it-IT'),'text/plain');
     // Il file di prova viene rimosso: lasciarlo sporcherebbe la cartella
     // dell'utente a ogni verifica.
     var rimosso=await connRimuoviProva(cfg,nome);
@@ -189,7 +189,7 @@ async function connProvaHttp(cfg){
     return {ok:false,msg:'Non raggiungibile dal browser. Avvia servizio-webhook/AVVIA-RICEVITORE.cmd per distinguere un blocco CORS da un indirizzo errato'};
   }
   if(s.ok&&!daBrowser)
-    return {ok:false,msg:'L\u2019endpoint esiste e risponde '+s.stato+' ('+s.ms+' ms), ma il browser non puo\u0300 chiamarlo: manca l\u2019autorizzazione CORS. L\u2019indirizzo e\u0300 corretto — serve un proxy o un header Access-Control-Allow-Origin'};
+    return {ok:false,msg:'L\u2019endpoint esiste e risponde '+s.stato+' ('+s.ms+' ms), ma il browser non puo\u0300 chiamarlo: manca l\u2019autorizzazione CORS. L\u2019indirizzo e\u0300 corretto, serve un proxy o un header Access-Control-Allow-Origin'};
   if(s.ok&&daBrowser)
     return {ok:false,msg:'Il servizio risponde '+s.stato+': l\u2019indirizzo e\u0300 giusto ma la richiesta viene rifiutata'};
   return {ok:false,msg:'Verificato dal servizio locale: '+(s.errore||'endpoint non raggiungibile')};
@@ -207,14 +207,14 @@ async function connProvaDatabase(cfg){
   var attese={PostgreSQL:'5432',MySQL:'3306',MongoDB:'27017','SQL Server':'1433'};
   var nota='';
   if(attese[cfg.motore]&&String(cfg.port)!==attese[cfg.motore])
-    nota=' — nota: la porta standard di '+cfg.motore+' e\u0300 '+attese[cfg.motore];
+    nota=': nota: la porta standard di '+cfg.motore+' e\u0300 '+attese[cfg.motore];
 
   var s=await sonda({tipo:'tcp',host:cfg.host,porta:cfg.port});
   if(!s)
     return {ok:false,msg:'Parametri completi e coerenti'+nota+', ma la connessione non e\u0300 stata provata: '+
       'avvia servizio-webhook/AVVIA-RICEVITORE.cmd per una prova TCP reale'};
   if(s.ok)
-    return {ok:true,msg:s.dettaglio+' ('+s.ms+' ms) \u2014 connessione TCP reale riuscita'+nota+
+    return {ok:true,msg:s.dettaglio+' ('+s.ms+' ms): connessione TCP reale riuscita'+nota+
       '. Le credenziali non sono state verificate: la query la esegue lo script esportato'};
   return {ok:false,msg:s.errore+nota};
 }
@@ -231,17 +231,17 @@ async function connProvaSmtp(cfg){
 
   var dest=((cfg||{}).destinatarioProva||'').trim();
   if(!dest)
-    return {ok:true,msg:'Servizio attivo \u2014 mittente '+s.mittente+' via '+s.server+
+    return {ok:true,msg:'Servizio attivo: mittente '+s.mittente+' via '+s.server+
       '. Per una prova completa scrivi un destinatario e premi Prova: verra\u0300 inviata un\u2019email vera'};
 
   var esito=await mailInvia({
-    a:dest, oggetto:'RelAItion \u2014 prova di connessione',
+    a:dest, oggetto:'RelAItion: prova di connessione',
     corpo:'Se leggi questo messaggio la connessione SMTP funziona.\n\n'+
           'Inviato da '+s.mittente+' via '+s.server+' il '+new Date().toLocaleString('it-IT')+'.',
     html:false, allegati:[]
   });
   return esito.ok
-    ? {ok:true,msg:'Email di prova inviata davvero a '+dest+' via '+s.server+' \u2014 controlla la casella'}
+    ? {ok:true,msg:'Email di prova inviata davvero a '+dest+' via '+s.server+': controlla la casella'}
     : {ok:false,msg:'Il servizio e\u0300 attivo ma l\u2019invio e\u0300 fallito: '+esito.errore};
 }
 
@@ -249,7 +249,7 @@ async function connProvaWebhook(){
   if(typeof whVerificaServizio!=='function')return {ok:false,msg:'Modulo webhook non caricato'};
   var s=await whVerificaServizio();
   return s.disponibile
-    ? {ok:true,msg:'Ricevitore attivo — '+(s.ricevute||0)+' chiamate ricevute'}
+    ? {ok:true,msg:'Ricevitore attivo: '+(s.ricevute||0)+' chiamate ricevute'}
     : {ok:false,msg:'Ricevitore non in ascolto: avvia servizio-webhook/AVVIA-RICEVITORE.cmd'};
 }
 

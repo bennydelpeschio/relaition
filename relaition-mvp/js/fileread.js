@@ -650,7 +650,7 @@ function frPannelloSorgente(nid,n){
 function frResocontoLotto(e){
   if(!e)return '';
   return '<div style="margin-top:8px;font-size:10.5px;line-height:1.5">'+
-    '<div style="color:#047857">✅ '+e.inclusi+' documento/i letti — '+e.caratteri.toLocaleString('it-IT')+' caratteri</div>'+
+    '<div style="color:#047857">✅ '+e.inclusi+' documento/i letti: '+e.caratteri.toLocaleString('it-IT')+' caratteri</div>'+
     (e.elenco&&e.elenco.length
       ? '<details style="margin-top:4px"><summary style="color:var(--tx4);cursor:pointer">Documenti inclusi</summary>'+
         '<div style="max-height:110px;overflow:auto;margin-top:4px">'+e.elenco.map(function(d){
@@ -659,7 +659,7 @@ function frResocontoLotto(e){
     (e.scartati&&e.scartati.length
       ? '<details style="margin-top:4px"><summary style="color:#B45309;cursor:pointer">'+e.scartati.length+' non letti</summary>'+
         '<div style="max-height:110px;overflow:auto;margin-top:4px">'+e.scartati.map(function(s){
-          return '<div style="color:var(--tx4);padding:3px 0">⚠️ '+escHtml(s.nome)+' — '+escHtml(s.motivo)+'</div>'}).join('')+'</div></details>'
+          return '<div style="color:var(--tx4);padding:3px 0">⚠️ '+escHtml(s.nome)+': '+escHtml(s.motivo)+'</div>'}).join('')+'</div></details>'
       : '')+
   '</div>';
 }

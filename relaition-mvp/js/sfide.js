@@ -188,7 +188,7 @@ function sfApriCandidatura(id){
     '<div style="display:flex;justify-content:space-between;align-items:center">'+
       '<h2>'+s.icona+' Candida un agente</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<div style="font-size:12px;color:var(--tx3);margin:8px 0 14px;line-height:1.6">'+escHtml(s.titolo)+
-      (s.metrica?' — il punteggio si calcola su <strong>'+escHtml(s.metrica.l).toLowerCase()+'</strong> dell’agente scelto, sulle sue esecuzioni reali.':'')+'</div>'+
+      (s.metrica?': il punteggio si calcola su <strong>'+escHtml(s.metrica.l).toLowerCase()+'</strong> dell’agente scelto, sulle sue esecuzioni reali.':'')+'</div>'+
     '<div class="prop-group"><div class="prop-label">Agente</div>'+
       '<select class="prop-select" id="sfAgente">'+miei.map(function(a){
         return '<option value="'+a.id+'"'+(gia&&gia.agent_id===a.id?' selected':'')+'>'+escHtml(a.name)+'</option>';
@@ -234,51 +234,78 @@ function sfRitira(id){
   sfAggiorna(id);
 }
 
-// Ridisegna la pagina e, se la scheda di dettaglio era aperta su quella sfida,
-// anche quella: dopo un'azione si deve vedere l'effetto senza tornare indietro.
-function sfAggiorna(id){
-  if(currentPage==='challenges'&&typeof renderChallenges==='function')renderChallenges();
-  var ov=document.getElementById('modalOverlay');
-  if(id&&ov&&/show/.test(ov.className)&&ov.getAttribute('data-sfida')===id)sfApri(id);
+// ══════════════════════════════════════════
+// LA SFIDA È UNA PAGINA, NON UNA FINESTRA
+// ══════════════════════════════════════════
+// Il dettaglio viveva in una finestra sovrapposta: si chiudeva solo con la ✕,
+// Indietro usciva dalla pagina invece di tornare all'elenco, e un contenuto
+// lungo — regolamento, fasi, classifica, domande — dentro un riquadro
+// sovrapposto obbliga a due scorrimenti annidati.
+//
+// Ora entra e esce come il Learning Hub: l'elenco si nasconde, il dettaglio
+// prende la pagina, e l'indirizzo diventa `#challenges/sprint1` — quindi
+// Indietro torna all'elenco, il collegamento si puo' mandare a qualcuno, e
+// ricaricando si riapre dove si era.
+function sfApriPagina(id,daStoria){
+  var s=sfidaById(id); if(!s)return;
+  var lista=document.getElementById('challenges-content');
+  var det=document.getElementById('challenges-detail');
+  if(!lista||!det)return;
+  sfCorrente=id;
+  lista.style.display='none';
+  det.classList.add('active');
+  det.innerHTML=sfContenutoPagina(s);
+  if(!daStoria&&typeof navRegistra==='function')navRegistra('challenges',id);
+  window.scrollTo(0,0);
 }
 
-// ══════════════════════════════════════════
-// SCHEDA DI DETTAGLIO
-// ══════════════════════════════════════════
-function sfApri(id){
-  var s=sfidaById(id); if(!s)return;
+function sfChiudiPagina(daStoria){
+  var lista=document.getElementById('challenges-content');
+  var det=document.getElementById('challenges-detail');
+  if(!det||!det.classList.contains('active'))return;
+  sfCorrente=null; sfCandAperta=null;
+  det.classList.remove('active');
+  det.innerHTML='';
+  if(lista)lista.style.display='';
+  if(!daStoria&&typeof navRegistra==='function')navRegistra('challenges');
+}
+
+var sfCorrente=null;
+
+// Compatibilita': le schede e i vecchi richiami chiamano ancora sfApri.
+function sfApri(id){ sfApriPagina(id) }
+
+// Ridisegna il dettaglio se aperto su QUESTA sfida, altrimenti l'elenco.
+// Ridisegnare sempre tutto farebbe perdere la posizione di scorrimento a ogni
+// voto — e chi vota tre domande di fila tornerebbe in cima tre volte.
+function sfAggiorna(id){
+  if(sfCorrente&&(!id||sfCorrente===id)){
+    var det=document.getElementById('challenges-detail');
+    var s=sfidaById(sfCorrente);
+    if(det&&s){
+      var y=window.scrollY;
+      det.innerHTML=sfContenutoPagina(s);
+      window.scrollTo(0,y);
+    }
+    return;
+  }
+  if(currentPage==='challenges'&&typeof renderChallenges==='function')renderChallenges();
+}
+
+function sfContenutoPagina(s){
+  var id=s.id;
   var st=sfStato(s), iscritto=sfIscritto(id), cand=sfCandidatura(id);
-  var iscritti=sfIscritti(id), classifica=sfClassifica(s);
+  var iscritti=sfIscritti(id);
   var pieno=Math.min(100,Math.round(sfConteggio(s)/s.posti*100));
 
-  var pesi='<div style="display:flex;flex-direction:column;gap:5px;margin-top:6px">'+
+  var pesi='<div style="display:flex;flex-direction:column;gap:5px;margin-top:6px;max-width:520px">'+
     s.criteri.map(function(c){
       return '<div style="display:flex;align-items:center;gap:8px;font-size:11.5px">'+
         '<span style="flex:1;color:var(--tx2)">'+escHtml(c[0])+'</span>'+
-        '<div style="width:110px;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden">'+
+        '<div style="width:130px;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden">'+
           '<div style="width:'+c[1]+'%;height:100%;background:'+s.colore+'"></div></div>'+
         '<span style="width:32px;text-align:right;color:var(--tx4)">'+c[1]+'%</span></div>';
     }).join('')+'</div>';
-
-  var blocoClassifica='';
-  if(s.metrica){
-    blocoClassifica='<div style="font-size:12px;font-weight:700;margin:18px 0 4px">🥇 Classifica</div>'+
-      '<div style="font-size:11px;color:var(--tx4);margin-bottom:8px">'+escHtml(s.metrica.l)+
-        ' — calcolata sulle esecuzioni reali degli agenti candidati, non su un punteggio dichiarato.</div>'+
-      (classifica.length
-        ? classifica.map(function(r,i){
-            return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bg2)'+
-                (r.io?';background:var(--ac-ul);border-radius:6px;padding-left:8px;padding-right:8px':'')+'">'+
-              '<span style="width:22px;font-size:13px;text-align:center">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1))+'</span>'+
-              '<div style="flex:1;min-width:0">'+
-                '<div style="font-size:12px;font-weight:700">'+escHtml(r.utente)+(r.io?' · tu':'')+'</div>'+
-                '<div style="font-size:10.5px;color:var(--tx4)">'+escHtml(r.agente)+' — '+escHtml(r.det)+'</div>'+
-              '</div>'+
-              '<span style="font-size:13px;font-weight:800;color:'+s.colore+'">'+r.punti+'</span>'+
-            '</div>';
-          }).join('')
-        : '<div style="font-size:11.5px;color:var(--tx4);font-style:italic">Nessuna candidatura: la classifica si popola quando qualcuno candida un agente.</div>');
-  }
 
   var azioni='';
   if(s.giorni>=0){
@@ -287,39 +314,53 @@ function sfApri(id){
     if(iscritto)azioni+='<button class="tb-btn" style="color:#B91C1C" onclick="sfAnnulla(\''+id+'\')">Annulla l’iscrizione</button>';
     else if(s.metrica)azioni+='<button class="tb-btn" onclick="sfIscrivi(\''+id+'\')">Iscriviti senza candidare</button>';
   }
-  azioni+='<button class="tb-btn" onclick="closeModal()">Chiudi</button>';
 
-  openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
-      '<div style="display:flex;gap:14px;align-items:center">'+
-        '<div class="agent-icon" style="background:'+s.colore+'15;color:'+s.colore+';width:50px;height:50px;font-size:26px">'+s.icona+'</div>'+
-        '<div><h2 style="margin:0">'+escHtml(s.titolo)+'</h2>'+
-          '<div style="font-size:12px;color:var(--tx3)">'+escHtml(sfDescriviScadenza(s))+' · '+escHtml(s.dove)+'</div></div>'+
+  return '<div class="lesson-back" onclick="sfChiudiPagina()">← Torna a Sfide &amp; Eventi</div>'+
+    '<div style="display:flex;gap:14px;align-items:center;margin-bottom:8px;flex-wrap:wrap">'+
+      '<div class="agent-icon" style="background:'+s.colore+'15;color:'+s.colore+';width:54px;height:54px;font-size:28px">'+s.icona+'</div>'+
+      '<div style="flex:1;min-width:220px">'+
+        '<div style="font-size:20px;font-weight:800">'+escHtml(s.titolo)+'</div>'+
+        '<div style="font-size:12px;color:var(--tx3);margin-top:2px">'+escHtml(sfDescriviScadenza(s))+' · '+escHtml(s.dove)+'</div>'+
       '</div>'+
-      '<button class="modal-close" onclick="closeModal()">✕</button>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+        '<span class="badge" style="background:'+st.b+';color:'+st.c+'">'+escHtml(st.t)+'</span>'+
+        (iscritto?'<span class="badge badge-g">✅ Sei iscritto</span>':'')+
+        (cand?'<span class="badge badge-b">🏁 '+escHtml(cand.agent_name)+'</span>':'')+
+      '</div>'+
     '</div>'+
-    '<div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">'+
-      '<span class="badge" style="background:'+st.b+';color:'+st.c+'">'+escHtml(st.t)+'</span>'+
-      (iscritto?'<span class="badge badge-g">✅ Sei iscritto</span>':'')+
-      (cand?'<span class="badge badge-b">🏁 '+escHtml(cand.agent_name)+'</span>':'')+
+    (azioni?'<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px">'+azioni+'</div>':'')+
+    '<p style="font-size:13px;color:var(--tx2);line-height:1.7;max-width:760px">'+escHtml(s.desc)+'</p>'+
+    // Due colonne dove c'e' spazio: in una pagina intera incolonnare tutto
+    // sprecherebbe meta' schermo e allungherebbe lo scorrimento.
+    '<div class="grid-2" style="align-items:start;margin-top:8px">'+
+      '<div class="card" style="padding:16px">'+
+        (typeof sfBloccoFasi==='function'?sfBloccoFasi(s):'')+
+        (typeof sfBloccoProgramma==='function'?sfBloccoProgramma(s):'')+
+        sfTitoletto('📏 Come si valuta')+pesi+
+        sfTitoletto('🏅 Riconoscimenti')+
+        '<div style="font-size:11.5px;color:var(--tx3);line-height:1.6">'+escHtml(s.premi)+'</div>'+
+        sfTitoletto('👥 Partecipazione')+
+        '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx4);margin-bottom:4px">'+
+          '<span>'+sfConteggio(s)+' di '+s.posti+' posti</span><span>'+pieno+'%</span></div>'+
+        '<div style="height:5px;background:var(--bg2);border-radius:3px;overflow:hidden">'+
+          '<div style="width:'+pieno+'%;height:100%;background:'+s.colore+'"></div></div>'+
+        (iscritti.length?'<div style="font-size:11px;color:var(--tx4);margin-top:7px">Da questa piattaforma: '+
+          iscritti.map(function(i){return escHtml(i.user)}).join(', ')+'</div>':'')+
+      '</div>'+
+      '<div class="card" style="padding:16px">'+
+        (typeof sfBloccoClassifica==='function'?sfBloccoClassifica(s):'')+
+        (typeof sfBloccoRegolamento==='function'?sfBloccoRegolamento(s):'')+
+      '</div>'+
     '</div>'+
-    '<p style="font-size:13px;color:var(--tx2);line-height:1.7">'+escHtml(s.desc)+'</p>'+
-    '<div style="font-size:12px;font-weight:700;margin:16px 0 2px">📏 Come si valuta</div>'+pesi+
-    '<div style="font-size:12px;font-weight:700;margin:16px 0 2px">🏅 Riconoscimenti</div>'+
-    '<div style="font-size:11.5px;color:var(--tx3);line-height:1.6">'+escHtml(s.premi)+'</div>'+
-    '<div style="font-size:12px;font-weight:700;margin:16px 0 6px">👥 Partecipazione</div>'+
-    '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx4);margin-bottom:4px">'+
-      '<span>'+sfConteggio(s)+' di '+s.posti+' posti</span><span>'+pieno+'%</span></div>'+
-    '<div style="height:5px;background:var(--bg2);border-radius:3px;overflow:hidden">'+
-      '<div style="width:'+pieno+'%;height:100%;background:'+s.colore+'"></div></div>'+
-    (iscritti.length
-      ? '<div style="font-size:11px;color:var(--tx4);margin-top:7px">Da questa piattaforma: '+
-        iscritti.map(function(i){return escHtml(i.user)}).join(', ')+'</div>'
-      : '')+
-    blocoClassifica+
-    '<div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap">'+azioni+'</div>',true);
-  var ov=document.getElementById('modalOverlay');
-  if(ov)ov.setAttribute('data-sfida',id);
+    '<div class="grid-2" style="align-items:start;margin-top:16px">'+
+      '<div class="card" style="padding:16px">'+
+        (typeof sfBloccoMateriali==='function'?sfBloccoMateriali(s):'')+
+        (typeof sfBloccoFaq==='function'?sfBloccoFaq(s):'')+
+      '</div>'+
+      '<div class="card" style="padding:16px">'+
+        (typeof sfBloccoDomande==='function'?sfBloccoDomande(s):'')+
+      '</div>'+
+    '</div>';
 }
 
 // ══════════════════════════════════════════

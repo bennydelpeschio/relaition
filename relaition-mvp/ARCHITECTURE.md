@@ -244,14 +244,22 @@ Hub **6 percorsi** da 6 lezioni ciascuno.
 Sei voci configurabili, ciascuna con chiave e stato indipendenti, così che nodi
 diversi dello stesso flusso possano usare fornitori diversi.
 
-| Fornitore | Modello | Strumenti | Output vincolato | Immagini |
-|---|---|:-:|:-:|:-:|
-| Claude | `claude-sonnet-4-6` | ✓ | ✓ | ✓ |
-| OpenAI | `gpt-4o-mini` | ✓ | ✓ | ✓ |
-| Gemini | `gemini-flash-latest` | ✓ | ✓ | ✓ |
-| Mistral | `mistral-large-latest` | ✓ | ✓ | ✗ |
-| **Modello in locale** | rilevato dal server | ✗ | ✗ | ✗ |
-| Endpoint personalizzato | indicato dall'utente | ✗ | ✗ | ✗ |
+| Fornitore | Modelli selezionabili | Predefinito | Strumenti | Output vincolato | Immagini |
+|---|---|---|:-:|:-:|:-:|
+| Claude | `claude-opus-5`, `claude-sonnet-5`, `claude-haiku-4-5`, `claude-fable-5` | `claude-opus-5` | ✓ | ✓ | ✓ |
+| OpenAI | `gpt-4o-mini`, `gpt-4o`, `gpt-4.1`, `gpt-4.1-mini` | `gpt-4o-mini` | ✓ | ✓ | ✓ |
+| Gemini | `gemini-flash-latest`, `gemini-pro-latest`, `gemini-flash-lite-latest` | `gemini-flash-latest` | ✓ | ✓ | ✓ |
+| Mistral | `mistral-large-latest`, `mistral-small-latest` | `mistral-large-latest` | ✓ | ✓ | ✗ |
+| **Modello in locale** | rilevati dal server interrogandolo | il primo rilevato | ✗ | ✗ | ✗ |
+| Endpoint personalizzato | indicato dall'utente | — | ✗ | ✗ | ✗ |
+
+Una chiave dà accesso a più modelli dello stesso fornitore, e il modello si
+sceglie **per nodo**: è la logica di n8n, dove la credenziale e la scelta del
+modello sono due decisioni separate. Il catalogo per fornitore sta in
+`AI_MODELLI_DISPONIBILI`; per i modelli locali l'elenco non è scritto da
+nessuna parte, lo si chiede al server, che è l'unico a sapere cosa sia
+installato. La scelta è reale: l'identificativo selezionato finisce nel corpo
+della richiesta HTTP, non è un'etichetta decorativa.
 
 Gli identificativi stanno tutti in `AI_MODELS` (`js/ai-client.js`). Erano
 ripetuti in otto punti: quando Google ha ritirato `gemini-2.0-flash`
@@ -727,6 +735,32 @@ Il contenuto è conservato come data URL nel database, quindi:
 - **rientra nell'esportazione del database**, l'unico backup che il prototipo ha;
 - **è limitato a 500 KB**, perché il database vive in IndexedDB e viene
   serializzato per intero a ogni salvataggio.
+
+L'allegato è **annunciato già nell'elenco**, non solo dentro al post: prima
+bisognava aprirli uno per uno per scoprire quali ne avessero, cioè la funzione
+esisteva ma non era reperibile. Accanto a «Scarica», un allegato `.json` mostra
+**«Apri nel Builder»**, che passa dallo stesso `applicaImport()` del pulsante di
+importazione: nessuna scorciatoia che salti i controlli di formato, e come una
+qualsiasi importazione non salva nulla finché non si preme Salva.
+
+Il workflow allegato al post dimostrativo **era una sagoma**: quattro voci
+`{t,n}` che somigliavano a dei nodi senza esserlo. Chi lo scaricava e provava a
+importarlo riceveva «formato non valido» — la funzione dimostrava il contrario
+di ciò che il post prometteva. Ora è un export vero
+(`flussoRiconciliazioneAllegato()` in `js/pages.js`), nella stessa forma
+prodotta da `exportAgent()`: cinque nodi, quattro archi, contesto agente, si
+importa e si esegue.
+
+**Rispondere senza aprire il post.** Il commento costringeva ad aprire la
+finestra sovrapposta e a chiuderla per tornare all'elenco: tre gesti per una
+riga di testo. Sotto ogni scheda si apre ora un modulo con le ultime due
+risposte, il collegamento a tutte le altre e un campo di scrittura. Una risposta
+sotto i tre caratteri viene rifiutata: gonfiare il contatore senza dire niente è
+il difetto che i numeri calcolati dovevano eliminare, non reintrodurre.
+
+Il pulsante **«Nuovo post» è passato in cima**, accanto ai filtri: stava in
+fondo alla lista, e con quindici post significava scorrere l'intera pagina per
+scrivere. Chi vuole pubblicare lo decide prima di leggere, non dopo.
 
 L'autore può modificare ed eliminare i propri post; su quelli altrui i comandi
 non compaiono. Una modifica viene **dichiarata con data e ora** sotto al testo:
@@ -1520,10 +1554,20 @@ non modificabile proprio per questo, perché cambiarlo avrebbe reso orfano tutto
 il resto.
 
 Ora è modificabile, e la rinomina è **un'unica operazione che riscrive
-l'attribuzione in tutte le 14 tabelle coinvolte** (`IDENTITA_COLONNE` in
+l'attribuzione in tutte le 22 tabelle coinvolte** (`IDENTITA_COLONNE` in
 `js/utenti.js`). Prima di eseguirla il sistema dichiara quanti elementi
 cambieranno intestatario e chiede conferma: su un profilo popolato sono
-sessanta righe, e farlo in silenzio sarebbe inaccettabile.
+oltre cento righe, e farlo in silenzio sarebbe inaccettabile.
+
+L'elenco delle colonne va tenuto allineato allo schema, e per un certo tempo
+non lo è stato: le otto tabelle nate dopo — `recensioni`, le quattro delle
+sfide (`challenge_submissions`, `challenge_votes`, `challenge_feedback`,
+`challenge_questions`, quest'ultima con due colonne, chi domanda e chi
+risponde), `challenge_winners`, `forum_likes`, `forum_views` — non c'erano.
+Chi si rinominava perdeva la paternità delle proprie recensioni, candidature e
+voti, che restavano nel database intestati a un nome non più esistente. Ora
+sono 23 colonne su 22 tabelle, e il riepilogo pre-conferma somma invece di
+assegnare, perché una tabella può comparirvi due volte.
 
 Il nome scelto è legato all'**account** (l'email, che non cambia) nella tabella
 `identita`: senza quel legame un utente rinominato tornerebbe al nome scritto
@@ -1817,6 +1861,21 @@ comprensibili: `in_verifica`/`in_revisione` → «In verifica», `pubblicato` �
 «Pubblicato», `bozza` → «Modifica richiesta», `ritirato`/`sospeso` →
 «Rifiutato»/«Sospeso».
 
+**La scheda dice anche che cosa fa l'agente.** La colonna `desc` esisteva in
+`published_agents` e non veniva mostrata: la scheda dichiarava lo stato della
+pubblicazione ma non il suo contenuto, mentre le schede degli agenti creati nel
+Builder lo dicono. Chi ha più pubblicazioni le distingueva solo dal nome. Sotto
+la descrizione compare la stessa riga di dettaglio delle altre schede: quanti
+nodi ha il workflow **come pubblicato** — letto da `workflow_json`, non
+dall'agente locale, che dopo la pubblicazione può essere andato avanti per conto
+suo — da quanto è pubblicato e quante installazioni ha.
+
+I tre pulsanti si dividevano la larghezza della scheda con `flex:1` ciascuno:
+dentro una colonna della griglia «Applica la correzione» andava a capo e
+l'altezza fissa di 30px lo tagliava a metà, cioè **il pulsante più importante
+era l'unico illeggibile**. L'azione principale sta ora su una riga propria, e
+«Ripresenta» e «Dettagli» si dividono la riga sotto.
+
 Sugli agenti che richiedono un intervento, **«Applica la modifica»** carica nel
 Builder il workflow *come pubblicato* — non l'agente locale, che può essere
 stato modificato dopo la pubblicazione: è sulla versione vista dal revisore che
@@ -1923,6 +1982,21 @@ Nomi e ordine sono ora quelli del capitolo (`GOV_AREE`, `govArea()` in
 Allineare la pagina al documento è costato meno che correggere il documento, e
 rende quel paragrafo **verificabile** invece che da prendere per buono: chi
 legge la tesi con l'applicazione aperta conta sette intestazioni numerate.
+
+**Leggibilità delle intestazioni e densità della pagina.** Il numero d'area era
+grigio e attaccato al titolo: si leggeva come una parola sola («4/7Presidio»), e
+scorrendo non si capiva dove finisse un'area e cominciasse la successiva. Ora è
+un contrassegno staccato, con una linea di separazione sopra ciascuna area.
+
+I cinque valori del Presidio erano in coda alla propria etichetta su righe
+strette: la cifra, che è il dato, spariva dentro la frase. Sono diventati
+riquadri con il numero grande e l'etichetta sotto.
+
+L'area *Uso* occupava tre righe di riquadri, l'ultima delle quali dedicava
+l'intera larghezza a cinque barre: le tre righe sono diventate due, con i tre
+grafici minori affiancati, e le altezze dei grafici sono scese (area 150→120,
+anelli 170→136 e 110→96, indicatore 70→62). Il numero di aree, i dati e i
+calcoli non cambiano: cambia soltanto quanto si deve scorrere per vederli.
 
 La riga di indicatori principali (esecuzioni, tasso di successo, agenti attivi,
 durata media) resta **sopra** la numerazione, come intestazione della pagina.
@@ -2106,3 +2180,278 @@ di accesso — `completeLogin()` rispetta l'hash invece di forzare la dashboard.
 Verificato: dieci pagine visitate in sequenza e nove passi indietro
 ripercorrono l'elenco esattamente al contrario, con la voce di menu evidenziata
 che segue.
+
+### 5.100 Menu laterale collassabile e uscita leggibile
+
+Il menu occupava 240px fissi anche mentre si disponevano i nodi sul canvas del
+Builder, dove lo spazio orizzontale è esattamente ciò che manca. Un pulsante
+hamburger lo riduce a 64px: **la navigazione si comprime, non sparisce**.
+Restano le icone, con il nome come suggerimento al passaggio del mouse — dover
+riaprire il menu per ogni spostamento sarebbe peggio del problema che risolve.
+
+Il conteggio sulle voci diventa un punto colorato: perde il numero, non il
+fatto che qualcosa richiede attenzione. La scelta è conservata in
+`localStorage`, perché è una preferenza di postazione e ripeterla a ogni avvio
+sarebbe una piccola tassa quotidiana. Alla chiusura il canvas viene ridisegnato:
+calcola le proprie dimensioni sulla larghezza disponibile, e senza avvisarlo i
+nodi resterebbero dove stavano.
+
+**Uscita.** Era un'icona di porta 🚪, che nessuno associa a «esci» senza
+passarci sopra. Sostituita da un controllo etichettato — freccia che esce da un
+riquadro, più la parola «Esci» — che diventa rosso al passaggio del mouse.
+Nel menu compatto resta la sola icona, dove il contesto è già dato dalla
+posizione.
+
+Verificato: le dieci voci restano su una riga sola a menu aperto, nessuna è
+troncata, e nessuna pagina produce scorrimento orizzontale in nessuno dei due
+stati.
+
+### 5.101 Approfondimenti: materiale esterno, verificato
+
+La scheda Risorse offriva un «Video Tutorial» che apriva soltanto un avviso —
+*in un ambiente di produzione qui si aprirebbe la playlist*. Una promessa non
+mantenuta insegna a non fidarsi nemmeno delle altre schede.
+
+`js/lezioni-risorse.js` non finge di ospitare contenuti: rimanda a materiale
+**esterno e pubblico** — gli articoli originali (Attention Is All You Need,
+ReAct, RAG, Chain-of-Thought, Toolformer), la documentazione dei fornitori,
+i testi normativi (AI Act, GDPR), NIST AI RMF, OWASP Top 10 per LLM, il corso
+di NLP di Hugging Face e due canali video.
+
+**Ogni indirizzo è stato interrogato e risponde.** Due candidati sono stati
+scartati perché non verificabili: la scheda ISO/IEC 42001, che blocca le
+richieste automatiche, e una pagina Wikipedia inesistente. Meglio una fonte in
+meno che un collegamento morto in una tesi.
+
+Le risorse sono dichiarate una volta e richiamate per sigla: le stesse fonti
+servono più lezioni, e ripeterle per esteso significherebbe correggerle in
+dieci punti quando un indirizzo cambia. Ciascuna porta il proprio tipo (video,
+corso, articolo, guida, norma, strumento) e una riga che dice **perché**
+aprirla — un elenco di collegamenti nudi costringe ad aprirli tutti per capire
+quale serviva.
+
+**Biblioteca.** Le risorse per lezione si trovano solo aprendo quella lezione:
+chi cerca «il testo dell'AI Act» senza ricordare dove l'ha visto dovrebbe
+riaprirle a una a una. La scheda Risorse ha ora una biblioteca che le raccoglie
+tutte, raggruppate per tipo, ciascuna con l'indicazione delle lezioni che la
+citano.
+
+Verificato: 36 lezioni su 36 mostrano il riquadro, 80 collegamenti in totale,
+26 risorse distinte, nessun riferimento a una sigla inesistente.
+
+### 5.102 Ogni sfida ha un contenuto, e qualcosa su cui agire
+
+Le sfide avevano già scheda, candidatura e classifica calcolata (§5.97), ma
+restavano **annunci**: si leggevano una volta e non c'era motivo di tornarci.
+Mancava ciò che in una vera iniziativa esiste sempre — il regolamento, le fasi
+con le date, il programma di un evento, il materiale per cominciare — e
+soprattutto mancava qualcosa da **fare** fra una scadenza e l'altra.
+
+`js/sfide-contenuti.js` porta, per **tutte e sette**:
+
+- **Regolamento** in punti numerati: da tre a cinque regole che dicono chi può
+  partecipare, come si viene valutati e cosa non è ammesso.
+- **Fasi** (sfide) o **Programma** (eventi). Le date delle fasi si calcolano
+  dalla scadenza dichiarata sulla sfida, non sono scritte a mano: la fase
+  passata è spenta, quella di oggi è evidenziata. Scrivere le date a mano
+  avrebbe riprodotto lo stesso difetto già tolto dalle date fisse.
+- **Materiale**: da uno a due riferimenti esterni, presi dallo stesso insieme
+  verificato delle lezioni.
+- **Domande frequenti**: due o tre, quelle che una persona si pone davvero
+  prima di iscriversi.
+
+**La parte interattiva.** Ogni sfida ha una sezione **Domande alla community**:
+si scrive una domanda, si votano quelle degli altri, e l'elenco si riordina.
+È l'unico blocco su cui si agisce — tutto il resto si legge — ed è quindi la
+parte che in dimostrazione si può mostrare *mentre accade* invece di
+raccontarla. L'ordinamento per voti non è decorativo: il regolamento
+dell'incontro aperto dichiara che «le più votate aprono la sessione», e
+l'elenco lo rispetta.
+
+Un voto per persona e per oggetto (chiave primaria su `tipo, ref_id, user`):
+senza il vincolo, «la più votata» misurerebbe soltanto chi ha cliccato più
+volte. Il voto **si ritira ricliccando** — un voto irrevocabile fa esitare, e
+chi esita non vota. Le domande sono cancellabili solo dal loro autore.
+
+Il seme porta **16 domande distribuite sulle sette sfide, 25 voti e due
+risposte già date**: una sezione vuota al primo avvio sembra una funzione che
+nessuno usa, e i voti sono distribuiti in modo che l'ordine per voti risulti
+visibilmente diverso da quello cronologico — che è esattamente il
+comportamento da mostrare.
+
+Verificato su tutte e sette: regolamento, fasi o programma, materiale, domande
+frequenti e sezione domande sono presenti; il voto si dà e si ritira; una
+domanda troppo corta viene rifiutata; pubblicandone una l'elenco si aggiorna.
+
+### 5.103 Community: i numeri smettono di mentire
+
+La Community non era indietro per quello che mancava — post, commenti,
+allegati e composizione c'erano già. Era indietro perché **i numeri mostrati
+non corrispondevano a niente**.
+
+- **Il conteggio dei commenti era inventato su tutti e quindici i post.** Uno
+  dichiarava 44 risposte e ne aveva zero; altri 31 contro 2, 27 contro 0, 8
+  contro 3. Bastava aprire il post per vederlo.
+- **Il «mi piace» era `p.likes++`**: un contatore cieco. Dieci clic della
+  stessa persona facevano dieci, non si poteva togliere, e nessuno sapeva chi
+  avesse apprezzato.
+- **Le visualizzazioni erano numeri fissi** scritti nel seme — 142, 89, 287 —
+  identici dopo cento aperture.
+
+`js/community.js` trasforma i tre conteggi in interrogazioni: contano righe, e
+le righe le scrivono le persone. È la stessa correzione già fatta sulle
+recensioni degli agenti (§5.91) e sui voti delle sfide (§5.102): **un numero
+mostrato dev'essere calcolato, non dichiarato.**
+
+- `forum_likes` con chiave primaria `(post_id, user)`: un apprezzamento per
+  persona, che si toglie ricliccando.
+- Il conteggio dei commenti è la lunghezza dell'elenco. Il campo `comments` non
+  viene più incrementato: un contatore separato dai dati che conta è un
+  contatore che prima o poi mente, ed è precisamente ciò che era successo.
+- `forum_views` conta le persone, non le aperture: riaprire lo stesso post
+  dieci volte non è dieci persone interessate. Il valore del seme resta come
+  base, altrimenti un forum appena aperto mostrerebbe ovunque «1».
+
+**Aggiunte.** Un riepilogo in cima alla pagina (contributi, risposte,
+apprezzamenti, persone, i tuoi interventi) che dichiara esplicitamente di
+essere contato sulle righe reali; il proprio commento è cancellabile, quello
+altrui no.
+
+**Dati dimostrativi.** I cinque post che non avevano nemmeno una risposta ora
+ne hanno di vere e pertinenti — 36 commenti in totale — e il seme distribuisce
+32 apprezzamenti e 44 visualizzazioni fra i quattro profili, con una
+distribuzione irregolare: un numero uguale ovunque si riconosce come finto a
+colpo d'occhio.
+
+Verificato: zero discrepanze fra il conteggio mostrato e i commenti reali su
+tutti e quindici i post; tre clic sul «mi piace» della stessa persona danno 1,
+non 3; tutti i post si aprono senza eccezioni.
+
+### 5.104 Modelli selezionabili e connessioni nel backup
+
+**Modelli.** L'elenco per fornitore era fermo alla generazione precedente:
+`claude-sonnet-4-6`, `claude-opus-4-1`. Aggiornato ai modelli correnti —
+**Opus 5** (predefinito), **Sonnet 5**, **Haiku 4.5**, **Fable 5** — con lo
+stesso ritocco nel generatore di script Python e nella lezione che mostra una
+chiamata di esempio, dove l'identificativo vecchio sarebbe rimasto a fare da
+documentazione sbagliata.
+
+Per Gemini si usano gli **alias mobili** (`gemini-flash-latest`,
+`gemini-pro-latest`, `gemini-flash-lite-latest`): seguono la generazione
+corrente senza modifiche al codice. È la difesa contro il difetto già
+sperimentato con `gemini-2.0-flash`, ritirato da Google, il cui 404 arrivava
+all'utente come «chiave non valida».
+
+Resta il limite strutturale, dichiarato: **l'elenco è scritto nel codice e
+invecchia**. La soluzione industriale è chiederlo al fornitore dopo il test
+della chiave — è ciò che la piattaforma già fa per i modelli locali
+(`discoverLocalModels`), dove l'elenco lo conosce solo il server. Estenderlo
+agli altri cinque fornitori richiede un adattatore per ciascuno e non è stato
+fatto.
+
+**Connessioni nel pacchetto JSON.** Erano l'unica tabella dello schema esclusa
+dall'export, e l'esclusione non era dichiarata: chi esportava il proprio backup
+e lo reimportava si ritrovava senza connessioni, senza che nulla glielo
+dicesse.
+
+Ora sono incluse **senza i campi che possono contenere un segreto**. La
+configurazione di una connessione non ha campi password — quella al database
+chiede l'utente e non la password, l'SMTP tiene le credenziali nel servizio
+locale — ma l'intestazione HTTP è un testo libero dove qualcuno può aver
+incollato un `Authorization: Bearer ...`. Un backup è un file che si gira: è
+esattamente il posto in cui una credenziale non deve finire.
+
+Ogni riga che ha perso qualcosa lo dichiara nel file stesso
+(`_campi_esclusi: ["headers"]`), così chi reimporta sa che quel campo va
+ricompilato invece di scoprirlo quando la connessione non funziona. Il
+pacchetto porta anche una nota in chiaro sul motivo.
+
+**Un difetto introdotto e corretto nello stesso passaggio:** il marcatore
+`_campi_esclusi` faceva fallire la reimportazione con «no column named
+_campi_esclusi», e le connessioni sparivano in silenzio. `dbInsertRow()` ignora
+ora le chiavi che iniziano con `_`: sono annotazioni del pacchetto, non colonne.
+
+Verificato: ogni identificativo scelto sul nodo arriva nel corpo della
+richiesta (`claude-fable-5`, `claude-haiku-4-5`, `gpt-4.1`,
+`gemini-flash-lite-latest`); il giro export → cancellazione → reimport su **27
+tabelle** è integro; il segreto non compare nel file esportato.
+
+### 5.105 Pubblicazioni: filtri, dettaglio e ripresentazione
+
+Con cinque pubblicazioni in quattro stati diversi la sezione diventava un
+elenco da leggere tutto per trovare l'unica che richiedeva qualcosa.
+
+**Filtri** con il conteggio per gruppo. I gruppi non sono i sei stati del
+database ma le **quattro situazioni in cui una persona si trova**: è
+pubblicato, aspetta un revisore, aspetta me, è stato tolto. Filtrare per
+`in_revisione` invece che per «In verifica» chiederebbe all'utente di conoscere
+lo schema. Un filtro che non seleziona nulla resta visibile ma spento: sapere
+che **non** hai nulla di sospeso è un'informazione.
+
+**Dettaglio** con la storia completa delle decisioni, versione per versione,
+con chi ha deciso e quando, più il flusso com'era al momento della
+pubblicazione. La scheda mostra l'ultima nota; su una pubblicazione respinta e
+ripresentata due volte, l'ultima nota da sola non dice come ci si è arrivati.
+
+**Ripresentazione.** Applicare la correzione e farla approvare sono due gesti
+distinti: `pubRipresenta()` riporta la pubblicazione a `in_verifica`, incrementa
+la versione, porta con sé il flusso corretto dall'agente locale e inserisce una
+nuova riga in `publications` — da cui la coda di revisione la ripesca.
+
+Chi corregge **non si approva da solo**. Far passare la pubblicazione
+direttamente fra le approvate renderebbe la coda di revisione una formalità
+aggirabile da chi ha più fretta, che è esattamente il difetto che il ciclo di
+vita del §3.8 esiste per evitare.
+
+Verificato dall'inizio alla fine: `bozza v1.0` → Ripresenta → `in verifica
+v1.1` → compare nella coda → il revisore approva → `pubblicato v1.1`, passa nel
+filtro «Pubblicate» e diventa visibile nel Marketplace. La storia registra
+entrambe le decisioni con autore e data.
+
+### 5.106 La sfida diventa una pagina
+
+Il dettaglio viveva in una finestra sovrapposta: si chiudeva solo con la ✕,
+Indietro usciva dalla pagina invece di tornare all'elenco, e un contenuto lungo
+— regolamento, fasi, classifica, domande — dentro un riquadro sovrapposto
+obbliga a due scorrimenti annidati.
+
+Ora entra ed esce come una lezione del Learning Hub: l'elenco si nasconde, il
+dettaglio prende la pagina su **due colonne**, e l'indirizzo diventa
+`#challenges/sprint1`. Il router è stato esteso per portare, oltre alla pagina,
+il dettaglio aperto dentro di essa: Indietro torna all'elenco, il collegamento
+si può mandare a qualcuno, e ricaricando si riapre dove si era.
+
+Cambiando pagina il dettaglio si chiude da sé — un dettaglio di sfida non ha
+senso mentre si guarda il Monitoraggio.
+
+**Voto e revisione fra pari sulle candidature.** Due regolamenti promettevano
+interazione che non esisteva: il Demo Day dichiara che «il voto della community
+vale il 50%», la sfida sul presidio prevede che «ogni partecipante commenti il
+presidio di un altro agente candidato».
+
+Ogni riga della classifica ha ora un pollice e un contatore di commenti. Il
+voto della community e il punteggio calcolato restano **due colonne separate**:
+il primo dice cosa piace alle persone, il secondo cosa fanno le esecuzioni.
+Sommarli in un numero solo nasconderebbe quale dei due sta parlando.
+
+**Non si vota la propria candidatura** — senza questa regola il voto della
+community misurerebbe soltanto quanti partecipanti ci sono — e sulla propria
+riga il commento non si scrive: lo scrivono gli altri. Il voto si ritira
+ricliccando; i commenti stanno in `challenge_feedback`, i voti in
+`challenge_votes` (chiave primaria `(tipo, ref_id, user)`: un voto per persona
+e per oggetto, il ritiro è la cancellazione della riga) e si cancellano solo se
+propri. Si apre una candidatura alla volta, altrimenti la classifica diventa una
+colonna di caselle di testo.
+
+**Obiettivi pratici configurabili.** Gli obiettivi del profilo erano otto righe
+scritte nel codice: soglia e XP fissi, nessun modo di sapere *come* un obiettivo
+venisse misurato. Ogni riga si espande ora su una spiegazione della misura e,
+dove ha senso, sui passi intermedi; soglia, XP e attivazione si modificano dal
+profilo e finiscono in `obiettivi_config` (chiave testuale stabile, non
+posizione: riordinare l'elenco non sposta le impostazioni su un altro
+obiettivo). «Ripristina le soglie» cancella le righe e riporta ai valori del
+codice — la configurazione è una sovrascrittura, non una copia.
+
+Verificato: sette sfide su sette si aprono come pagina, Indietro torna
+all'elenco, tre clic sul pollice danno 1, un commento troppo corto viene
+rifiutato, e sulla propria candidatura il pulsante di voto è inerte.

@@ -35,7 +35,7 @@ function updateChatBuilderGate(){
   btn.style.cursor=prov?'pointer':'not-allowed';
   input.placeholder=prov
     ? 'Descrivi l\'agente da creare o la modifica da fare... es: "aggiungi una notifica Slack se lo score è alto"'
-    : 'Builder conversazionale disattivato — configura un provider AI nel pannello a sinistra';
+    : 'Builder conversazionale disattivato, configura un provider AI nel pannello a sinistra';
 }
 
 // ── CATALOGHI E REGOLE CONDIVISE DAL PROMPT ──
@@ -67,7 +67,7 @@ function ccCompactRules(){
 function ccBaseRules(){
   var connectorCatalog=PALETTE.filter(function(p){return p.type==='ac'}).map(function(p){
     var cc=CONNECTOR_CONFIGS[p.name];
-    return '- "'+p.name+'" ('+p.desc+')'+(cc?' — config: '+cc.fields.map(function(f){return f.k}).join(', '):'');
+    return '- "'+p.name+'" ('+p.desc+')'+(cc?': config: '+cc.fields.map(function(f){return f.k}).join(', '):'');
   }).join('\n');
   var triggerCatalog=PALETTE.filter(function(p){return p.type==='tr'}).map(function(p){return '- "'+p.name+'" ('+p.desc+')'}).join('\n');
   var guardCatalog=PALETTE.filter(function(p){return p.type==='gr'}).map(function(p){return '- "'+p.name+'"'}).join('\n');
@@ -145,7 +145,7 @@ async function composePlan(desc,isModify,prov){
       'I nodi con "imposto":true sono controlli imposti da una politica organizzativa: non possono essere rimossi.\n\n'+
       ccCompactRules()+'\n\n'+
       ccRegoleDati()+'\n\n'+
-      'FORMATO RISPOSTA — SOLO JSON valido, niente markdown:\n'+
+      'FORMATO RISPOSTA: SOLO JSON valido, niente markdown:\n'+
       '{"interpretazione":"come hai capito la richiesta, in una frase","ops":[...]}\n'+
       'Operazioni ammesse:\n'+
       '{"op":"add","dopo":<id>|null,"prima":<id>|null,"t":"ai","ic":"🔎","n":"Nome","d":"Desc","config":{},"perche":"..."}\n'+
@@ -162,7 +162,7 @@ async function composePlan(desc,isModify,prov){
       'Compila SEMPRE i campi config obbligatori dei nodi che aggiungi.\n\n'+
       // Un esempio funzionante vale piu' di ogni istruzione: la modalità
       // creazione ne aveva uno, la modifica no — ed era la meno affidabile.
-      'ESEMPIO — workflow attuale: nodi [{"id":1,"t":"tr","n":"Webhook"},{"id":2,"t":"ai","n":"Analizza"},{"id":3,"t":"ou","n":"Output"}], connessioni 1→2, 2→3.\n'+
+      'ESEMPIO: workflow attuale: nodi [{"id":1,"t":"tr","n":"Webhook"},{"id":2,"t":"ai","n":"Analizza"},{"id":3,"t":"ou","n":"Output"}], connessioni 1→2, 2→3.\n'+
       'Richiesta: "avvisa il team su Slack prima di chiudere".\n'+
       'Risposta: {"interpretazione":"Aggiungo una notifica Slack fra l\'analisi e l\'output","ops":[{"op":"add","dopo":2,"t":"ac","ic":"💬","n":"Slack","d":"Avviso al team","config":{"channel":"#team","message":"Esito: {{result}}"},"perche":"la richiesta chiede un avviso prima della chiusura"}]}\n\n'+
       'Se la richiesta non è chiara o non è realizzabile con questi nodi, rispondi {"interpretazione":"...","ops":[],"problema":"spiegazione breve"}.';
@@ -171,7 +171,7 @@ async function composePlan(desc,isModify,prov){
     sys='Sei un generatore di workflow per RelAItion, piattaforma no-code di AI agent. Dato un obiettivo, generi un workflow ESEGUIBILE (4-8 nodi, inizia con un trigger) usando SOLO i connettori reali.\n\n'+
       ccBaseRules()+'\n\n'+
       ccRegoleDati()+'\n\n'+
-      'FORMATO RISPOSTA — SOLO JSON valido, niente markdown:\n'+
+      'FORMATO RISPOSTA: SOLO JSON valido, niente markdown:\n'+
       '{"interpretazione":"come hai capito la richiesta, in una frase","agentName":"Nome",'+
       '"nodes":[{"id":1,"t":"tr","ic":"📥","n":"Webhook","d":"...","config":{}}],'+
       '"edges":[{"da":1,"porta":"out","a":2,"etichetta":""}]}\n'+
@@ -285,7 +285,7 @@ function ccNodeById(id){return B.nodes.find(function(n){return n.id===id})}
 
 function ccNodeLabel(id){
   var n=ccNodeById(id);
-  return n?('"'+n.name+'" (#'+n.id+')'):('nodo #'+id+' — inesistente');
+  return n?('"'+n.name+'" (#'+n.id+')'):('nodo #'+id+': inesistente');
 }
 
 function ccOpLine(o){
@@ -365,7 +365,7 @@ function cancelPendingPlan(){
   ccPendingPlan=null;
   var box=document.getElementById('composePreview');
   if(box){box.style.display='none';box.innerHTML=''}
-  showToast('Modifica annullata — nulla è cambiato sul canvas');
+  showToast('Modifica annullata: nulla è cambiato sul canvas');
 }
 
 function applyPendingPlan(){
@@ -444,7 +444,7 @@ function ccApplyCreate(plan){
   // nodi nell'ordine in cui sono arrivati.
   if(typeof bAutoLayout==='function'){try{bAutoLayout(true)}catch(e){}}
   if(typeof fillRequiredDefaults==='function')fillRequiredDefaults(B.nodes);
-  ccFinalize('✨ Workflow generato: '+B.nodes.length+' nodi — pronto da eseguire','generato');
+  ccFinalize('✨ Workflow generato: '+B.nodes.length+' nodi, pronto da eseguire','generato');
 }
 
 // ── APPLICAZIONE: MODIFICA CHIRURGICA ──

@@ -607,10 +607,18 @@ var GOV_AREE=[
   ['Conoscenza',                 'Documenti caricati, porzioni indicizzate, recuperi riusciti e a vuoto'],
   ['Pubblicazione e apprendimento','Stato del ciclo di vita degli agenti, revisioni e avanzamento formativo']
 ];
+// L'indicatore «4/7» era grigio e attaccato al titolo: si leggeva come una
+// parola sola («4/7Presidio»), e le sette aree non si distinguevano l'una
+// dall'altra scorrendo. Ora e' un contrassegno staccato, e una linea sopra
+// dice dove finisce l'area precedente.
 function govArea(n){
   var a=GOV_AREE[n-1];
-  return '<div class="section-title" style="font-size:14px;margin:24px 0 2px">'+
-      '<span style="color:var(--tx4);font-weight:600">'+n+'/7</span> '+a[0]+'</div>'+
+  return '<div style="border-top:1px solid var(--bo);margin:26px 0 0"></div>'+
+    '<div style="display:flex;align-items:center;gap:9px;margin:14px 0 3px">'+
+      '<span style="flex:none;background:var(--ac-ul);color:var(--ac);font-size:10.5px;font-weight:800;'+
+        'letter-spacing:.02em;border-radius:6px;padding:3px 8px;line-height:1.3">'+n+' / 7</span>'+
+      '<span style="font-size:15px;font-weight:800;letter-spacing:-.01em">'+a[0]+'</span>'+
+    '</div>'+
     '<div class="section-sub" style="margin-bottom:10px">'+a[1]+'</div>';
 }
 function govRiquadro(titolo,sottotitolo,corpo,piede){
@@ -703,7 +711,7 @@ function renderMonitoraggio(){
     '<div class="grid-2">'+
       govRiquadro('Andamento delle esecuzioni',
         totPeriodo+' nel periodo · '+(esecDopo>=esecPrima?'in crescita':'in calo')+' rispetto alla prima metà',
-        govAreaChart(serie,'#6366F1',150,'govDettaglioGiorno')+
+        govAreaChart(serie,'#6366F1',120,'govDettaglioGiorno')+
         '<div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--tx4);margin-top:4px">'+
           '<span>'+serie[0].l+'</span><span>'+serie[serie.length-1].l+'</span></div>')+
       govRiquadro('Esito delle esecuzioni','Clicca una fetta per vedere quelle esecuzioni',
@@ -712,32 +720,44 @@ function renderMonitoraggio(){
           {l:'Fallite',n:s.esecuzioniKo,c:col.err,k:'err'},
           {l:'Interrotte',n:s.esecuzioniStop,c:col.neutro,k:'aborted'},
           {l:'In attesa',n:s.esecuzioniAttesa,c:col.warn,k:'waiting'}
-        ],170,'govDettaglioEsito'))+
+        ],136,'govDettaglioEsito'))+
     '</div>'+
-    '<div class="grid-2" style="margin-top:16px">'+
+    // Tre riquadri su una riga sola invece di due piu' uno: «Distribuzione
+    // delle durate» stava da solo su tutta la larghezza per mostrare cinque
+    // barre, e costava una schermata intera a chi scorre.
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:16px;margin-top:16px">'+
       govRiquadro('Esito giorno per giorno',
         'L\'andamento totale non dice se la crescita sia fatta di successi o di fallimenti',
         govColonneImpilate(serie))+
       govRiquadro('Quando viene usata',
         'Distribuzione per giorno della settimana e fascia oraria',
         govHeatmap(govGrigliaOraria()))+
-    '</div>'+
-    '<div style="margin-top:16px">'+
       govRiquadro('Distribuzione delle durate',
-        'La media nasconde i casi lenti, che sono quelli che generano le lamentele',
+        'La media nasconde i casi lenti, che generano le lamentele',
         govBarreOrizzontali(govDistribuzioneDurate(),'govDettaglioVario'))+
     '</div>';
 
   // ── Area 4 · Presidio ──
+  // I cinque numeri erano in coda alla propria etichetta, su righe alte 1.75:
+  // la cifra — che e' il dato — spariva dentro la frase. Ora ognuno e' un
+  // riquadro con il numero grande e l'etichetta sotto, e i riquadri si
+  // dispongono da soli sulla larghezza disponibile.
+  var govTessera=function(ic,eti,val,nota){
+    return '<div style="background:var(--bg2);border-radius:9px;padding:9px 11px">'+
+      '<div style="font-size:19px;font-weight:800;line-height:1.15">'+val+'</div>'+
+      '<div style="font-size:10.5px;color:var(--tx3);margin-top:1px">'+ic+' '+eti+'</div>'+
+      (nota?'<div style="font-size:9.5px;color:var(--tx4);margin-top:1px">'+nota+'</div>':'')+
+    '</div>';
+  };
   h+=govArea(4)+
     '<div class="card" style="padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">'+
-      govGauge(s.coperturaControlli,'Agenti con almeno un controllo',70)+
-      '<div style="flex:1;min-width:170px;font-size:11.5px;line-height:1.75">'+
-        '<div>📜 Politiche attive <strong>'+s.politicheAttive+'</strong>'+(s.politicheImposte?' ('+s.politicheImposte+' obbligatorie)':'')+'</div>'+
-        '<div>🎭 Mascheramenti <strong>'+s.mascheramenti+'</strong></div>'+
-        '<div>✋ Approvazioni umane <strong>'+s.approvazioni+'</strong></div>'+
-        '<div>⛔ Bloccate da un controllo <strong>'+s.bloccatiDaControlli+'</strong></div>'+
-        '<div>🧯 Guasti assorbiti <strong>'+s.erroriAssorbiti+'</strong></div>'+
+      govGauge(s.coperturaControlli,'Agenti con almeno un controllo',62)+
+      '<div style="flex:1;min-width:230px;display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:8px">'+
+        govTessera('📜','Politiche attive',s.politicheAttive,s.politicheImposte?s.politicheImposte+' obbligatorie':'')+
+        govTessera('🎭','Mascheramenti',s.mascheramenti,'')+
+        govTessera('✋','Approvazioni umane',s.approvazioni,'')+
+        govTessera('⛔','Bloccate da un controllo',s.bloccatiDaControlli,'')+
+        govTessera('🧯','Guasti assorbiti',s.erroriAssorbiti,'')+
       '</div>'+
     '</div>';
 
@@ -758,7 +778,7 @@ function renderMonitoraggio(){
       govDonut([
         {l:'Recuperi riusciti',n:s.kbRecuperi,c:col.ok},
         {l:'Recuperi a vuoto',n:s.kbVuoti,c:col.warn}
-      ],110),
+      ],96),
       s.kbDocumenti+' documenti · '+s.kbPorzioni+' porzioni indicizzate · '+s.kbDaAgenti+' prodotti dagli agenti');
 
   // ── Area 7 · Pubblicazione e apprendimento ──

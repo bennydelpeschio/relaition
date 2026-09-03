@@ -36,7 +36,7 @@ dedotti dalla lettura del codice. La documentazione tecnica corrispondente è in
 | Lezioni del Learning Hub | **36**, tutte funzionanti | sei non si aprivano affatto — §G.1 |
 | Percorsi formativi | **6**, da 6 lezioni ciascuno | |
 | Sfide ed eventi | **7**, di cui **3** con classifica calcolata | §G.2 |
-| Moduli JavaScript caricati | **35** | +5 rispetto alla v41 |
+| Moduli JavaScript caricati | **38** | +8 rispetto alla v41 — vedi §H.4 |
 | Agenti nel catalogo | **22** | invariato |
 | Stati di pubblicazione | **6** nel database, **4** etichette nell'interfaccia | §D.2 |
 | Formati di export del registro | **3** — Markdown, CSV, JSON | §D.1 |
@@ -74,7 +74,7 @@ li rende leggibili, e regge anche se il numero cambierà.
    e possibilità di rimuovere un file allegato per usare al suo posto la KB
    aziendale.
 7. **Rinomina dell'utente con ricascata** su agenti e contenuti pubblicati: il
-   nome è la chiave di attribuzione in 14 tabelle, e cambiarlo le aggiorna
+   nome è la chiave di attribuzione in 22 tabelle, e cambiarlo le aggiorna
    tutte.
 8. **Divisori trascinabili** fra i pannelli del Builder, con le proporzioni
    conservate fra una sessione e l'altra.
@@ -292,3 +292,145 @@ ricavate da una sessione precedente, **vanno rilette dopo questa correzione**.
 ### G.5 Verifica
 
 Lo stato completo è in §F, già aggiornato dopo questi due interventi.
+
+---
+
+## H. Modelli, connessioni, interfaccia (ultimo giro)
+
+### H.1 Modelli selezionabili — dove intervenire nel documento
+
+**Nel Capitolo 3 non esiste una tabella dei modelli.** Tab. 3.5 (§3.7.1)
+elenca le *cinque dimensioni dell'astrazione*, non i modelli; il rimando dice
+«dettaglio in Appendice A.3». Se un elenco di identificativi esiste, è lì — e
+l'Appendice non era nel file che mi hai passato, quindi non l'ho potuta
+verificare.
+
+**Contenuto aggiornato da mettere dove quell'elenco si trova:**
+
+| Fornitore | Modelli selezionabili sul nodo |
+|---|---|
+| Claude | `claude-opus-5` (predefinito), `claude-sonnet-5`, `claude-haiku-4-5`, `claude-fable-5` |
+| OpenAI | `gpt-4o-mini` (predefinito), `gpt-4o`, `gpt-4.1`, `gpt-4.1-mini` |
+| Gemini | `gemini-flash-latest` (predefinito), `gemini-pro-latest`, `gemini-flash-lite-latest` |
+| Mistral | `mistral-large-latest`, `mistral-small-latest` |
+| Modello in locale | elenco **interrogato al server** (Ollama, LM Studio, LocalAI, Jan) |
+| Endpoint personalizzato | identificativo digitato dall'utente |
+
+Due cose da dire nel testo, perché sono scelte di progetto e non dettagli:
+
+1. **Per Gemini si usano alias mobili** (`-latest`): seguono la generazione
+   corrente senza modifiche al codice. È la difesa contro il difetto già
+   sperimentato con `gemini-2.0-flash`, ritirato da Google, il cui 404 arrivava
+   all'utente come «chiave non valida».
+2. **L'elenco è scritto nel codice e invecchia.** La soluzione industriale è
+   chiederlo al fornitore dopo il test della chiave — come fa n8n, e come la
+   piattaforma già fa per i modelli locali. Estenderlo agli altri cinque
+   fornitori è lavoro non fatto, e dichiararlo è più solido che tacerlo.
+
+⚠️ **Verifica tu gli identificativi OpenAI e Gemini prima di consegnare.**
+Quelli Claude li ho verificati su fonte autorevole; per gli altri due fornitori
+non ho un elenco autorevole consultabile da qui, e un identificativo ritirato
+produce un errore in demo.
+
+### H.2 Connessioni nel pacchetto di esportazione — Tab. 3.6
+
+La riga **«Dati strutturati / JSON»** di Tab. 3.6 (§3.7.2) elenca il contenuto:
+«Agenti, workflow, log, pubblicazioni, documenti KB, progressi Learning Hub e
+Community». Vanno aggiunte le **connessioni**, con la qualificazione che conta:
+
+> …e le connessioni riutilizzabili, **private dei campi che possono contenere
+> credenziali** (intestazioni HTTP, token): il pacchetto dichiara riga per riga
+> quali campi ha escluso, così chi reimporta sa cosa ricompilare.
+
+È coerente con quanto il capitolo già afferma altrove — che le credenziali non
+transitano dal database né dagli export.
+
+### H.3 Interfaccia
+
+Due modifiche che il capitolo non descrive e che si notano subito in demo:
+
+- **Menu laterale collassabile** con pulsante hamburger (240px → 64px): la
+  navigazione si comprime, non sparisce, e la scelta è ricordata fra le
+  sessioni. Serve nel Builder, dove lo spazio orizzontale è ciò che manca.
+- **Indietro e Avanti funzionano.** La piattaforma è una pagina sola e il
+  browser non registrava i cambi di schermata: Indietro usciva
+  dall'applicazione. Ogni pagina scrive ora `#nome` nell'indirizzo, quindi
+  Indietro/Avanti — anche dai tasti laterali del mouse — tornano a funzionare,
+  e gli indirizzi diventano condivisibili (`index.html#monitoraggio`).
+
+### H.4 Numeri della §A che cambiano ancora
+
+| Dato | Valore |
+|---|---|
+| Moduli JavaScript caricati | **38** |
+| Tabelle nel database | **28** (erano 22: +recensioni, candidature, vincitori, domande, voti, apprezzamenti e visualizzazioni del forum, identità, profili, connessioni) |
+| Versione della cache del service worker | `relaition-v18` — vedi §I.4 |
+
+---
+
+## I. Ultimo giro — ciclo di correzione e sfide interattive
+
+Tre aggiunte. **Nessuna cambia l'impianto concettuale del capitolo**: due
+rendono vero ciò che il testo già dichiarava, la terza chiude un anello che il
+testo descriveva solo a metà.
+
+### I.1 §3.8.3 — il ciclo di correzione si chiude
+
+Il capitolo descrive le tre azioni del revisore (approvazione, richiesta di
+modifica, rifiuto) e il versionamento. **Non dice cosa succede dopo la
+correzione**: l'anello resta aperto.
+
+Da aggiungere, in coda al paragrafo:
+
+> Ricevuta una richiesta di modifica, l'autore corregge il flusso e lo
+> **ripresenta**: la pubblicazione torna in stato *in verifica* con la versione
+> incrementata, portando con sé il flusso corretto, e rientra nella coda di
+> revisione. **Chi corregge non si approva da solo**: la decisione resta al
+> revisore, altrimenti la coda sarebbe una formalità aggirabile da chi ha più
+> fretta. La sezione «Pubblicati e in revisione» filtra le proprie pubblicazioni
+> per situazione — richiedono un intervento, in verifica, pubblicate, sospese —
+> e ne conserva la storia delle decisioni, versione per versione, con autore e
+> data.
+
+### I.2 §3.5.2 — il voto della community esiste davvero
+
+Il paragrafo parla di sfide con «riconoscimento pubblico nella classifica». Ora
+c'è di più, ed è il caso di dirlo perché è la parte dimostrabile dal vivo:
+
+> Ogni candidatura può essere **votata** dagli altri partecipanti e commentata
+> in una **revisione fra pari**. Il voto della community e il punteggio
+> calcolato sulle esecuzioni restano due colonne separate: il primo dice cosa
+> piace alle persone, il secondo cosa fanno le esecuzioni, e sommarli in un
+> numero solo nasconderebbe quale dei due sta parlando. Non si vota la propria
+> candidatura — senza quel vincolo il voto misurerebbe soltanto quanti
+> partecipanti ci sono — e il commento sulla propria lo scrivono gli altri.
+
+Nota: la revisione fra pari **era già promessa** dal regolamento della sfida
+sul presidio; prima non esisteva da nessuna parte.
+
+### I.3 §3.1.1 — navigazione
+
+Se il paragrafo descrive la navigazione, due righe da aggiungere:
+
+> Il menu laterale si riduce a una colonna di icone con un comando dedicato, e
+> la scelta è conservata fra le sessioni. Ogni schermata ha un proprio
+> indirizzo (`#monitoraggio`), e le schede di dettaglio che vivono dentro una
+> pagina lo estendono (`#challenges/sprint1`): Indietro e Avanti del browser
+> funzionano, e un collegamento riapre l'applicazione dove si era.
+
+### I.4 Numeri aggiornati
+
+| Dato | Valore |
+|---|---|
+| Moduli JavaScript caricati | **38** |
+| Tabelle nel database | **28** |
+| Cache del service worker | `relaition-v18` |
+| Sfide ed eventi | 7, di cui 3 con classifica calcolata e voto della community |
+
+### I.5 Cosa NON è cambiato
+
+Per evitare correzioni inutili: motore di esecuzione, Knowledge Base,
+indipendenza dal fornitore, verifica automatica di pubblicazione, ambiti di
+diffusione, cruscotto di monitoraggio e portabilità **non sono stati toccati**
+in questo giro. I paragrafi §3.3, §3.6, §3.7 e §3.8.1-3.8.2 restano corretti
+come sono.

@@ -123,7 +123,7 @@ window.addEventListener('appinstalled',function(){
   _promptInstall=null;
   var b=document.getElementById('btnInstallApp');
   if(b)b.style.display='none';
-  showToast('✅ RelAItion installata — la trovi fra le applicazioni del computer');
+  showToast('✅ RelAItion installata: la trovi fra le applicazioni del computer');
   addAct('Installata RelAItion come applicazione');
 });
 
@@ -131,7 +131,7 @@ function installApp(){
   if(_promptInstall){
     _promptInstall.prompt();
     _promptInstall.userChoice.then(function(scelta){
-      if(scelta.outcome!=='accepted')showToast('Installazione annullata — puoi rifarla quando vuoi da questo pulsante');
+      if(scelta.outcome!=='accepted')showToast('Installazione annullata: puoi rifarla quando vuoi da questo pulsante');
       _promptInstall=null;
     });
     return;
@@ -153,12 +153,12 @@ function openInstallGuide(){
         '<p style="font-size:12px;color:var(--tx3);margin-top:10px">Poi apri <code>http://localhost:8099</code> e il pulsante «Installa app» comparirà da solo.</p>'
       : '<p style="font-size:12.5px;color:var(--tx2);margin:12px 0;line-height:1.6">Il browser non ha ancora proposto l\'installazione. Puoi forzarla dal menu del browser:</p>'+
         '<div style="font-size:12.5px;color:var(--tx2);line-height:1.9">'+
-        '<div><strong>Chrome / Edge</strong> — icona ⊕ nella barra degli indirizzi, oppure menu ⋮ → «Installa RelAItion»</div>'+
-        '<div><strong>Safari</strong> — Condividi → «Aggiungi al Dock»</div>'+
+        '<div><strong>Chrome / Edge</strong>: icona ⊕ nella barra degli indirizzi, oppure menu ⋮ → «Installa RelAItion»</div>'+
+        '<div><strong>Safari</strong>: Condividi → «Aggiungi al Dock»</div>'+
         '</div>')+
     '<div style="border-top:1px solid var(--bo);margin-top:16px;padding-top:12px;font-size:11.5px;color:var(--tx3);line-height:1.6">'+
       '<strong>Cosa cambia una volta installata:</strong> finestra propria senza barra del browser, icona fra le applicazioni, avvio anche senza connessione. '+
-      'I dati restano dove sono adesso — nel database locale del browser — e non vengono duplicati né spostati.'+
+      'I dati restano dove sono adesso: nel database locale del browser, e non vengono duplicati né spostati.'+
     '</div>'+
     // Lo stato reale del service worker va detto: se non si registra,
     // l'installazione non sarà possibile qualunque cosa faccia l'utente, e
@@ -210,6 +210,7 @@ initDatabase().then(function(){
   // Le recensioni del catalogo sono dati, non decorazione: vivono nella stessa
   // tabella di quelle scritte dall'utente e il seme non tocca cio' che esiste.
   if(typeof recSemina==='function'){try{recSemina()}catch(e){}}
+  if(typeof ripristinaMenu==='function')ripristinaMenu();
   // Blocco F: dati dimostrativi al primo avvio, mai sopra il lavoro esistente.
   if(typeof seedDemoData==="function"){
     var _s=seedDemoData();

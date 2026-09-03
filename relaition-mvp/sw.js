@@ -4,7 +4,7 @@
 // che l'app si apra anche senza connessione — il che è coerente con il fatto
 // che i dati vivono nel browser e non su un server.
 
-var CACHE = 'relaition-v7';
+var CACHE = 'relaition-v22';
 // L'elenco e' generato dai <script> e <link> di index.html: quando era
 // scritto a mano restava indietro a ogni modulo aggiunto, e nell'app
 // installata i moduli mancanti non avevano copia di riserva — bastava una
@@ -45,6 +45,9 @@ var GUSCIO = [
   './js/chat-compose.js',
   './js/agent-runtime.js',
   './js/builder.js',
+  './js/community.js',
+  './js/sfide-contenuti.js',
+  './js/lezioni-risorse.js',
   './js/sfide.js',
   './js/lezioni-pratica.js',
   './js/recensioni.js',
