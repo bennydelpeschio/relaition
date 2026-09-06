@@ -17,7 +17,7 @@
 
 /* ─── BADGES / TAGS ─── */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.badge-g{background:var(--ac-l);color:var(--ac-d)}
+.badge-g{background:var(--ok-l);color:var(--ok-d)}
 .badge-b{background:var(--ac2-l);color:var(--ac2-d)}
 .badge-y{background:var(--ac3-l);color:#D97706}
 .badge-r{background:#FEE2E2;color:#DC2626}
@@ -64,7 +64,7 @@
 .logo-mark{animation:logoPulse 4s ease-in-out infinite}
 @keyframes logoPulse{0%,100%{box-shadow:0 4px 12px rgba(16,185,129,.4)}50%{box-shadow:0 4px 24px rgba(16,185,129,.7)}}
 .ni.active{position:relative;overflow:hidden}
-.ni.active::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#10B981,#059669);border-radius:0 3px 3px 0}
+.ni.active::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#2563EB,#7C3AED);border-radius:0 3px 3px 0}
 .agent-card{position:relative}
 .agent-card::before{content:'';position:absolute;inset:0;border-radius:var(--rl);background:linear-gradient(135deg,rgba(16,185,129,.06),rgba(99,102,241,.06));opacity:0;transition:opacity .25s;pointer-events:none}
 .agent-card:hover::before{opacity:1}
@@ -111,7 +111,7 @@
 @keyframes fullscreenIn{from{opacity:0}to{opacity:1}}
 #loginScreen>div{animation:modalIn .4s cubic-bezier(.34,1.4,.64,1)}
 #loginScreen input{transition:var(--trans)}
-#loginScreen input:focus{outline:none;border-color:#10B981!important;box-shadow:0 0 0 3px rgba(16,185,129,.18)}
+#loginScreen input:focus{outline:none;border-color:#2563EB!important;box-shadow:0 0 0 3px rgba(37,99,235,.18)}
 #loginScreen button{transition:var(--trans)}
 #loginScreen button[type="submit"]:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 6px 16px rgba(16,185,129,.35)}
 #loginScreen button[type="submit"]:active{transform:translateY(0)}
@@ -145,7 +145,7 @@
 .conn-card:hover{border-color:var(--bo2);box-shadow:0 2px 8px rgba(15,23,42,.06)}
 /* La banda e' l'indicatore primario: resta leggibile anche scorrendo in fretta. */
 .conn-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--bo2)}
-.conn-card.st-ok::before{background:var(--ac)}
+.conn-card.st-ok::before{background:var(--ok)}
 .conn-card.st-errore::before{background:#EF4444}
 .conn-card.st-nuovo::before{background:#FBBF24}
 

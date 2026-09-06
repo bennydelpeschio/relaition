@@ -297,18 +297,31 @@ function updateXPDisplays(){
   var d4=document.getElementById('profileXPVal');if(d4)d4.textContent=xp.toLocaleString('it-IT');
 }
 
-// Numeri reali (non più hardcoded) per le card della Dashboard e del
-// Profilo: agenti = salvati + installati, esecuzioni = log persistente nel
-// DB, corsi = percorsi Learning Hub completati al 100%.
+// Numeri reali (non più hardcoded) per le card della Dashboard e del Profilo:
+// agenti = creati dall'utente + installati da lui, esecuzioni = le sue righe
+// nel log, corsi = percorsi Learning Hub completati al 100%.
+//
+// Il filtro sull'utente mancava su due delle quattro schede, e le due pagine
+// che le ospitano dicono entrambe «la TUA attività»: l'intestazione del Profilo
+// annunciava 10 agenti e 50 esecuzioni mentre il corpo della stessa pagina,
+// poche righe sotto, contava correttamente 2 creati, 5 installati e 19
+// esecuzioni. Stessa pagina, due risposte diverse alla stessa domanda: chi
+// legge non sa quale credere, ed e' il tipo di incoerenza che si nota subito
+// perche' i due numeri sono visibili insieme.
 function updateStatCards(){
-  var savedAgents=dbGetOne('SELECT COUNT(*) c FROM agents').c;
-  var myAgents=dbGetOne('SELECT COUNT(*) c FROM my_agents WHERE user=?',[utenteCorrente()]).c;
-  var runs=dbGetOne('SELECT COUNT(*) c FROM exec_log').c;
+  var io=utenteCorrente();
+  var savedAgents=dbGetOne('SELECT COUNT(*) c FROM agents WHERE author=?',[io]).c;
+  var myAgents=dbGetOne('SELECT COUNT(*) c FROM my_agents WHERE user=?',[io]).c;
+  var runs=dbGetOne('SELECT COUNT(*) c FROM exec_log WHERE user=?',[io]).c;
   var coursesTotal=(typeof PATHS!=='undefined'?PATHS.length:5);
   var coursesDone=(typeof PATHS!=='undefined')?PATHS.filter(function(p){return p.lessons.every(function(l){return l.done})}).length:0;
   var agentsTotal=savedAgents+myAgents;
   var set=function(id,val){var el=document.getElementById(id);if(el)el.textContent=val};
-  set('dashAgentsVal',agentsTotal);set('dashAgentsSub',agentsTotal?agentsTotal+' totali':'Nessuno ancora');
+  set('dashAgentsVal',agentsTotal);
+  // Il sottotitolo diceva «N totali», che ripeteva il numero grande senza
+  // aggiungere niente. Dice invece com'e' composto, che e' l'unica cosa che
+  // quel numero da solo non spiega.
+  set('dashAgentsSub',agentsTotal?(savedAgents+' creat'+(savedAgents===1?'o':'i')+' · '+myAgents+' installat'+(myAgents===1?'o':'i')):'Nessuno ancora');
   set('dashRunsVal',runs);set('dashRunsSub',runs?runs+' registrate nel log':'Nessuna esecuzione ancora');
   set('dashCoursesVal',coursesDone);set('dashCoursesSub',coursesTotal?Math.round(coursesDone/coursesTotal*100)+'% completamento':'');
   set('profileAgentsVal',agentsTotal);set('profileRunsVal',runs);

@@ -89,15 +89,48 @@ function go(page,daStoria){
 
 // ── MARKETPLACE DATA ──
 
+// La ricerca calcolava i risultati e poi li BUTTAVA VIA: mostrava un avviso
+// «3 agenti trovati» e portava al Marketplace non filtrato, lasciando all'utente
+// il compito di ritrovarli a mano fra ventidue schede. Chi cercava «fattura»
+// doveva poi scorrere tutto, e chi non azzeccava il nome esatto non trovava
+// niente. Ora il testo cercato diventa un filtro vero sulla griglia, e resta
+// scritto sopra i risultati finche' non lo si toglie.
 function onGlobalSearch(q){
   clearTimeout(_searchTimer);
-  if(!q||q.length<3)return;
+  var testo=String(q||'').trim();
+  // Sotto i due caratteri non si filtra: una lettera sola restringerebbe a
+  // meta' catalogo dando l'impressione di un risultato.
+  if(testo.length<2){
+    if(mktRicerca){ mktRicerca=''; if(currentPage==='marketplace')renderMkt() }
+    return;
+  }
   _searchTimer=setTimeout(function(){
-    var ql=q.toLowerCase();
-    var results=AGENTS.concat(getPublishedAgents()).filter(function(a){return a.name.toLowerCase().indexOf(ql)>=0||a.desc.toLowerCase().indexOf(ql)>=0||a.cat.toLowerCase().indexOf(ql)>=0});
-    if(results.length>0&&currentPage!=='marketplace'){go('marketplace');showToast('🔍 '+results.length+' agenti trovati per "'+q+'"')}
-    else if(results.length===0){showToast('🔍 Nessun agente trovato per "'+q+'"')}
-  },600);
+    mktRicerca=testo;
+    if(currentPage!=='marketplace')go('marketplace'); else renderMkt();
+  },350);
+}
+
+// Cerca in nome, descrizione, categoria, autore ed etichette, e tollera
+// l'ordine delle parole: «fatture estrazione» trova «Estrazione dati da
+// fatture». Cercare per nome esatto era il difetto piu' segnalato dalle prove.
+// Cerca in nome, descrizione, categoria, autore ed etichette, tollerando
+// l'ordine delle parole e le desinenze italiane. Con il confronto letterale
+// «fattura» non trovava «fatture» — non e' una sottostringa — e chi cercava al
+// singolare quello che il catalogo scrive al plurale concludeva che la ricerca
+// non funzionasse. Si confronta la RADICE: tolta l'ultima vocale, «fattura» e
+// «fatture» diventano entrambe «fattur».
+function mktRadice(p){
+  return p.length>=5 ? p.replace(/[aeio]$/,'') : p;
+}
+
+function mktCorrisponde(a,testo){
+  if(!testo)return true;
+  var campi=[a.name,a.desc,a.cat,a.author].concat(a.tags||[]).join(' ')
+    .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return testo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .split(/\s+/).filter(Boolean).every(function(p){
+      return campi.indexOf(mktRadice(p))>=0;
+    });
 }
 
 

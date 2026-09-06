@@ -4,7 +4,7 @@
 // che l'app si apra anche senza connessione — il che è coerente con il fatto
 // che i dati vivono nel browser e non su un server.
 
-var CACHE = 'relaition-v22';
+var CACHE = 'relaition-v32';
 // L'elenco e' generato dai <script> e <link> di index.html: quando era
 // scritto a mano restava indietro a ogni modulo aggiunto, e nell'app
 // installata i moduli mancanti non avevano copia di riserva — bastava una

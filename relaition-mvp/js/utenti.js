@@ -161,6 +161,34 @@ function ripristinaUtente(){
 
 // Elenco degli account mostrato nella schermata di accesso: in una demo
 // nascondere le credenziali significa solo non poter provare i profili.
+// ══════════════════════════════════════════════════════════════
+// CLASSIFICA PER ESPERIENZA
+// ══════════════════════════════════════════════════════════════
+// Somma delle righe di `xp_log` per utente. Prima era un elenco di sei nomi
+// con i punti scritti nel codice: completare una lezione o vincere una sfida
+// non spostava la classifica di un punto, e il proprio nome restava inchiodato
+// al quinto posto. Un numero mostrato dev'essere calcolato, non dichiarato —
+// e una classifica finta e' il caso in cui si nota prima.
+//
+// Compaiono tutti gli utenti noti, anche a zero punti: una classifica che
+// nasconde chi non ha ancora fatto niente non e' una classifica, e chi entra
+// per la prima volta non si troverebbe.
+function classificaXP(){
+  var somme={};
+  try{
+    dbAll('SELECT user, COALESCE(SUM(amount),0) tot FROM xp_log GROUP BY user').forEach(function(r){
+      if(r.user)somme[r.user]=r.tot;
+    });
+  }catch(e){}
+  (typeof UTENTI!=='undefined'?UTENTI:[]).forEach(function(u){
+    var n=nomeDellAccount(u.email,u.name);
+    if(somme[n]===undefined)somme[n]=0;
+  });
+  return Object.keys(somme)
+    .map(function(n){ return {nome:n, xp:somme[n]} })
+    .sort(function(a,b){ return b.xp-a.xp || a.nome.localeCompare(b.nome) });
+}
+
 function renderAccountDisponibili(){
   var box=document.getElementById('accountDemo');
   if(!box)return;

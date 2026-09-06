@@ -1,8 +1,17 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --ac:#10B981;--ac-d:#059669;--ac-l:#D1FAE5;--ac-ul:#ECFDF5;
-  --ac2:#6366F1;--ac2-d:#4F46E5;--ac2-l:#E0E7FF;
+  /* Colore del marchio: blu, con il viola come secondo. Era verde, che nel
+     nostro settore si legge come «riuscito» piu' che come «innovazione», e
+     infatti finiva per confondersi con lo stato di successo dei flussi.
+     Il verde resta, ma SOLO come semantica: `--ok` sotto. Separarli era
+     necessario prima di cambiare la tinta, altrimenti «Pubblicato» e
+     «Esecuzione riuscita» sarebbero diventati blu insieme ai pulsanti. */
+  --ac:#2563EB;--ac-d:#1D4ED8;--ac-l:#DBEAFE;--ac-ul:#EFF6FF;
+  --ac2:#7C3AED;--ac2-d:#6D28D9;--ac2-l:#EDE9FE;
   --ac3:#F59E0B;--ac3-l:#FEF3C7;
+  /* Semantica: riuscito, fallito, in attesa. Non seguono il marchio, perche'
+     un esito non cambia significato quando cambia la grafica. */
+  --ok:#10B981;--ok-d:#059669;--ok-l:#D1FAE5;--ok-ul:#ECFDF5;
   --bg:#F8FAFC;--bg2:#F1F5F9;--bg3:#E2E8F0;
   --card:#FFFFFF;--card-h:#F8FAFC;
   --tx:#0F172A;--tx2:#334155;--tx3:#64748B;--tx4:#94A3B8;
@@ -23,7 +32,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 .logo-area{padding:20px;border-bottom:1px solid rgba(255,255,255,.08)}
 .logo-row{display:flex;align-items:center;gap:12px;cursor:pointer;border-radius:10px;padding:4px;margin:-4px;transition:background .15s}
 .logo-row:hover{background:rgba(255,255,255,.06)}
-.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,#10B981,#059669);border-radius:10px;display:grid;place-items:center;font-size:18px;box-shadow:0 4px 12px rgba(16,185,129,.4)}
+.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,#2563EB,#7C3AED);border-radius:10px;display:grid;place-items:center;font-size:18px;box-shadow:0 4px 12px rgba(37,99,235,.4)}
 .logo-text{color:#F8FAFC;font-size:16px;font-weight:800;letter-spacing:-.5px}
 .logo-sub{color:rgba(148,163,184,.7);font-size:10px;font-weight:500;letter-spacing:.5px;margin-top:2px}
 .sidebar nav{flex:1;padding:8px 12px;overflow-y:auto}
@@ -31,9 +40,9 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 .ni{display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:13px;cursor:pointer;color:rgba(203,213,225,.7);border-radius:8px;transition:var(--trans);user-select:none;margin:1px 0;font-weight:500}
 .ni:hover{color:#F1F5F9;background:rgba(255,255,255,.06)}
 .ni.active{color:#fff;background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(16,185,129,.08));box-shadow:inset 0 0 0 1px rgba(16,185,129,.3)}
-.ni.active .ni-ic{color:#10B981}
+.ni.active .ni-ic{color:#60A5FA}
 .ni-ic{font-size:15px;width:20px;text-align:center;flex-shrink:0}
-.ni-badge{margin-left:auto;background:rgba(16,185,129,.15);color:#10B981;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+.ni-badge{margin-left:auto;background:rgba(96,165,250,.18);color:#93C5FD;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
 .sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,.06)}
 .sf-row{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;padding:8px;border-radius:8px;transition:var(--trans)}
 .sf-row:hover{background:rgba(255,255,255,.06)}
@@ -54,7 +63,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 .tb-search input::placeholder{color:var(--tx4)}
 .tb-btn{height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--bo);background:var(--card);font-size:12px;font-weight:600;cursor:pointer;transition:var(--trans);display:inline-flex;align-items:center;gap:6px;color:var(--tx2);font-family:inherit}
 .tb-btn:hover{background:var(--bg2);border-color:var(--bo2)}
-.tb-btn.primary{background:linear-gradient(135deg,#10B981,#059669);color:#fff;border:none;box-shadow:0 2px 8px rgba(16,185,129,.3)}
+.tb-btn.primary{background:linear-gradient(135deg,#2563EB,#4F46E5);color:#fff;border:none;box-shadow:0 2px 8px rgba(37,99,235,.3)}
 .tb-btn.primary:hover{box-shadow:0 4px 12px rgba(16,185,129,.4);transform:translateY(-1px)}
 .tb-icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--bo);background:var(--card);display:grid;place-items:center;cursor:pointer;transition:var(--trans);font-size:16px;position:relative}
 .tb-icon-btn:hover{background:var(--bg2)}
@@ -147,7 +156,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 .sidebar.compatta .ni-badge{
   position:absolute;top:7px;right:7px;transform:none;
   min-width:9px;width:9px;height:9px;padding:0;font-size:0;line-height:0;
-  border-radius:50%;background:#10B981;
+  border-radius:50%;background:#60A5FA;
   box-shadow:0 0 0 2px #16233c}
 
 .sidebar.compatta .sidebar-footer{padding:12px 0}

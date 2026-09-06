@@ -249,7 +249,7 @@ function showComposeError(msg){
       (ccLastRequest?'<button class="chat-builder-btn" style="flex:1;height:30px;justify-content:center" onclick="retryCompose()">Riprova</button>':'')+
       '<button class="chat-builder-btn" style="flex:0 0 90px;height:30px;justify-content:center;background:var(--bg2);color:var(--tx2)" onclick="cancelPendingPlan()">Chiudi</button>'+
     '</div>';
-  box.style.display='block';
+  ccApriRiquadro();
 }
 
 // Il modello impiega da qualche secondo a mezzo minuto. Senza un riscontro
@@ -267,7 +267,7 @@ function showComposeWaiting(isModify){
         '<div style="font-size:10px;color:var(--tx4);margin-top:4px">Nulla viene applicato finché non confermi.</div>'+
       '</div>'+
     '</div>';
-  box.style.display='block';
+  ccApriRiquadro();
 }
 
 function retryCompose(){
@@ -350,17 +350,75 @@ function previewChanges(plan){
       'Annullabile con Ctrl+Z.</div>';
   }
   box.innerHTML=
-    '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:4px">Ho interpretato così</div>'+
-    '<div style="font-size:11.5px;color:var(--tx2);line-height:1.45;margin-bottom:10px;font-style:italic">'+escHtml(plan.interpretation||'(nessuna interpretazione dichiarata dal modello)')+'</div>'+
-    '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:2px">'+(plan.mode==='create'?'Nodi da creare':'Modifiche proposte')+'</div>'+
-    body+
-    '<div style="display:flex;gap:8px;margin-top:12px">'+
-      '<button class="chat-builder-btn" style="flex:1;height:30px;justify-content:center" onclick="applyPendingPlan()">Applica</button>'+
-      '<button class="chat-builder-btn" style="flex:0 0 90px;height:30px;justify-content:center;background:var(--bg2);color:var(--tx2)" onclick="cancelPendingPlan()">Annulla</button>'+
+    // Una testata che dice chiaramente che c'e' una decisione da prendere.
+    // Senza, la proposta si confondeva con il resto della fascia della chat e
+    // passava inosservata: si premeva Genera e sembrava non fosse successo nulla.
+    '<div class="cp-testa">'+
+      '<span style="font-size:15px">✨</span>'+
+      '<span style="flex:1;font-size:12.5px;font-weight:800">'+
+        (plan.mode==='create'?'Proposta: nuovo flusso':'Proposta: modifica al flusso')+'</span>'+
+      '<span class="badge badge-b" style="font-size:9.5px">da confermare</span>'+
+      '<span class="modal-close" title="Annulla" style="cursor:pointer;font-size:15px;line-height:1" onclick="cancelPendingPlan()">✕</span>'+
+    '</div>'+
+    '<div class="cp-corpo">'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:4px">Ho interpretato così</div>'+
+      '<div style="font-size:11.5px;color:var(--tx2);line-height:1.45;margin-bottom:10px;font-style:italic">'+escHtml(plan.interpretation||'(nessuna interpretazione dichiarata dal modello)')+'</div>'+
+      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:2px">'+(plan.mode==='create'?'Nodi da creare':'Modifiche proposte')+'</div>'+
+      body+
+    '</div>'+
+    '<div class="cp-piede">'+
+      '<button class="chat-builder-btn" style="flex:1;height:32px;justify-content:center" onclick="applyPendingPlan()">Applica</button>'+
+      '<button class="chat-builder-btn" style="flex:0 0 96px;height:32px;justify-content:center;background:var(--bg2);color:var(--tx2)" onclick="cancelPendingPlan()">Annulla</button>'+
     '</div>';
-  box.style.display='block';
+  box.style.display='flex';
+  ccPosizionaAnteprima();
 }
 
+// Posiziona il riquadro sotto la barra della chat. E' `fixed`, quindi va
+// collocato a mano: in cambio nessun contenitore con `overflow` puo' tagliarlo,
+// ed era esattamente il problema — la fascia della chat scorre e la proposta
+// finiva sotto il bordo.
+// Apre il riquadro sovrapposto. Il pannello e' `flex` con padding zero e tre
+// fasce (testa, corpo, piede); i messaggi piu' semplici — errore, attesa,
+// aiuto — non le costruiscono, quindi qui vengono avvolti nel corpo, cosi'
+// mantengono i margini senza dover toccare ogni punto che li produce.
+function ccApriRiquadro(){
+  var box=document.getElementById('composePreview');
+  if(!box)return;
+  if(!box.querySelector('.cp-testa') && !box.querySelector('.cp-corpo')){
+    box.innerHTML='<div class="cp-corpo">'+box.innerHTML+'</div>';
+  }
+  box.style.display='flex';
+  ccPosizionaAnteprima();
+}
+
+function ccPosizionaAnteprima(){
+  var box=document.getElementById('composePreview');
+  if(!box||box.style.display==='none')return;
+  var barra=document.querySelector('.builder-header .chat-builder-bar')||
+            document.querySelector('.chat-builder-bar');
+  var l,t;
+  if(barra){
+    var r=barra.getBoundingClientRect();
+    l=r.left+r.width/2-box.offsetWidth/2;
+    t=r.bottom+10;
+  }else{
+    l=(window.innerWidth-box.offsetWidth)/2;
+    t=90;
+  }
+  // Non deve mai uscire dallo schermo: su finestre basse si alza, su finestre
+  // strette si accosta al bordo invece di sparire a meta'.
+  if(l<10)l=10;
+  if(l+box.offsetWidth>window.innerWidth-10)l=window.innerWidth-box.offsetWidth-10;
+  if(t+box.offsetHeight>window.innerHeight-10)t=Math.max(10,window.innerHeight-box.offsetHeight-10);
+  box.style.left=Math.round(l)+'px';
+  box.style.top=Math.round(t)+'px';
+}
+
+// La posizione dipende dalla barra della chat, che si sposta quando la finestra
+// cambia o quando si ridimensiona il pannello: senza questo il riquadro
+// resterebbe dove si trovava al momento della comparsa.
+window.addEventListener('resize',ccPosizionaAnteprima);
 function cancelPendingPlan(){
   ccPendingPlan=null;
   var box=document.getElementById('composePreview');
@@ -484,7 +542,7 @@ function ccFinalize(toast,verbo){
 function ccMostraResidui(errori){
   var box=document.getElementById('composePreview');
   if(!box)return;
-  box.style.display='block';
+  ccApriRiquadro();
   box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:#B45309">'+
       '⚠️ Modifica applicata, ma il flusso non è ancora eseguibile</div>'+
     '<div style="max-height:160px;overflow:auto">'+errori.slice(0,6).map(function(e){

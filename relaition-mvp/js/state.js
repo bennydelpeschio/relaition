@@ -15,6 +15,9 @@ var pageLabels={
 
 
 var mktFilter='Tutti';
+// Testo cercato dalla barra in alto: e' un filtro come la categoria, non un
+// avviso passeggero, quindi vive nello stato e non in una variabile locale.
+var mktRicerca='';
 
 var B={nodes:[],edges:[],nextId:1,selId:-1,selIds:[],marquee:null,zoom:1,panX:0,panY:0,drag:null,conn:null,init:false,dbAgentId:null,context:''};
 

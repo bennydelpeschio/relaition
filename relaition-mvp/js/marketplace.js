@@ -147,6 +147,32 @@ function renderMkt(){
   // grid
   var allAgents=AGENTS.concat(getPublishedAgents());
   var list=mktFilter==='Tutti'?allAgents:allAgents.filter(function(a){return a.cat===mktFilter});
+  // Il testo cercato e' un secondo filtro, che si combina con la categoria.
+  // Prima si pretende che ci siano TUTTE le parole; se cosi' non si trova
+  // niente si ripiega su quelle che ci sono, ordinate per quante ne
+  // corrispondono. Chi cerca «estrazione fatture» e ottiene zero perche' la
+  // scheda dice «estrae» conclude che la ricerca sia rotta: meglio un elenco
+  // parziale, dichiarato come tale, che una pagina vuota.
+  window.__ricercaParziale=false;
+  if(mktRicerca){
+    var stretto=list.filter(function(a){return mktCorrisponde(a,mktRicerca)});
+    var parole=mktRicerca.trim().split(/\s+/).filter(Boolean);
+    if(stretto.length||parole.length<2){
+      list=stretto;
+    }else{
+      var punteggio={};
+      var largo=list.filter(function(a){
+        var n=parole.filter(function(p){ return mktCorrisponde(a,p) }).length;
+        if(n)punteggio[a.id]=n;
+        return n>0;
+      });
+      if(largo.length){
+        window.__ricercaParziale=true;
+        largo.sort(function(a,b){ return (punteggio[b.id]||0)-(punteggio[a.id]||0) });
+      }
+      list=largo;
+    }
+  }
   list=list.slice().sort(function(a,b){
     // L'ordinamento segue la valutazione MOSTRATA: ordinare per `rating` di
     // catalogo mentre le schede espongono la media delle recensioni darebbe un
@@ -156,7 +182,28 @@ function renderMkt(){
     if(mktSort==='name')return a.name.localeCompare(b.name);
     return 0;
   });
-  document.getElementById('mkt-grid').innerHTML=list.map(function(a){
+  // Cosa si sta cercando resta scritto SOPRA i risultati, con quanti ne ha
+  // trovati e un modo per togliere il filtro. Senza, chi non ricorda di aver
+  // scritto qualcosa nella barra vede un catalogo dimezzato e crede sia rotto.
+  var barra=document.getElementById('mkt-ricerca');
+  if(!barra){
+    barra=document.createElement('div');
+    barra.id='mkt-ricerca';
+    var griglia=document.getElementById('mkt-grid');
+    griglia.parentNode.insertBefore(barra,griglia);
+  }
+  barra.innerHTML=mktRicerca
+    ? '<div style="display:flex;align-items:center;gap:10px;background:var(--ac-ul);border:1px solid var(--ac);'+
+      'border-radius:10px;padding:9px 12px;margin-bottom:14px">'+
+      '<span style="font-size:13px">🔍</span>'+
+      '<span style="flex:1;font-size:12.5px">Risultati per <strong>'+escHtml(mktRicerca)+'</strong>: '+
+        list.length+' agent'+(list.length===1?'e':'i')+(window.__ricercaParziale?' che contengono almeno una delle parole':'')+
+        (mktFilter!=='Tutti'?' nella categoria '+escHtml(mktFilter):'')+'</span>'+
+      '<button class="tb-btn" style="height:28px;font-size:11px" onclick="mktAzzeraRicerca()">Togli il filtro</button>'+
+      '</div>'
+    : '';
+
+  document.getElementById('mkt-grid').innerHTML=list.length?list.map(function(a){
     return '<div class="agent-card" onclick="openAgentDetail('+a.id+')">'+
       '<div class="agent-top">'+
         '<div class="agent-icon" style="background:'+a.color+'15;color:'+a.color+'">'+a.icon+'</div>'+
@@ -172,10 +219,29 @@ function renderMkt(){
         '<span class="agent-price">'+a.price+'</span>'+
       '</div>'+
     '</div>';
-  }).join('');
+  }).join('')
+  // Una griglia vuota senza spiegazione sembra un guasto: si dice cosa non ha
+  // trovato e si offre la via d'uscita, invece di lasciare un rettangolo bianco.
+  : '<div class="card" style="grid-column:1/-1;padding:26px;text-align:center">'+
+      '<div style="font-size:26px;margin-bottom:8px">🔍</div>'+
+      '<div style="font-size:13px;font-weight:600;margin-bottom:4px">Nessun agente per «'+escHtml(mktRicerca)+'»'+
+        (mktFilter!=='Tutti'?' nella categoria '+escHtml(mktFilter):'')+'</div>'+
+      '<div style="font-size:12px;color:var(--tx3);margin-bottom:14px">La ricerca guarda nome, descrizione, categoria, autore ed etichette.</div>'+
+      '<button class="tb-btn primary" onclick="mktAzzeraRicerca()">Mostra tutto il catalogo</button>'+
+    '</div>';
 }
 
 function setMktFilter(f){mktFilter=f;renderMkt()}
+
+// Toglie il filtro di ricerca svuotando anche la barra in alto: azzerare solo
+// lo stato lasciava il testo scritto nel campo, e alla ricerca successiva
+// sembrava che il filtro fosse ancora attivo.
+function mktAzzeraRicerca(){
+  mktRicerca='';
+  var campo=document.getElementById('globalSearch');
+  if(campo)campo.value='';
+  renderMkt();
+}
 
 
 function openAgentDetail(id){

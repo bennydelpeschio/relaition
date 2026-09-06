@@ -762,7 +762,28 @@ function bAggiornaEtichettaZoom(){
   if(zl)zl.textContent=Math.round(B.zoom*100)+'%';
 }
 
+// Un pannello che scorre dentro il canvas si prende la rotella. Il registro
+// esecuzione vive dentro `canvasArea`, quindi l'evento risaliva fin qui: chi
+// aveva il puntatore sul registro e girava la rotella per leggere le voci piu'
+// vecchie si vedeva ingrandire il canvas sotto, e il registro fermo. Prima di
+// zoomare si guarda da dove arriva l'evento: se sta dentro un contenitore che
+// puo' scorrere davvero (contenuto piu' alto dello spazio disponibile), la
+// rotella e' sua e noi non facciamo niente, nemmeno preventDefault, cosi' il
+// browser la fa scorrere come su qualunque altra pagina.
+function bRotellaAppartieneAUnPannello(e){
+  var ca=document.getElementById('canvasArea');
+  var n=e.target;
+  while(n&&n!==ca&&n.nodeType===1){
+    var st=window.getComputedStyle(n);
+    var scorre=/(auto|scroll)/.test(st.overflowY);
+    if(scorre&&n.scrollHeight>n.clientHeight+1)return true;
+    n=n.parentNode;
+  }
+  return false;
+}
+
 function onCanvasWheel(e){
+  if(bRotellaAppartieneAUnPannello(e))return;
   e.preventDefault();
   var ca=document.getElementById('canvasArea');
   var r=ca?ca.getBoundingClientRect():{left:0,top:0};
@@ -940,7 +961,24 @@ function renderProps(nid){
         '</div></div>';
       return;
     }
-    body.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--tx4)"><div style="font-size:32px;margin-bottom:8px">👈</div><div style="font-size:13px;font-weight:600">Seleziona un nodo</div><div style="font-size:11px;margin-top:4px">Clicca su un nodo, oppure trascina sul canvas vuoto per selezionarne più di uno</div></div>';
+    // Il pannello vuoto e' il momento in cui si sta guardando la tela senza
+    // sapere cosa fare: e' il posto giusto per dire come ci si muove. Lo
+    // spostamento della vista c'era gia' (Ctrl, Shift o tasto centrale) ma non
+    // era scritto da nessuna parte, e nelle prove risultava «frustrante» —
+    // una funzione che non si scopre, per chi la usa, non esiste.
+    body.innerHTML='<div style="text-align:center;padding:34px 20px;color:var(--tx4)">'+
+      '<div style="font-size:32px;margin-bottom:8px">👈</div>'+
+      '<div style="font-size:13px;font-weight:600">Seleziona un nodo</div>'+
+      '<div style="font-size:11px;margin-top:4px">Clicca su un nodo, oppure trascina sul canvas vuoto per selezionarne più di uno</div>'+
+      '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--bg2);text-align:left">'+
+        '<div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px">Muoversi sulla tela</div>'+
+        '<div style="font-size:11px;line-height:1.85">'+
+          '<strong>Ctrl</strong> o <strong>Shift</strong> + trascina: sposta la vista<br>'+
+          '<strong>Tasto centrale</strong> + trascina: sposta la vista<br>'+
+          '<strong>Rotella</strong>: ingrandisci e riduci<br>'+
+          '<strong>⛶</strong> in basso a destra: inquadra tutto il flusso'+
+        '</div>'+
+      '</div></div>';
     return;
   }
   var n=B.nodes.find(function(x){return x.id===nid});if(!n)return;
@@ -1215,10 +1253,22 @@ function updConfig(nid,key,val){
   if(!n.config)n.config={};
   n.config[key]=val;
   if(B._invalidIds)delete B._invalidIds[nid];
+  // Cambiando fornitore su un nodo AI, il modello scelto per il fornitore
+  // precedente non ha piu' senso: «GPT-4o mini» non esiste in casa Anthropic.
+  // Si azzera, cosi' subentra il predefinito del nuovo fornitore invece di
+  // restare in configurazione un identificativo di un altro vendor. In
+  // esecuzione non cambiava nulla (modelloEffettivo() ricadeva gia' sul
+  // predefinito), ma la configurazione salvata diceva una cosa falsa.
+  if(n.type==='ai'&&key==='model')delete n.config.modelId;
   b_render();
   // Se altri campi dipendono da questo, il pannello va ridisegnato: è ciò che
   // fa comparire i parametri giusti e sparire quelli che non c'entrano più.
-  if(campoDaCuiDipendonoAltri(n,key))renderProps(nid);
+  //
+  // Il pannello del nodo AI è scritto a mano e non ha un elenco `fields`, per
+  // cui la regola generica non poteva vederne le dipendenze: la tendina dei
+  // modelli restava quella del fornitore precedente, e chi passava a Claude o
+  // a Gemini continuava a vedere i modelli OpenAI. Il caso va nominato.
+  if(campoDaCuiDipendonoAltri(n,key)||(n.type==='ai'&&key==='model'))renderProps(nid);
 }
 
 // Vero se qualche campo dello stesso nodo cambia in funzione di `chiave`.
@@ -1400,6 +1450,15 @@ function impostaAltezzaRegistro(px){
   l.classList.toggle('collapsed',v<=LOG_ALTEZZE.ridotto+2);
   l.classList.remove('espanso');
   B.logH=v;                    // stato: è questo a decidere il prossimo comando
+  // I comandi dello zoom stavano a `bottom:16px`, cioe' SOPRA il registro, che
+  // parte da `bottom:0`: coprivano sempre le ultime due righe, proprio quelle
+  // che si e' appena finito di leggere quando un flusso termina con un errore.
+  // Qui si pubblica l'altezza del registro come variabile CSS, e i comandi si
+  // appoggiano sopra al pannello invece che sopra al testo. Passa da questa
+  // funzione ogni cambio di altezza — pulsanti, doppio clic e trascinamento
+  // della maniglia — quindi non serve un secondo punto di aggiornamento.
+  var ca=document.getElementById('canvasArea');
+  if(ca)ca.style.setProperty('--altezza-registro',v+'px');
   return v;
 }
 
@@ -1951,7 +2010,14 @@ async function checkScheduledAgents(){
 // Esecuzione automatica (scheduler, eventi, "Esegui ora" da elenco).
 // Stesso motore dell'esecuzione interattiva, senza canvas: cambia solo
 // l'ascoltatore degli eventi, che qui non deve disegnare nulla.
-async function runAgentHeadless(row){
+// `modo` distingue l'avvio automatico dello scheduler da quello premuto a mano
+// dalla pagina «I miei agenti». Prima era fisso a 'scheduled': una corsa
+// lanciata da una persona finiva fra le PIANIFICATE, e il Log Esecuzioni —
+// che separa le due proprio per rispondere a «e' partito da solo o l'ha
+// lanciato qualcuno?» — dava la risposta sbagliata. Anche l'attribuzione
+// cambia: una pianificata appartiene all'autore dell'agente, una manuale a
+// chi l'ha premuta.
+async function runAgentHeadless(row, modo){
   var nodes,edges;
   try{nodes=JSON.parse(row.nodes_json);edges=JSON.parse(row.edges_json)}catch(e){return}
   if(!nodes||!nodes.length)return;
@@ -1973,8 +2039,9 @@ async function runAgentHeadless(row){
 
   // Attribuita all'autore dell'agente: è il suo flusso che è partito, non
   // quello di chi si trovava connesso quando lo scheduler è scattato.
-  var execRowId=recordExecution(row.name,res.stepsCount,stato,res.duration||(Date.now()-_t0),'scheduled',
-    res.pipeline?String(res.pipeline).substring(0,2000):'',res.steps,res.trace,row.author);
+  var manuale=(modo==='manual');
+  var execRowId=recordExecution(row.name,res.stepsCount,stato,res.duration||(Date.now()-_t0),manuale?'manual':'scheduled',
+    res.pipeline?String(res.pipeline).substring(0,2000):'',res.steps,res.trace,manuale?utenteCorrente():row.author);
   if(execRowId&&typeof persistExecutionEvents==='function')persistExecutionEvents(execRowId,res.ctx);
 
   dbRun('UPDATE agents SET last_run_at=? WHERE id=?',[new Date().toISOString(),row.id]);
@@ -3127,7 +3194,10 @@ var TRIGGER_CONFIGS={
 
 
 var LOGIC_CONFIGS={
-  'Loop':{fields:[{k:'maxiter',l:'Max iterazioni (guardrail)',ph:'100'},{k:'batch',l:'Elementi per batch',ph:'10'},{k:'onitemerror',l:'Se un elemento fallisce',ph:'Salta e continua',opts:['Salta e continua','Ferma il loop']}]},
+  // Il Loop ripercorre davvero i nodi a valle.  e' il campo prodotto a
+  // monte che contiene l'elenco su cui ciclare: se c'e', il numero di giri lo
+  // decidono gli elementi trovati; altrimenti si usa il numero dichiarato.
+  'Loop':{fields:[{k:'field',l:'Campo con la lista su cui ciclare',ph:'es. documenti'},{k:'iterations',l:'Oppure quante volte ripetere',ph:'3'},{k:'maxiter',l:'Tetto di sicurezza',ph:'25'},{k:'onitemerror',l:'Se un elemento fallisce',ph:'Salta e continua',opts:['Salta e continua','Ferma il loop']}]},
   'Delay':{fields:[{k:'seconds',l:'Attesa',ph:'30'},{k:'unit',l:'Unità',ph:'Secondi',opts:['Secondi','Minuti','Ore']}]},
   'Retry':{fields:[{k:'attempts',l:'Tentativi max',ph:'3'},{k:'backoff',l:'Backoff (sec, raddoppia)',ph:'2'},{k:'strategy',l:'Strategia backoff',ph:'Esponenziale',opts:['Esponenziale','Fisso','Lineare']}]},
   'Switch':{fields:[{k:'cases',l:'Casi (uno per riga: valore → ramo)',ph:'billing → Finance\ntechnical → IT\naltro → Support',ta:true},{k:'default',l:'Ramo di default',ph:'Support'}]},

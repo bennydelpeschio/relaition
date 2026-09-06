@@ -695,7 +695,7 @@ function renderMonitoraggio(){
     '<div class="grid-2">'+
       govRiquadro('Agenti più eseguiti','Clicca per vedere le esecuzioni di ciascuno',
         govBarreOrizzontali(s.classificaAgenti.map(function(a){
-          return {l:a.agent||'—',n:a.c,k:a.agent,nota:a.ko?a.ko+' ko':'',c:a.ko?'#F59E0B':'var(--ac)',
+          return {l:a.agent||'—',n:a.c,k:a.agent,nota:a.ko?a.ko+' ko':'',c:a.ko?'#F59E0B':'var(--ok)',
                   tip:'<strong>'+escHtml(a.agent||'—')+'</strong><br>'+a.c+' esecuzioni'+(a.ko?'<br><span style="color:#FCA5A5">'+a.ko+' fallite</span>':'')};
         }),'govDettaglioAgente'))+
       govRiquadro('Modalità di esecuzione','Da dove partono davvero i flussi',

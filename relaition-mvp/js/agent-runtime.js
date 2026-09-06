@@ -760,6 +760,104 @@ async function rtRunSubAgent(ctx, node){
 // ── Grafo: dipendenze e ondate (B4) ──────────────────────────────────────
 
 // Nodi pronti = tutte le dipendenze soddisfatte (completate o saltate).
+// ══════════════════════════════════════════════════════════════
+// CICLI
+// ══════════════════════════════════════════════════════════════
+// Tetto assoluto alle iterazioni di un Loop. Un ciclo senza limite dentro una
+// pagina web blocca il browser, e durante una dimostrazione dal vivo non si
+// recupera piu': meglio un limite dichiarato nel registro che una schermata
+// morta. Venticinque bastano a mostrare che il meccanismo e' reale e non
+// bastano a piantare nulla.
+var LOOP_TETTO = 25;
+
+// Tutti i nodi raggiungibili da `id` seguendo le frecce in avanti. Sono quelli
+// che un Loop deve riaprire per ripercorrerli. Il nodo di partenza resta
+// escluso: se lo si azzera insieme agli altri si perde il conteggio del giro.
+function rtNodiAValle(ctx, id){
+  var visti = {}, coda = [id], out = [];
+  while(coda.length){
+    var corrente = coda.shift();
+    ctx.edges.forEach(function(e){
+      if(e.from !== corrente) return;
+      if(visti[e.to]) return;
+      visti[e.to] = true;
+      out.push(e.to);
+      coda.push(e.to);
+    });
+  }
+  return out;
+}
+
+// Valore di un campo prodotto dai nodi a monte, cercato nella pipeline
+// corrente e poi negli output gia' raccolti. Serve al Loop per sapere QUANTI
+// elementi ci sono davvero, invece di ripetere un numero fisso.
+// Valore di un campo prodotto dai nodi a monte. Serve al Loop per sapere QUANTI
+// elementi ci sono davvero, invece di ripetere un numero fisso.
+//
+// La pipeline e' una STRINGA, non un oggetto: cercare le chiavi dentro di essa
+// come se fosse una struttura non trovava mai niente, e il ciclo ricadeva in
+// silenzio sul numero dichiarato. Quando il contenuto e' JSON — ed e' il caso
+// dei nodi con output vincolato, cioe' proprio quelli che producono elenchi —
+// va prima interpretato.
+function rtInterpreta(v){
+  if(v == null) return null;
+  if(typeof v === 'object') return v;
+  var t = String(v).trim();
+  if(!t || (t.charAt(0) !== '{' && t.charAt(0) !== '[')) return null;
+  try{ return JSON.parse(t) }catch(e){ return null }
+}
+
+function rtLeggiCampo(ctx, campo){
+  var chiave = String(campo||'').trim();
+  if(!chiave) return null;
+  var cerca = function(o){
+    if(!o || typeof o !== 'object') return undefined;
+    if(o[chiave] !== undefined) return o[chiave];
+    for(var k in o){
+      if(o[k] && typeof o[k] === 'object'){
+        var v = cerca(o[k]);
+        if(v !== undefined) return v;
+      }
+    }
+    return undefined;
+  };
+  var v = cerca(rtInterpreta(ctx.pipeline));
+  if(v !== undefined) return v;
+  var ids = Object.keys(ctx.outputs || {});
+  for(var i = ids.length - 1; i >= 0; i--){
+    v = cerca(rtInterpreta(ctx.outputs[ids[i]]));
+    if(v !== undefined) return v;
+  }
+  return null;
+}
+
+// Riapre i nodi a valle di un ciclo che ha ancora giri da fare. Viene chiamata
+// SOLO quando l'ondata si esaurisce, cioe' quando tutto quello che poteva
+// girare ha girato: e' questo che garantisce che ogni iterazione sia completa
+// prima che cominci la successiva. Restituisce true se ha riaperto qualcosa,
+// e in quel caso il motore fa un altro giro invece di concludere.
+function rtRiarmaCicli(ctx, stato){
+  if(!ctx.cicli) return false;
+  var ids = Object.keys(ctx.cicli);
+  for(var k=0;k<ids.length;k++){
+    var id = parseInt(ids[k],10);
+    var g = ctx.cicli[id];
+    if(g.i >= g.tot) continue;
+    // Si riapre solo se i nodi a valle hanno finito: altrimenti si
+    // sovrapporrebbero due iterazioni sugli stessi nodi.
+    var inSospeso = g.valle.some(function(n){
+      return stato[n] === 'idle' || stato[n] === 'running' || stato[n] === 'waiting';
+    });
+    if(inSospeso) continue;
+    g.i++;
+    g.valle.forEach(function(n){ stato[n] = 'idle' });
+    var nodo = ctx.nodes.filter(function(n){ return n.id === id })[0];
+    if(nodo) rtPush(ctx, nodo, '🔄 Iterazione '+g.i+' di '+g.tot+' ('+g.origine+')', 'OK');
+    return true;
+  }
+  return false;
+}
+
 function rtReadyNodes(ctx, stato){
   return ctx.nodes.filter(function(n){
     if(stato[n.id] !== 'idle') return false;
@@ -822,8 +920,16 @@ async function executeGraph(spec){
   // il sistema esterno in uno stato che la traccia non saprebbe descrivere.
   RUNNING_CTX[ctx.execId] = ctx;
 
+  // Il tetto alle ondate cresce con i cicli presenti: un Loop ripercorre i
+  // nodi a valle, quindi un flusso con un ciclo ne consuma molte piu' di uno
+  // lineare. Con il vecchio limite fisso un ciclo lungo veniva troncato in
+  // silenzio a meta', ed e' il tipo di bugia peggiore — il registro diceva
+  // «concluso» avendo saltato meta' degli elementi.
+  var cicli = ctx.nodes.filter(function(n){ return n.name==='Loop' }).length;
+  var maxOndate = 200 + cicli * LOOP_TETTO * Math.max(1, ctx.nodes.length);
+
   var eseguiti = 0, guardia = 0;
-  while(guardia++ < 200){
+  while(guardia++ < maxOndate){
     if(ctx.abort){
       rtEmit(ctx, 'execution:aborted', null, { eseguiti: eseguiti, richiestaDa: 'utente' });
       ctx.steps.push({ time: rtNow(), type:'SISTEMA', msg:'⏹️ Esecuzione interrotta su richiesta, '+eseguiti+' nodi completati, i restanti non sono stati avviati', status:'WARN' });
@@ -831,7 +937,13 @@ async function executeGraph(spec){
       return rtFinalize(ctx, 'aborted', eseguiti);
     }
     var pronti = rtReadyNodes(ctx, stato);
-    if(!pronti.length) break;
+    if(!pronti.length){
+      // Niente da eseguire: prima di concludere si guarda se un ciclo ha
+      // ancora giri da fare. E' il punto in cui una iterazione e' certamente
+      // finita, quindi l'unico in cui e' corretto aprirne un'altra.
+      if(rtRiarmaCicli(ctx, stato)) continue;
+      break;
+    }
 
     // Un nodo marcato sequenziale non parte insieme agli altri: l'ondata si
     // riduce a lui solo, per i casi in cui l'ordine conta davvero.
@@ -1067,8 +1179,34 @@ async function rtRunLogicNode(ctx, node, stato){
     return;
   }
   if(node.name === 'Loop'){
-    var mi = parseInt(cfg.maxiter||100,10);
-    rtPush(ctx, node, '🔄 Loop: iterazioni entro il guardrail di '+mi+' (batch '+(cfg.batch||10)+')', 'OK'); return;
+    // Il nodo Loop non ripete nulla da solo: DICHIARA quanti giri servono.
+    // A ripetere ci pensa il motore quando l'ondata si esaurisce (vedi
+    // `rtRiarmaCicli`), ed e' l'unico ordine che funziona: azzerando qui i
+    // nodi a valle insieme a se stesso, il ciclo ripartiva prima che quei
+    // nodi girassero — quattro iterazioni tutte vuote, con il registro che
+    // dichiarava un lavoro mai fatto.
+    ctx.cicli = ctx.cicli || {};
+    if(!ctx.cicli[node.id]){
+      var elenco = null;
+      if(cfg.field){
+        var v = rtLeggiCampo(ctx, cfg.field);
+        if(Array.isArray(v)) elenco = v;
+        else if(v != null && String(v).indexOf('\n')>=0) elenco = String(v).split('\n').filter(Boolean);
+      }
+      var dichiarate = parseInt(cfg.iterations||cfg.batch||3,10);
+      var tot = elenco ? elenco.length : (isNaN(dichiarate)?3:dichiarate);
+      var origine = elenco ? ('elementi trovati in «'+cfg.field+'»') : 'numero dichiarato';
+      var tetto = Math.min(parseInt(cfg.maxiter||LOOP_TETTO,10)||LOOP_TETTO, LOOP_TETTO);
+      if(tot > tetto){
+        rtPush(ctx, node, '🔄 Loop: '+tot+' elementi, limitati a '+tetto+' dal tetto di sicurezza', 'WARN');
+        tot = tetto;
+      }
+      if(tot < 1) tot = 1;
+      ctx.cicli[node.id] = {i:1, tot:tot, origine:origine, valle:rtNodiAValle(ctx, node.id)};
+      rtPush(ctx, node, '🔄 Loop: '+tot+' iterazion'+(tot===1?'e':'i')+' da fare ('+origine+'), '+
+        ctx.cicli[node.id].valle.length+' nod'+(ctx.cicli[node.id].valle.length===1?'o':'i')+' a valle da ripetere', 'OK');
+    }
+    return;
   }
   if(node.name === 'Retry'){ rtPush(ctx, node, '🔁 Retry: max '+(cfg.attempts||3)+' tentativi, backoff '+(cfg.backoff||2)+'s', 'OK'); return }
   if(node.name === 'Switch'){

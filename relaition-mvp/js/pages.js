@@ -1,18 +1,59 @@
+// ══════════════════════════════════════════════════════════════
+// LIVELLI DI CERTIFICAZIONE
+// ══════════════════════════════════════════════════════════════
+// La pagina prometteva «i 4 livelli di certificazione, da AI Aspirant ad AI
+// Ambassador» senza che nessun percorso fosse associato a un livello: chi
+// leggeva cercava una struttura che non esisteva da nessuna parte. Ora ogni
+// percorso dichiara il proprio livello (`livello:`), le schede lo mostrano, e
+// il livello raggiunto si calcola: e' il piu' alto fra quelli i cui percorsi
+// sono TUTTI completati, non un'etichetta che si assegna da sola.
+var LIVELLI=[
+  {n:1, nome:'AI Aspirant',     ic:'🌱', col:'#10B981', desc:'Sa cosa sono gli agenti e come funzionano'},
+  {n:2, nome:'AI Practitioner', ic:'🔧', col:'#6366F1', desc:'Costruisce e mette in produzione flussi propri'},
+  {n:3, nome:'AI Professional', ic:'💼', col:'#F59E0B', desc:'Porta l\'automazione dentro processi aziendali reali'},
+  {n:4, nome:'AI Ambassador',   ic:'🛡️', col:'#EF4444', desc:'Presidia governo, conformità e diffusione in azienda'}
+];
+
+function livelloInfo(n){ return LIVELLI.filter(function(l){return l.n===n})[0]||LIVELLI[0] }
+
+// Livello raggiunto: il piu' alto per cui TUTTI i percorsi di quel livello e
+// dei precedenti sono completati. Basarsi su una percentuale complessiva
+// avrebbe dato «AI Ambassador» a chi ha finito solo i percorsi facili.
+function livelloRaggiunto(){
+  var raggiunto=0;
+  for(var i=0;i<LIVELLI.length;i++){
+    var n=LIVELLI[i].n;
+    var diQuestoLivello=PATHS.filter(function(p){return (p.livello||1)<=n});
+    if(!diQuestoLivello.length)continue;
+    var tuttiFatti=diQuestoLivello.every(function(p){return p.lessons.every(function(l){return l.done})});
+    if(tuttiFatti)raggiunto=n; else break;
+  }
+  return raggiunto;
+}
+
+// Avanzamento dentro un livello: quante lezioni dei suoi percorsi sono fatte.
+function avanzamentoLivello(n){
+  var perc=PATHS.filter(function(p){return (p.livello||1)===n});
+  var tot=0, fatte=0;
+  perc.forEach(function(p){ p.lessons.forEach(function(l){ tot++; if(l.done)fatte++ }) });
+  return {percorsi:perc.length, lezioni:tot, fatte:fatte, pct:tot?Math.round(fatte/tot*100):0};
+}
+
 var PATHS=[
-  {id:1,name:'Fondamenti AI Agent',icon:'🤖',color:'#10B981',desc:'Impara le basi: cosa sono gli agenti AI, come funzionano i LLM, architetture agentic e primi workflow.',banner:'linear-gradient(135deg,#D1FAE5,#A7F3D0)',
+  {id:1,livello:1,name:'Fondamenti AI Agent',icon:'🤖',color:'#10B981',desc:'Impara le basi: cosa sono gli agenti AI, come funzionano i LLM, architetture agentic e primi workflow.',banner:'linear-gradient(135deg,#D1FAE5,#A7F3D0)',
    lessons:[{t:'Cos\'è un AI Agent',dur:'15 min',type:'Video',done:true},{t:'LLM: come funzionano',dur:'20 min',type:'Articolo',done:true},{t:'Architettura ReAct',dur:'25 min',type:'Video',done:true},{t:'Il tuo primo workflow',dur:'30 min',type:'Lab',done:false},{t:'Prompt engineering basics',dur:'20 min',type:'Quiz',done:false},{t:'Testing e validazione',dur:'15 min',type:'Articolo',done:false}]},
-  {id:2,name:'Builder Avanzato',icon:'🔧',color:'#6366F1',desc:'Padroneggia il builder visuale: nodi condizionali, loop, API esterne, gestione errori e debugging.',banner:'linear-gradient(135deg,#E0E7FF,#C7D2FE)',
+  {id:2,livello:2,name:'Builder Avanzato',icon:'🔧',color:'#6366F1',desc:'Padroneggia il builder visuale: nodi condizionali, loop, API esterne, gestione errori e debugging.',banner:'linear-gradient(135deg,#E0E7FF,#C7D2FE)',
    lessons:[{t:'Nodi condizionali e branching',dur:'20 min',type:'Video',done:true},{t:'Loop e iterazioni',dur:'25 min',type:'Lab',done:true},{t:'Integrare API REST',dur:'30 min',type:'Lab',done:false},{t:'Error handling patterns',dur:'20 min',type:'Articolo',done:false},{t:'Debugging workflows',dur:'25 min',type:'Video',done:false},{t:'Ottimizzazione performance',dur:'20 min',type:'Quiz',done:false}]},
-  {id:3,name:'AI per il Business',icon:'💼',color:'#F59E0B',desc:'Casi d\'uso reali per Sales, HR, Finance e Legal. ROI, metriche di successo e change management.',banner:'linear-gradient(135deg,#FEF3C7,#FDE68A)',
+  {id:3,livello:3,name:'AI per il Business',icon:'💼',color:'#F59E0B',desc:'Casi d\'uso reali per Sales, HR, Finance e Legal. ROI, metriche di successo e change management.',banner:'linear-gradient(135deg,#FEF3C7,#FDE68A)',
    lessons:[{t:'AI agent per Sales: lead scoring',dur:'25 min',type:'Case Study',done:true},{t:'Automazione HR: onboarding',dur:'20 min',type:'Case Study',done:false},{t:'Finance: invoice processing',dur:'25 min',type:'Lab',done:false},{t:'Legal: contract review AI',dur:'30 min',type:'Case Study',done:false},{t:'Calcolare il ROI dell\'automazione',dur:'15 min',type:'Articolo',done:false},{t:'Change management per AI',dur:'20 min',type:'Video',done:false}]},
-  {id:4,name:'Sicurezza & Governance',icon:'🛡️',color:'#EF4444',desc:'GDPR, privacy by design, audit trail, guardrails per LLM, bias detection e responsible AI.',banner:'linear-gradient(135deg,#FEE2E2,#FECACA)',
+  {id:4,livello:4,name:'Sicurezza & Governance',icon:'🛡️',color:'#EF4444',desc:'GDPR, privacy by design, audit trail, guardrails per LLM, bias detection e responsible AI.',banner:'linear-gradient(135deg,#FEE2E2,#FECACA)',
    lessons:[{t:'AI e GDPR: guida pratica',dur:'20 min',type:'Articolo',done:false},{t:'Privacy by design per agenti',dur:'25 min',type:'Video',done:false},{t:'Guardrails per output LLM',dur:'30 min',type:'Lab',done:false},{t:'Audit trail e logging',dur:'20 min',type:'Articolo',done:false},{t:'Bias detection e fairness',dur:'25 min',type:'Lab',done:false},{t:'Framework Responsible AI',dur:'20 min',type:'Quiz',done:false}]},
-  {id:5,name:'Marketing AI Agent',icon:'📣',color:'#8B5CF6',desc:'Agenti per content creation, social media, email marketing, A/B testing e analytics automatizzati.',banner:'linear-gradient(135deg,#F3E8FF,#E9D5FF)',
+  {id:5,livello:3,name:'Marketing AI Agent',icon:'📣',color:'#8B5CF6',desc:'Agenti per content creation, social media, email marketing, A/B testing e analytics automatizzati.',banner:'linear-gradient(135deg,#F3E8FF,#E9D5FF)',
    lessons:[{t:'Content generation con LLM',dur:'20 min',type:'Lab',done:false},{t:'Social media agent: scheduling',dur:'25 min',type:'Video',done:false},{t:'Email marketing automation',dur:'30 min',type:'Lab',done:false},{t:'A/B testing automatizzato',dur:'20 min',type:'Case Study',done:false},{t:'Analytics e reporting AI',dur:'25 min',type:'Lab',done:false},{t:'Multi-channel orchestration',dur:'20 min',type:'Video',done:false}]},
   // Percorso sui meccanismi che questa piattaforma implementa davvero: sono
   // le lezioni che si possono verificare aprendo l'applicazione, invece di
   // restare teoria generica sugli agenti.
-  {id:6,name:'Padroneggiare RelAItion',icon:'⚡',color:'#0EA5E9',desc:'I meccanismi propri della piattaforma: knowledge base con recupero verificabile, spiegabilità delle decisioni, ciclo di pubblicazione e monitoraggio dell\'adozione.',banner:'linear-gradient(135deg,#E0F2FE,#BAE6FD)',
+  {id:6,livello:2,name:'Padroneggiare RelAItion',icon:'⚡',color:'#0EA5E9',desc:'I meccanismi propri della piattaforma: knowledge base con recupero verificabile, spiegabilità delle decisioni, ciclo di pubblicazione e monitoraggio dell\'adozione.',banner:'linear-gradient(135deg,#E0F2FE,#BAE6FD)',
    lessons:[{t:'Knowledge Base: segmentare per struttura',dur:'20 min',type:'Lab',done:false},{t:'Recupero ibrido e filtro permessi',dur:'25 min',type:'Articolo',done:false},{t:'Leggere «Perché questo risultato»',dur:'20 min',type:'Lab',done:false},{t:'Politiche e controlli obbligatori',dur:'25 min',type:'Articolo',done:false},{t:'Pubblicare: ambiti e revisione',dur:'30 min',type:'Lab',done:false},{t:'Monitorare l\'adozione',dur:'20 min',type:'Case Study',done:false}]}
 ];
 
@@ -63,6 +104,12 @@ function setLearnTab(tab,el){
         '<div class="path-banner" style="background:'+p.banner+'"></div>'+
         '<div class="path-body">'+
           '<div class="path-icon">'+p.icon+'</div>'+
+          // Il livello sta sulla scheda: la pagina prometteva quattro livelli
+          // e non diceva da nessuna parte a quale appartenesse ciascun percorso.
+          (function(){ var L=livelloInfo(p.livello||1);
+            return '<div style="display:inline-flex;align-items:center;gap:5px;background:'+L.col+'18;color:'+L.col+
+              ';border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;margin-bottom:5px">'+
+              L.ic+' Livello '+L.n+': '+L.nome+'</div>'; })()+
           '<div class="path-name">'+p.name+'</div>'+
           '<div class="path-desc">'+p.desc+'</div>'+
           '<div class="path-meta"><span>📚 '+p.lessons.length+' lezioni</span><span>✅ '+done+' completate</span></div>'+
@@ -70,15 +117,56 @@ function setLearnTab(tab,el){
         '</div></div>';
     }).join('')+'</div>';
   }else if(tab==='certs'){
-    var totalL=0,doneL=0;PATHS.forEach(function(p){p.lessons.forEach(function(l){totalL++;if(l.done)doneL++})});
-    var pctCert=totalL?Math.round(doneL/totalL*100):0;
-    var pathsDone=PATHS.filter(function(p){return p.lessons.every(function(l){return l.done})}).length;
-    var savedAgentsN=dbGetOne('SELECT COUNT(*) c FROM agents WHERE author=?',[utenteCorrente()]).c+dbGetOne('SELECT COUNT(*) c FROM my_agents WHERE user=?',[utenteCorrente()]).c;
+    // I quattro livelli promessi in cima alla pagina, con l'avanzamento vero di
+    // ciascuno. Prima c'erano due riquadri fissi — «AI Agent Practitioner» e
+    // «Builder Expert» — che non avevano alcun rapporto con i livelli
+    // dichiarati, e nessuno dei due era scaricabile.
+    var raggiunto=livelloRaggiunto();
+    var savedAgentsN=dbGetOne('SELECT COUNT(*) c FROM agents WHERE author=?',[utenteCorrente()]).c+
+                     dbGetOne('SELECT COUNT(*) c FROM my_agents WHERE user=?',[utenteCorrente()]).c;
     var execN=dbGetOne('SELECT COUNT(*) c FROM exec_log WHERE user=?',[utenteCorrente()]).c;
-    c.innerHTML='<div class="grid-2">'+
-      '<div class="card"><div style="text-align:center;padding:20px"><div style="font-size:48px;margin-bottom:12px">🏅</div><div style="font-size:16px;font-weight:700;margin-bottom:4px">AI Agent Practitioner</div><div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Completa tutti e 5 i percorsi per ottenere la certificazione ufficiale RelAItion.</div><div class="badge '+(pctCert>=100?'badge-g':'badge-y')+'">'+(pctCert>=100?'✅ Ottenuta':'In corso: '+pctCert+'% ('+pathsDone+'/'+PATHS.length+' percorsi)')+'</div></div></div>'+
-      '<div class="card"><div style="text-align:center;padding:20px"><div style="font-size:48px;margin-bottom:12px">🎖️</div><div style="font-size:16px;font-weight:700;margin-bottom:4px">Builder Expert</div><div style="font-size:12px;color:var(--tx3);margin-bottom:16px">Dimostra competenza avanzata nel builder: 10+ agenti creati, 50+ esecuzioni.</div><div class="badge '+(savedAgentsN>=10&&execN>=50?'badge-g':'badge-b')+'">'+(savedAgentsN>=10&&execN>=50?'✅ Ottenuta':'Obiettivo: '+savedAgentsN+'/10 agenti · '+execN+'/50 esecuzioni')+'</div></div></div>'+
-    '</div>';
+
+    var schede=LIVELLI.map(function(L){
+      var a=avanzamentoLivello(L.n);
+      var ottenuto=(raggiunto>=L.n);
+      // Un livello e' "in corso" solo se il precedente e' stato raggiunto:
+      // dire «in corso» su tutti e quattro non aiuterebbe a capire dove si e'.
+      var attuale=(!ottenuto && raggiunto===L.n-1);
+      return '<div class="card" style="padding:16px;'+(ottenuto?'border:1px solid '+L.col:'')+'">'+
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'+
+          '<span style="font-size:26px">'+L.ic+'</span>'+
+          '<div style="flex:1;min-width:0">'+
+            '<div style="font-size:13.5px;font-weight:800">'+escHtml(L.nome)+'</div>'+
+            '<div style="font-size:10.5px;color:var(--tx4)">Livello '+L.n+' · '+escHtml(L.desc)+'</div>'+
+          '</div>'+
+          (ottenuto?'<span class="badge badge-g">✅ Ottenuto</span>'
+                   :(attuale?'<span class="badge badge-y">In corso</span>'
+                            :'<span class="badge badge-gray">Bloccato</span>'))+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--tx3);margin-bottom:7px">'+
+          a.percorsi+' percors'+(a.percorsi===1?'o':'i')+' · '+a.fatte+' di '+a.lezioni+' lezioni completate</div>'+
+        '<div class="path-progress"><div class="path-progress-fill" style="width:'+a.pct+'%;background:'+L.col+'"></div></div>'+
+        (ottenuto
+          ? '<button class="tb-btn primary mt-12" style="width:100%;justify-content:center;height:32px;font-size:11.5px" '+
+            'onclick="scaricaAttestato('+L.n+')">📄 Scarica l’attestato</button>'
+          : '')+
+      '</div>';
+    }).join('');
+
+    c.innerHTML=
+      '<div class="card" style="padding:16px;margin-bottom:16px">'+
+        '<div style="font-size:13px;font-weight:800;margin-bottom:3px">🎓 Il tuo livello: '+
+          (raggiunto?escHtml(livelloInfo(raggiunto).nome):'nessuno ancora')+'</div>'+
+        '<div style="font-size:11.5px;color:var(--tx3)">Un livello si ottiene completando <strong>tutti</strong> i percorsi '+
+        'fino a quel livello, non una percentuale complessiva: finire solo i percorsi facili non porta in cima.</div>'+
+      '</div>'+
+      '<div class="grid-2">'+schede+'</div>'+
+      '<div class="card mt-16" style="padding:16px">'+
+        '<div style="font-size:12.5px;font-weight:700;margin-bottom:4px">🎖️ Builder Expert</div>'+
+        '<div style="font-size:11.5px;color:var(--tx3);margin-bottom:8px">Riconoscimento pratico, indipendente dai percorsi: si ottiene usando la piattaforma.</div>'+
+        '<div class="badge '+(savedAgentsN>=10&&execN>=50?'badge-g':'badge-b')+'">'+
+          (savedAgentsN>=10&&execN>=50?'✅ Ottenuto':'Obiettivo: '+savedAgentsN+'/10 agenti · '+execN+'/50 esecuzioni')+'</div>'+
+      '</div>';
   }else{
     // Il numero dei connettori era scritto a mano ("63") e non corrispondeva:
     // sono quelli dichiarati in CONNECTOR_CONFIGS, e cambiano quando se ne
@@ -281,7 +369,7 @@ function renderObiettiviProfilo(){
     '</div>'+
     (fatti.length<ob.length
       ? '<div style="font-size:11px;color:var(--tx3);line-height:1.5">Prossimo: <strong>'+escHtml(ob.find(function(o){return o.val<o.obiettivo}).t)+'</strong>, <span style="text-decoration:underline;cursor:pointer" onclick="go(\'challenges\')">vedi tutti</span></div>'
-      : '<div style="font-size:11px;color:var(--ac)">Tutti gli obiettivi raggiunti.</div>')+
+      : '<div style="font-size:11px;color:var(--ok)">Tutti gli obiettivi raggiunti.</div>')+
   '</div>';
 }
 
@@ -312,7 +400,7 @@ function renderObiettivi(){
           '<div style="height:100%;width:'+pct+'%;background:'+(fatto?'var(--ac)':'var(--ac3)')+'"></div></div>'+
       '</div>'+
       '<div style="text-align:right;flex-shrink:0">'+
-        '<div style="font-size:11px;font-weight:700;color:'+(fatto?'var(--ac)':'var(--tx4)')+'">'+Math.min(o.val,o.obiettivo)+'/'+o.obiettivo+'</div>'+
+        '<div style="font-size:11px;font-weight:700;color:'+(fatto?'var(--ok)':'var(--tx4)')+'">'+Math.min(o.val,o.obiettivo)+'/'+o.obiettivo+'</div>'+
         '<div style="font-size:10px;color:var(--tx4)">+'+o.xp+' XP</div>'+
       '</div>'+
       '<span style="font-size:11px;color:var(--tx4);flex-shrink:0;width:12px">'+(aperto?'▴':'▾')+'</span>'+
@@ -324,7 +412,7 @@ function renderObiettivi(){
     // obiettivi a un solo criterio aggiungerebbe righe che non dicono nulla.
     var passi=(o.passi||[]).map(function(p){
       return '<div style="display:flex;gap:8px;align-items:center;font-size:11.5px;padding:3px 0">'+
-        '<span style="color:'+(p.ok?'var(--ac)':'var(--tx4)')+'">'+(p.ok?'✅':'⬜')+'</span>'+
+        '<span style="color:'+(p.ok?'var(--ok)':'var(--tx4)')+'">'+(p.ok?'✅':'⬜')+'</span>'+
         '<span style="flex:1;color:'+(p.ok?'var(--tx3)':'var(--tx2)')+'">'+escHtml(p.t)+'</span>'+
         '<span style="color:var(--tx4);font-size:10.5px">'+escHtml(p.nota||'')+'</span></div>';
     }).join('');
@@ -382,8 +470,39 @@ function renderObiettivi(){
 // Le sei iniziative erano definite qui dentro come testo, con le date scritte
 // a mano e ormai nel passato. Ora vivono in `js/sfide.js`, con scadenze
 // relative e una scheda di dettaglio propria; qui resta l'impaginazione.
+// Classifica generale per esperienza, sopra le sfide. Le classifiche esistenti
+// misurano una singola sfida; questa misura la persona, ed e' la stessa che si
+// vede nella Community — stessa fonte, stesso ordine, cosi' non si contraddicono
+// fra due pagine della stessa piattaforma.
+function sfClassificaGenerale(){
+  if(typeof classificaXP!=='function')return '';
+  var righe=classificaXP();
+  if(!righe.length)return '';
+  var io=utenteCorrente();
+  var mioPosto=righe.findIndex(function(r){return r.nome===io});
+  var medaglie={0:'🥇',1:'🥈',2:'🥉'};
+  return '<div class="card" style="padding:16px;margin-bottom:22px">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
+      '<span style="font-size:13px;font-weight:800">🏆 Classifica generale</span>'+
+      (mioPosto>=0?'<span class="badge badge-y" style="margin-left:auto">Sei '+(mioPosto+1)+'° su '+righe.length+'</span>':'')+
+    '</div>'+
+    '<div style="font-size:10.5px;color:var(--tx4);margin-bottom:12px">Somma dell\'esperienza guadagnata: lezioni, quiz, sfide, pubblicazioni e contributi.</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px">'+
+    righe.slice(0,6).map(function(r,i){
+      var mio=(r.nome===io);
+      return '<div style="display:flex;align-items:center;gap:9px;background:'+(mio?'var(--ac-ul)':'var(--bg2)')+';'+
+        'border-radius:9px;padding:8px 11px'+(mio?';border:1px solid var(--ac)':'')+'">'+
+        '<span style="font-size:14px;width:20px;text-align:center">'+(medaglie[i]||(i+1))+'</span>'+
+        '<span style="flex:1;font-size:12px;font-weight:'+(mio?'700':'600')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(r.nome)+'</span>'+
+        '<span style="font-size:11.5px;font-weight:700;color:var(--ac)">'+r.xp.toLocaleString('it-IT')+'</span>'+
+      '</div>';
+    }).join('')+
+    '</div></div>';
+}
+
 function renderChallenges(){
   var html=renderObiettivi()+
+    sfClassificaGenerale()+
     '<div class="section-title" style="font-size:15px;margin-bottom:2px">📅 Sfide ed eventi</div>'+
     '<div class="section-sub">Le sfide con la classifica si misurano sulle esecuzioni reali degli agenti candidati. Clicca una scheda per il regolamento.</div>'+
     sfSchede()+
@@ -393,6 +512,74 @@ function renderChallenges(){
 
 // Compatibilita': il vecchio pulsante chiamava registerChallenge.
 function registerChallenge(id){ sfIscrivi(id) }
+// Immagini dei post: grafica vettoriale generata qui, non fotografie. Una
+// community senza niente da guardare sembra un archivio di file; d'altra parte
+// mettere finte foto di persone o schermate inventate significherebbe
+// arredare la dimostrazione con roba che non esiste. Questi sono schemi e
+// grafici che descrivono cose vere della piattaforma.
+function immaginePost(svg){
+  return 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg)));
+}
+
+var IMG_SCHEMA_FLUSSO=immaginePost(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="880" height="300" viewBox="0 0 880 300">'+
+  '<rect width="880" height="300" fill="#F8FAFC"/>'+
+  ['📎 CV ricevuto|#10B981|40','🎭 Mascheramento|#EF4444|215','🧠 Estrazione|#6366F1|390','🔀 Punteggio>70|#F59E0B|565','📧 Risposta|#0EA5E9|740']
+    .map(function(b,i){
+      var p=b.split('|'), x=parseInt(p[2],10);
+      return '<rect x="'+x+'" y="110" width="150" height="70" rx="12" fill="#FFFFFF" stroke="'+p[1]+'" stroke-width="2"/>'+
+        '<text x="'+(x+75)+'" y="152" text-anchor="middle" font-family="Segoe UI,Arial" font-size="14" fill="#0F172A">'+p[0]+'</text>'+
+        (i<4?'<line x1="'+(x+150)+'" y1="145" x2="'+(x+215)+'" y2="145" stroke="#94A3B8" stroke-width="2"/>'+
+             '<polygon points="'+(x+215)+',145 '+(x+207)+',140 '+(x+207)+',150" fill="#94A3B8"/>':'');
+    }).join('')+
+  '<text x="440" y="52" text-anchor="middle" font-family="Segoe UI,Arial" font-size="19" font-weight="700" fill="#0F172A">Screening CV: il flusso che uso da tre mesi</text>'+
+  '<text x="440" y="76" text-anchor="middle" font-family="Segoe UI,Arial" font-size="13" fill="#64748B">Il mascheramento sta PRIMA del nodo AI, non dopo</text>'+
+  '<text x="440" y="240" text-anchor="middle" font-family="Segoe UI,Arial" font-size="12" fill="#94A3B8">Il ramo «sotto soglia» chiude comunque su un output: ogni esito resta registrato</text>'+
+  '</svg>');
+
+// Schema del ciclo di pubblicazione: gli stessi stati che la piattaforma usa
+// davvero (`published_agents.status`), non un diagramma di comodo. Se un giorno
+// gli stati cambiassero, questo disegno andrebbe rifatto — ed e' giusto cosi':
+// un'illustrazione che non segue il prodotto e' peggio di nessuna illustrazione.
+var IMG_CICLO_PUBBLICAZIONE=immaginePost(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360">'+
+  '<rect width="960" height="360" fill="#F8FAFC"/>'+
+  '<text x="480" y="42" text-anchor="middle" font-family="Segoe UI,Arial" font-size="19" font-weight="700" fill="#0F172A">Il ciclo di pubblicazione di un agente</text>'+
+  '<text x="480" y="66" text-anchor="middle" font-family="Segoe UI,Arial" font-size="12.5" fill="#64748B">Sette controlli automatici, poi una persona. Chi corregge non si approva da solo.</text>'+
+  [['Bozza','#94A3B8',40],['In verifica','#F59E0B',250],['In revisione','#2563EB',460],['Pubblicato','#10B981',670]]
+    .map(function(s,i){
+      var x=s[2];
+      return '<rect x="'+x+'" y="130" width="170" height="62" rx="12" fill="#FFFFFF" stroke="'+s[1]+'" stroke-width="2"/>'+
+        '<text x="'+(x+85)+'" y="160" text-anchor="middle" font-family="Segoe UI,Arial" font-size="14" font-weight="700" fill="#0F172A">'+s[0]+'</text>'+
+        '<text x="'+(x+85)+'" y="178" text-anchor="middle" font-family="Segoe UI,Arial" font-size="10.5" fill="#64748B">'+
+          ['in lavorazione','controlli automatici','decide una persona','visibile nel catalogo'][i]+'</text>'+
+        (i<3?'<line x1="'+(x+170)+'" y1="161" x2="'+(x+248)+'" y2="161" stroke="#94A3B8" stroke-width="2"/>'+
+             '<polygon points="'+(x+248)+',161 '+(x+240)+',156 '+(x+240)+',166" fill="#94A3B8"/>':'');
+    }).join('')+
+  '<rect x="670" y="248" width="170" height="52" rx="12" fill="#FFFFFF" stroke="#EF4444" stroke-width="2"/>'+
+  '<text x="755" y="272" text-anchor="middle" font-family="Segoe UI,Arial" font-size="13" font-weight="700" fill="#0F172A">Sospeso</text>'+
+  '<text x="755" y="288" text-anchor="middle" font-family="Segoe UI,Arial" font-size="10.5" fill="#64748B">ritirato dopo la pubblicazione</text>'+
+  '<line x1="755" y1="192" x2="755" y2="248" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="4 3"/>'+
+  '<path d="M 545 192 L 545 226 L 125 226 L 125 192" fill="none" stroke="#F59E0B" stroke-width="1.5"/>'+
+  '<polygon points="125,192 120,200 130,200" fill="#F59E0B"/>'+
+  '<text x="335" y="243" text-anchor="middle" font-family="Segoe UI,Arial" font-size="11" fill="#B45309">modifica richiesta: torna all’autore con il motivo scritto</text>'+
+  '<text x="480" y="332" text-anchor="middle" font-family="Segoe UI,Arial" font-size="11" fill="#94A3B8">Ogni decisione registra chi l’ha presa, quando e perché</text>'+
+  '</svg>');
+var IMG_GRAFICO_TEMPI=immaginePost(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="880" height="340" viewBox="0 0 880 340">'+
+  '<rect width="880" height="340" fill="#F8FAFC"/>'+
+  '<text x="60" y="46" font-family="Segoe UI,Arial" font-size="19" font-weight="700" fill="#0F172A">Tempo di prima risposta, prima e dopo</text>'+
+  '<text x="60" y="70" font-family="Segoe UI,Arial" font-size="13" fill="#64748B">Ticket di supporto, media su 6 settimane</text>'+
+  [['Sett. 1',260,'#EF4444'],['Sett. 2',235,'#EF4444'],['Sett. 3',150,'#F59E0B'],
+   ['Sett. 4',95,'#F59E0B'],['Sett. 5',62,'#10B981'],['Sett. 6',48,'#10B981']]
+    .map(function(v,i){
+      var x=80+i*130, h=v[1]*0.62, y=290-h;
+      return '<rect x="'+x+'" y="'+y+'" width="76" height="'+h+'" rx="7" fill="'+v[2]+'"/>'+
+        '<text x="'+(x+38)+'" y="'+(y-9)+'" text-anchor="middle" font-family="Segoe UI,Arial" font-size="12" font-weight="700" fill="#0F172A">'+v[1]+'\'</text>'+
+        '<text x="'+(x+38)+'" y="310" text-anchor="middle" font-family="Segoe UI,Arial" font-size="11" fill="#64748B">'+v[0]+'</text>';
+    }).join('')+
+  '<line x1="60" y1="290" x2="820" y2="290" stroke="#CBD5E1" stroke-width="1"/>'+
+  '</svg>');
 // ── COMMUNITY ──
 
 // Il workflow allegato al post 11 era una sagoma: quattro voci `{t,n}` che
@@ -455,7 +642,29 @@ var POSTS=[
   {id:14,user:'Chiara V.',ava:'CV',color:'#14B8A6',title:'Dataset di prova per testare l\'estrazione da CSV',body:'Un CSV con 20 righe di ordini, qualche valore mancante e due date in formato diverso: serve a verificare che il vostro flusso di estrazione regga i casi sporchi, non solo quelli puliti. Allegato.',type:'Soluzione',tag:'Testing',likes:38,comments:11,views:295,time:'5 giorni fa',
    attach_name:'ordini-di-prova.csv',attach_mime:'text/csv',
    attach_data:'data:text/csv;base64,'+btoa('ordine;cliente;importo;data;stato\nORD-001;ACME Spa;1280,50;2026-03-04;evaso\nORD-002;Beta Srl;;04/03/2026;in attesa\nORD-003;Gamma SpA;940,00;2026-03-05;evaso\nORD-004;Delta Srl;2310,75;05/03/2026;annullato\nORD-005;ACME Spa;760,20;2026-03-06;')},
-  {id:15,user:'Paolo G.',ava:'PG',color:'#F97316',title:'Quanto costa davvero un agente: il conto che nessuno fa',body:'Il costo delle chiamate al modello è la parte piccola. Il costo vero è la manutenzione dei prompt quando cambia il formato dei dati a monte, e il tempo di chi verifica gli output nei primi mesi. Nel mio caso: 280 euro al mese di API, contro circa 6 ore al mese di presidio umano.',type:'Discussione',tag:'Finance',likes:81,comments:29,views:705,time:'1 settimana fa'}
+  {id:15,user:'Paolo G.',ava:'PG',color:'#F97316',title:'Quanto costa davvero un agente: il conto che nessuno fa',body:'Il costo delle chiamate al modello è la parte piccola. Il costo vero è la manutenzione dei prompt quando cambia il formato dei dati a monte, e il tempo di chi verifica gli output nei primi mesi. Nel mio caso: 280 euro al mese di API, contro circa 6 ore al mese di presidio umano.',type:'Discussione',tag:'Finance',likes:81,comments:29,views:705,time:'1 settimana fa'},
+  // Post con contenuto visivo: uno schema e un grafico, non fotografie. In una
+  // community senza niente da guardare ogni contributo si legge come una voce
+  // d'archivio; d'altra parte riempirla di immagini inventate significherebbe
+  // arredare la dimostrazione con cose che non esistono.
+  {id:16,user:'Valentina M.',ava:'VM',color:'#EC4899',title:'Lo schema del mio flusso di screening, per chi lo chiedeva',body:'Ve lo disegno invece di descriverlo. Il punto su cui insisto: il mascheramento dei dati personali sta PRIMA del nodo AI, non dopo. Se lo metti dopo hai già mandato nome e telefono al modello, e la conformità l\'hai persa nel passaggio precedente.',type:'Tutorial',tag:'HR',likes:64,comments:17,views:498,time:'2 giorni fa',
+   attach_name:'schema-screening-cv.svg',attach_mime:'image/svg+xml',attach_data:IMG_SCHEMA_FLUSSO},
+  {id:17,user:'Luca P.',ava:'LP',color:'#0EA5E9',title:'Sei settimane di dati: il grafico che ho portato in direzione',body:'Non ho portato una slide con le promesse del fornitore, ho portato questo. Il tempo di prima risposta sui ticket, settimana per settimana, da quando l\'agente è in produzione. La discesa non è immediata: le prime due settimane servono a sistemare i prompt.',type:'Showcase',tag:'Customer Service',likes:97,comments:34,views:812,time:'4 giorni fa',
+   attach_name:'tempi-prima-risposta.svg',attach_mime:'image/svg+xml',attach_data:IMG_GRAFICO_TEMPI},
+  // Post sui meccanismi che questa piattaforma implementa davvero: il ciclo di
+  // pubblicazione, la spiegabilita', il recupero verificabile, i controlli.
+  // Una community che parla di AI in generale potrebbe stare su qualunque
+  // prodotto; questa parla di cose che chi guarda puo' aprire e verificare
+  // mentre legge, ed e' la differenza fra un contorno e una parte del prodotto.
+  {id:18,user:'Sara L.',ava:'SL',color:'#6366F1',title:'Il ciclo di pubblicazione spiegato a chi lo vede per la prima volta',body:'Riassumo perché me lo chiedono spesso. Un agente non passa da «finito» a «nel catalogo»: c\'è una verifica automatica (output presente, gestione errori, controlli sui dati personali, parametri compilati, almeno un\'esecuzione riuscita) e poi una persona. Il revisore può approvare, chiedere una modifica o rifiutare, e in tutti e tre i casi il motivo resta scritto sulla scheda. Chi corregge non si approva da solo: ripresenta, e la versione sale.',type:'Tutorial',tag:'Governance',likes:58,comments:21,views:604,time:'3 giorni fa',
+   attach_name:'ciclo-pubblicazione.svg',attach_mime:'image/svg+xml',attach_data:IMG_CICLO_PUBBLICAZIONE},
+  {id:19,user:'Marco R.',ava:'MR',color:'#10B981',title:'«Perché questo risultato» è il pulsante che mi ha fatto passare l\'audit',body:'Domanda del revisore interno: «come fate a sapere su cosa si è basato l\'agente?». Ho aperto un\'esecuzione e cliccato quel pulsante: quali porzioni di quali documenti sono state recuperate, con che somiglianza, quali controlli sono intervenuti, quale ramo della condizione è stato preso e perché. Non l\'ho dovuto ricostruire a mano: era già lì. È la differenza fra un sistema che si può firmare e uno che no.',type:'Soluzione',tag:'Governance',likes:83,comments:26,views:719,time:'5 giorni fa'},
+  {id:20,user:'Giulia D.',ava:'GD',color:'#F59E0B',title:'Recupero a vuoto: perché è un risultato e non un errore',body:'All\'inizio mi infastidiva vedere «nessuna porzione recuperata». Poi ho capito che è l\'informazione più utile che il sistema mi dà: significa che la Knowledge Base non contiene la risposta, e che se il modello rispondesse comunque si starebbe inventando. Meglio saperlo che ricevere una frase plausibile e sbagliata. La verifica di fondatezza confronta poi la risposta con le fonti recuperate.',type:'Discussione',tag:'Knowledge Base',likes:71,comments:19,views:552,time:'6 giorni fa'},
+  {id:21,user:'Valentina M.',ava:'VM',color:'#EC4899',title:'Il ciclo sui documenti: come analizzarne una cartella intera',body:'Caso concreto: cinquanta fatture da leggere. Il nodo Loop non ripete un numero fisso di volte, conta gli elementi che il nodo a monte ha davvero prodotto e ripercorre i nodi a valle uno per ciascuno. Nel campo «lista» metti il nome del campo che contiene l\'elenco, e il registro scrive «Iterazione 3 di 50». C\'è un tetto di sicurezza: se lo superi te lo dice, non tronca in silenzio.',type:'Tutorial',tag:'Builder',likes:66,comments:23,views:487,time:'2 giorni fa'},
+  {id:22,user:'Andrea L.',ava:'AL',color:'#8B5CF6',title:'Mascheramento prima del modello, non dopo: la regola che ripeto sempre',body:'Ho rivisto quattro flussi di colleghi e in tre il nodo di mascheramento stava DOPO la chiamata al modello. Così non serve a niente: nome, telefono ed email sono già usciti. Il controllo va fra il trigger e il nodo AI. Nel builder si vede a occhio se è nel posto giusto, ed è uno dei vantaggi del flusso visuale rispetto a un blocco di codice dove la sequenza non si legge.',type:'Soluzione',tag:'Governance',likes:104,comments:31,views:893,time:'1 settimana fa'},
+  {id:23,user:'Luca P.',ava:'LP',color:'#0EA5E9',title:'Ho esportato un agente in Python e l\'ho messo su un server',body:'La funzione «Python» del builder produce uno script che rispecchia il flusso: i nodi AI chiamano il modello vero, le azioni hanno i parametri configurati e i punti di integrazione sono marcati TODO. Non è magia, è un punto di partenza onesto: l\'ho avvolto in FastAPI e l\'ho fatto partire da un webhook. Per chi deve uscire dal browser è la strada.',type:'Showcase',tag:'DevOps',likes:78,comments:28,views:661,time:'4 giorni fa'},
+  {id:24,user:'Chiara V.',ava:'CV',color:'#14B8A6',title:'Domanda: come gestite l\'approvazione umana sugli importi?',body:'Sto costruendo un flusso che approva note spese. Sopra una certa cifra voglio che si fermi e aspetti una persona. Ho visto che esiste il nodo di approvazione umana e che l\'esecuzione resta «in attesa» invece di proseguire — ma come gestite voi i tempi morti? Chi non risponde entro giornata blocca la coda o lo lasciate sospeso?',type:'Domanda',tag:'Finance',likes:34,comments:16,views:298,time:'ieri'},
+  {id:25,user:'Paolo G.',ava:'PG',color:'#F97316',title:'I numeri del monitoraggio: quali guardo davvero ogni lunedì',body:'Delle sette aree ne uso tre. <em>Presidio</em>: quanti agenti hanno almeno un controllo — se scende, qualcuno sta costruendo in fretta. <em>Uso</em>: la distribuzione delle durate, perché la media nasconde i casi lenti che generano le lamentele. <em>Conoscenza</em>: il rapporto fra recuperi riusciti e a vuoto, che dice se la Knowledge Base sta invecchiando. Il resto lo guardo quando qualcuno fa una domanda specifica.',type:'Discussione',tag:'Monitoraggio',likes:89,comments:24,views:702,time:'1 settimana fa'}
 ];
 
 function filterByTag(t){forumTagFilter=(forumTagFilter===t?null:t);renderCommunity();if(t&&forumTagFilter)showToast('🏷️ Filtro: '+t)}
@@ -496,7 +705,27 @@ function renderCommunity(){
       // Allegato annunciato gia' nell'elenco: prima bisognava aprire ogni post
       // per scoprire se ne avesse uno, cioe' la funzione esisteva ma non era
       // reperibile. Si scarica senza aprire il post.
-      (p.attach_name
+      // Le immagini si MOSTRANO, non si annunciano: una community in cui ogni
+      // contenuto visivo e' una riga «📎 schema.svg — Scarica» somiglia a un
+      // archivio, non a un posto dove si guarda qualcosa. Gli altri formati
+      // restano una riga con il pulsante, che per un CSV o un JSON e' giusto.
+      (p.attach_name && /^image\//.test(p.attach_mime||'')
+        ? '<div style="margin:9px 0;border-radius:10px;overflow:hidden;border:1px solid var(--bo);background:var(--bg2)">'+
+          // L'anteprima e' ritagliata per non far diventare ogni scheda alta
+          // una schermata; l'immagine intera si apre al clic. Uno schema di
+          // flusso o un grafico, ridotti a una striscia, non si leggono — ed
+          // erano proprio il tipo di contenuto per cui le immagini servivano.
+          '<img src="'+p.attach_data+'" alt="'+escHtml(p.attach_name)+'" '+
+            'onclick="event.stopPropagation();apriImmaginePost('+p.id+')" '+
+            'title="Apri a schermo intero" '+
+            'style="display:block;width:100%;max-height:260px;object-fit:cover;cursor:zoom-in" loading="lazy">'+
+          '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px">'+
+            '<span style="flex:1;min-width:0;font-size:10.5px;color:var(--tx4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.attach_name)+'</span>'+
+            '<button class="tb-btn" style="height:24px;font-size:10px" onclick="event.stopPropagation();apriImmaginePost('+p.id+')" title="Apri a schermo intero">🔍</button>'+
+            '<button class="tb-btn" style="height:24px;font-size:10px" onclick="event.stopPropagation();scaricaAllegatoPost('+p.id+')" title="Scarica">⬇️</button>'+
+          '</div></div>'
+        : '')+
+      (p.attach_name && !/^image\//.test(p.attach_mime||'')
         ? '<div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bo);border-radius:8px;padding:7px 10px;margin:8px 0">'+
           '<span style="font-size:14px">📎</span>'+
           '<span style="flex:1;min-width:0;font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.attach_name)+'</span>'+
@@ -517,19 +746,19 @@ function renderCommunity(){
       '<div id="rispRapida'+p.id+'"></div></div>';
   }).join('');
 
-  // Leaderboard
-  var leaders=[
-    {name:'Andrea L.',xp:4820,rank:1},{name:'Marco R.',xp:4210,rank:2},{name:'Giulia D.',xp:3890,rank:3},
-    {name:'Valentina M.',xp:3540,rank:4},{name:'Mario R.',xp:2840,rank:5},{name:'Sara L.',xp:2650,rank:6}
-  ];
-  document.getElementById('leaderboard').innerHTML=leaders.map(function(l){
-    var medals={1:'🥇',2:'🥈',3:'🥉'};
-    return '<div class="leaderboard-row" onclick="'+(l.name==='Mario R.'?'go(\'profile\')':'showToast(\'👤 Profilo di '+l.name+': visibile in versione completa\')')+'"><span class="lb-rank">'+(medals[l.rank]||l.rank)+'</span>'+
-      '<span class="lb-name">'+(l.name==='Mario R.'?'<strong>'+l.name+'</strong>':l.name)+'</span>'+
-      '<span class="lb-xp">'+l.xp.toLocaleString()+' XP</span></div>';
+  // Classifica per esperienza. Erano sei nomi con l'XP scritto nel codice
+  // — Andrea L. 4820, Marco R. 4210 — mentre la piattaforma tiene i valori
+  // veri in `xp_log`: guadagnare esperienza non spostava la classifica di un
+  // punto, e il proprio nome compariva sempre al quinto posto qualunque cosa
+  // si facesse. Ora e' la somma delle righe reali, per utente.
+  document.getElementById('leaderboard').innerHTML=classificaXP().map(function(l,i){
+    var medaglie={0:'🥇',1:'🥈',2:'🥉'};
+    var io=(l.nome===utenteCorrente());
+    return '<div class="leaderboard-row"'+(io?' onclick="go(\'profile\')" title="Vai al tuo profilo"':'')+'>'+
+      '<span class="lb-rank">'+(medaglie[i]||(i+1))+'</span>'+
+      '<span class="lb-name">'+(io?'<strong>'+escHtml(l.nome)+'</strong>':escHtml(l.nome))+'</span>'+
+      '<span class="lb-xp">'+l.xp.toLocaleString('it-IT')+' XP</span></div>';
   }).join('');
-
-  // Events
   document.getElementById('events-list').innerHTML=
     '<div style="padding:8px 0;border-bottom:1px solid var(--bg2);cursor:pointer" onclick="go(\'challenges\')"><div style="font-size:12px;font-weight:600">🏆 Hackathon: Agent for Good</div><div style="font-size:10px;color:var(--tx4)">15-16 Luglio · Online → dettagli</div></div>'+
     '<div style="padding:8px 0;border-bottom:1px solid var(--bg2);cursor:pointer" onclick="go(\'challenges\')"><div style="font-size:12px;font-weight:600">📣 Workshop Marketing AI</div><div style="font-size:10px;color:var(--tx4)">22 Luglio · Roma → dettagli</div></div>'+
@@ -1255,7 +1484,20 @@ function openPostDetail(id){
     // La modifica è dichiarata: chi ha commentato deve capire che il testo a
     // cui rispondeva potrebbe non essere più quello.
     (p.edited_at?'<div style="font-size:10.5px;color:var(--tx4);font-style:italic;margin-bottom:12px">✏️ Modificato il '+new Date(p.edited_at).toLocaleString('it-IT')+'</div>':'')+
-    (p.attach_name
+    // Anche qui l'immagine si vede, non si annuncia: aprire un post per
+    // trovarci scritto «📎 schema.png» e' un passaggio in piu' verso niente.
+    (p.attach_name && /^image\//.test(p.attach_mime||'')
+      ? '<div style="margin-bottom:16px;border-radius:12px;overflow:hidden;border:1px solid var(--bo);background:var(--bg2)">'+
+        '<img src="'+p.attach_data+'" alt="'+escHtml(p.attach_name)+'" '+
+          'onclick="apriImmaginePost('+p.id+')" title="Apri a schermo intero" '+
+          'style="display:block;width:100%;max-height:340px;object-fit:contain;background:#fff;cursor:zoom-in">'+
+        '<div style="display:flex;align-items:center;gap:8px;padding:7px 11px">'+
+          '<span style="flex:1;min-width:0;font-size:11px;color:var(--tx4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.attach_name)+'</span>'+
+          '<button class="tb-btn" style="height:26px;font-size:10.5px" onclick="apriImmaginePost('+p.id+')">🔍 Ingrandisci</button>'+
+          '<button class="tb-btn" style="height:26px;font-size:10.5px" onclick="scaricaAllegatoPost('+p.id+')">⬇️</button>'+
+        '</div></div>'
+      : '')+
+    (p.attach_name && !/^image\//.test(p.attach_mime||'')
       ? '<div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--bo);border-radius:10px;padding:10px 12px;margin-bottom:18px">'+
         '<span style="font-size:20px">📎</span>'+
         '<div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600">'+escHtml(p.attach_name)+'</div>'+
@@ -1518,8 +1760,21 @@ function scheduleSummary(row){
 function renderMyAgents(){
   var my=dbAll('SELECT * FROM my_agents WHERE user=?',[utenteCorrente()]);
   var saved=dbAll('SELECT * FROM agents WHERE author=? ORDER BY updated_at DESC',[utenteCorrente()]);
-  var runsByAgent={};
+  // Due conteggi, non uno: quante volte l'ho eseguito io e quante in tutto.
+  // Il totale da solo, su una pagina che si intitola «Agenti che hai creato o
+  // installato», si legge come personale e non lo e': ogni agente del seme ha
+  // esecuzioni di quattro utenti diversi, e il numero sulla scheda smentiva
+  // quello della Dashboard. Quando coincidono se ne mostra uno solo, perche'
+  // ripetere lo stesso numero due volte non informa nessuno.
+  var runsByAgent={}, runsMineByAgent={};
   dbAll('SELECT agent, COUNT(*) c FROM exec_log GROUP BY agent').forEach(function(r){runsByAgent[r.agent]=r.c});
+  dbAll('SELECT agent, COUNT(*) c FROM exec_log WHERE user=? GROUP BY agent',[utenteCorrente()]).forEach(function(r){runsMineByAgent[r.agent]=r.c});
+  var etichettaEsecuzioni=function(nome){
+    var tot=runsByAgent[nome]||0, mie=runsMineByAgent[nome]||0;
+    if(!tot)return 'mai eseguito';
+    if(mie===tot)return tot+' esecuzion'+(tot===1?'e':'i');
+    return mie+' tue · '+tot+' in tutto';
+  };
 
   var html='<div style="display:flex;gap:8px;margin-bottom:20px"><button class="tb-btn primary" onclick="go(\'builder\')">+ Crea nuovo</button><button class="tb-btn" onclick="importAgentJSON()">📥 Importa JSON</button></div>';
 
@@ -1532,7 +1787,7 @@ function renderMyAgents(){
   if(saved.length){
     html+='<div style="font-size:11px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">🔧 Creati da te ('+saved.length+')</div><div class="mkt-grid" style="margin-bottom:28px">';
     saved.forEach(function(s){
-      var runs=runsByAgent[s.name]||0;
+      var runs=etichettaEsecuzioni(s.name);
       var nodeCount=0;try{nodeCount=JSON.parse(s.nodes_json).length}catch(e){}
       var safeName=s.name.replace(/'/g,"\\'").replace(/"/g,'&quot;');
       var sched=scheduleSummary(s);
@@ -1543,7 +1798,7 @@ function renderMyAgents(){
         '</div>'+
         '<div class="agent-desc">'+
           '<div style="display:flex;gap:12px;font-size:11px;color:var(--tx4);flex-wrap:wrap">'+
-            '<span>▶️ '+runs+' esecuzion'+(runs===1?'e':'i')+'</span>'+
+            '<span>▶️ '+runs+'</span>'+
             (sched?'<span style="color:#D97706;font-weight:600">'+sched+'</span>':'<span>Solo manuale</span>')+
           '</div>'+
         '</div>'+
@@ -1563,8 +1818,8 @@ function renderMyAgents(){
       var a=AGENTS.concat(getPublishedAgents()).find(function(x){return x.id===m.catalog_id});
       if(!a)return;
       installedCount++;
-      var runs=runsByAgent[a.name]||0;
-      installedCards+='<div class="agent-card"><div class="agent-top"><div class="agent-icon" style="background:'+a.color+'15;color:'+a.color+'">'+a.icon+'</div><div class="agent-info"><div class="agent-name">'+a.name+'</div><div class="agent-author">'+a.author+' · installato '+relTimeIt(new Date(m.installed_at).getTime())+'</div></div><span class="badge badge-b">Installato</span></div><div class="agent-desc"><div style="display:flex;gap:12px;font-size:11px;color:var(--tx4)"><span>▶️ '+runs+' esecuzioni</span><span>⭐ '+a.rating+'</span></div></div><div class="agent-bottom"><button class="tb-btn" onclick="installAgent('+a.id+');event.stopPropagation()" style="font-size:11px;height:28px">✏️ Apri nel Builder</button><button class="tb-btn primary" onclick="quickRunMktAgent('+a.id+');event.stopPropagation()" style="font-size:11px;height:28px">▶️ Esegui</button><button class="tb-btn" onclick="uninstallAgent('+a.id+');event.stopPropagation()" style="font-size:11px;height:28px;color:#EF4444;border-color:#FEE2E2">🗑️</button></div></div>';
+      var runs=etichettaEsecuzioni(a.name);
+      installedCards+='<div class="agent-card"><div class="agent-top"><div class="agent-icon" style="background:'+a.color+'15;color:'+a.color+'">'+a.icon+'</div><div class="agent-info"><div class="agent-name">'+a.name+'</div><div class="agent-author">'+a.author+' · installato '+relTimeIt(new Date(m.installed_at).getTime())+'</div></div><span class="badge badge-b">Installato</span></div><div class="agent-desc"><div style="display:flex;gap:12px;font-size:11px;color:var(--tx4)"><span>▶️ '+runs+'</span><span>⭐ '+a.rating+'</span></div></div><div class="agent-bottom"><button class="tb-btn" onclick="installAgent('+a.id+');event.stopPropagation()" style="font-size:11px;height:28px">✏️ Apri nel Builder</button><button class="tb-btn primary" onclick="quickRunMktAgent('+a.id+');event.stopPropagation()" style="font-size:11px;height:28px">▶️ Esegui</button><button class="tb-btn" onclick="uninstallAgent('+a.id+');event.stopPropagation()" style="font-size:11px;height:28px;color:#EF4444;border-color:#FEE2E2">🗑️</button></div></div>';
     });
     if(installedCount){
       html+='<div style="font-size:11px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">🏪 Installati dal Marketplace ('+installedCount+')</div><div class="mkt-grid">'+installedCards+'</div>';
@@ -1577,15 +1832,75 @@ function renderMyAgents(){
 }
 
 
-function quickRunAgent(name){
-  myAgentRuns[name]=(myAgentRuns[name]||0)+1;
-  showToast('▶️ Esecuzione "'+name+'" avviata...');
+// «Esegui» da «I miei agenti» NON eseguiva niente: aspettava due secondi e
+// registrava un'esecuzione riuscita con zero nodi. Chi lo premeva vedeva
+// «completato con successo» e poi cercava invano il risultato — non c'era,
+// perche' non era successo nulla. E' il difetto peggiore possibile in una
+// piattaforma il cui punto e' dimostrare che gli agenti girano davvero.
+//
+// Ora usa lo stesso motore del Builder e, a fine corsa, dice DOVE e' finito
+// quello che ha prodotto: file scaricato, documento in Knowledge Base, email
+// inviata, oppure la riga nel registro se non ha prodotto nulla di esterno.
+async function quickRunAgent(name){
+  var row=dbGetOne('SELECT * FROM agents WHERE name=? AND author=? ORDER BY id DESC LIMIT 1',[name,utenteCorrente()])
+       || dbGetOne('SELECT * FROM agents WHERE name=? ORDER BY id DESC LIMIT 1',[name]);
+  if(!row){ showToast('⚠️ "'+name+'" non ha un flusso salvato da eseguire'); return }
+
+  showToast('▶️ "'+name+'" in esecuzione...');
   addAct('Eseguito: '+name);
-  var _t0=Date.now();
-  setTimeout(function(){
-    recordExecution(name,0,'ok',Date.now()-_t0+1800,'quick','Quick run da I miei agenti');
-    showToast('✅ "'+name+'" completato con successo!');renderMyAgents();
-  },2000);
+
+  var res;
+  try{ res=await runAgentHeadless(row,'manual') }
+  catch(e){ showToast('❌ "'+name+'" non è partito: '+e.message); return }
+  if(!res){ showToast('⚠️ "'+name+'" non ha nodi da eseguire'); return }
+
+  myAgentRuns[name]=(myAgentRuns[name]||0)+1;
+  renderMyAgents();
+  if(typeof updateStatCards==='function')updateStatCards();
+
+  var esiti={done:'✅ completato', error:'❌ terminato con errori', waiting:'⏸️ in attesa di approvazione', aborted:'⏹️ interrotto'};
+  showToast((esiti[res.status]||res.status)+': "'+name+'"');
+  mostraDoveFinisce(name,res);
+}
+
+// Riepilogo di dove sono finiti i risultati. La domanda «dove trovo l'esito?»
+// era la piu' ricorrente nelle prove con utenti, e la risposta era gia' nel
+// registro — ma dentro venti righe tecniche che nessuno legge fino in fondo.
+function mostraDoveFinisce(name,res){
+  var passi=(res&&res.steps)||[];
+  var testo=passi.map(function(s){return s.msg||''}).join('\n');
+  var dove=[];
+  if(/File scaricato/i.test(testo))            dove.push('💾 un file è stato <strong>scaricato</strong> sul tuo computer');
+  if(/Knowledge Base/i.test(testo))            dove.push('📚 un documento è stato salvato nella <strong>Knowledge Base</strong>');
+  if(/email inviata|Invio riuscito/i.test(testo)) dove.push('📧 un\'<strong>email è stata inviata</strong> tramite il servizio locale');
+  if(/\[simulato\]|simulat/i.test(testo))      dove.push('🧪 alcune azioni verso l\'esterno sono state <strong>simulate</strong> e il registro lo dichiara');
+
+  openModal(
+    '<div style="display:flex;justify-content:space-between;align-items:center">'+
+      '<h2>📍 Dove è finito il risultato</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="font-size:12.5px;color:var(--tx3);margin:10px 0 14px;overflow-wrap:anywhere">'+escHtml(name)+' · '+
+      (res.stepsCount||0)+' nodi percorsi · '+Math.round((res.duration||0)/100)/10+'s</div>'+
+    (dove.length
+      ? '<ul style="font-size:12.5px;line-height:1.9;margin:0 0 14px;padding-left:20px">'+
+        dove.map(function(d){return '<li>'+d+'</li>'}).join('')+'</ul>'
+      : '<div style="font-size:12.5px;color:var(--tx2);line-height:1.65;margin-bottom:14px">'+
+        'Questo flusso <strong>non produce file né invii esterni</strong>: il suo esito è il contenuto finale, '+
+        'che resta registrato nel log dell\'esecuzione.</div>')+
+    // L'esito puo' essere un CSV o un JSON: righe lunghissime senza spazi, che
+    // il testo normale NON manda a capo — usciva dal riquadro e finiva sotto il
+    // bordo della finestra. Serve `pre-wrap` per rispettare gli a capo veri,
+    // `break-word` per spezzare le righe che non ne hanno, e un'altezza massima
+    // con scorrimento: un output di duemila caratteri non deve allungare la
+    // finestra oltre lo schermo.
+    '<div style="background:var(--bg2);border-radius:9px;padding:11px 13px;font-size:11px;color:var(--tx2);'+
+      'line-height:1.55;margin-bottom:14px;max-height:190px;overflow:auto;'+
+      'white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-family:\'SF Mono\',Consolas,monospace">'+
+      '<strong style="font-family:inherit">Esito finale</strong>\n'+escHtml(String(res.pipeline||'—').substring(0,1200))+'</div>'+
+    '<div style="display:flex;gap:8px">'+
+      '<button class="tb-btn primary" style="flex:1;justify-content:center" onclick="closeModal();go(\'execlog\')">📜 Apri il registro completo</button>'+
+      '<button class="tb-btn" onclick="closeModal()">Chiudi</button>'+
+    '</div>'
+  );
 }
 
 function quickRunMktAgent(id){
@@ -1614,7 +1929,7 @@ function renderExecLogPage(){
   var html='<div class="stats-row" style="grid-template-columns:repeat(5,1fr)">'+
     '<div class="stat-card"><div class="stat-label">▶️ Manuali</div><div class="stat-val">'+nMan+'</div></div>'+
     '<div class="stat-card"><div class="stat-label">⏱️ Pianificate</div><div class="stat-val" style="color:#B45309">'+nSched+'</div></div>'+
-    '<div class="stat-card"><div class="stat-label">✅ Successi</div><div class="stat-val" style="color:var(--ac)">'+okCount+'</div></div>'+
+    '<div class="stat-card"><div class="stat-label">✅ Successi</div><div class="stat-val" style="color:var(--ok)">'+okCount+'</div></div>'+
     '<div class="stat-card"><div class="stat-label">❌ Errori</div><div class="stat-val" style="color:#EF4444">'+errCount+'</div></div>'+
     '<div class="stat-card"><div class="stat-label">⏱️ Durata media</div><div class="stat-val">'+avgDur+'<span style="font-size:14px;color:var(--tx4)">s</span></div></div>'+
   '</div>';
@@ -1682,7 +1997,7 @@ function renderExecLogPage(){
     var d=new Date(l.ts);
     var dateStr=d.toLocaleDateString('it-IT',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
     return '<div class="list-row" style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--bg2);cursor:pointer" onclick="openExecLogDetail('+l.id+')" title="Clicca per il dettaglio">'+
-      '<div style="width:10px;height:10px;border-radius:50%;background:'+(l.status==='ok'?'var(--ac)':'#EF4444')+';flex-shrink:0"></div>'+
+      '<div style="width:10px;height:10px;border-radius:50%;background:'+(l.status==='ok'?'var(--ok)':'#EF4444')+';flex-shrink:0"></div>'+
       '<div style="flex:1;min-width:0">'+
         '<div style="font-size:13px;font-weight:700">'+escHtml(l.agent)+'</div>'+
         (l.summary?'<div style="font-size:11px;color:var(--tx4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escHtml(l.summary)+'</div>':'')+
@@ -1857,4 +2172,204 @@ function execlogImpostaPerPagina(n){
   execlogPerPagina=parseInt(n,10)||10;
   execlogPagina={manuali:1,pianificate:1};
   renderExecLogPage();
+}
+// ══════════════════════════════════════════════════════════════
+// ATTESTATO DI LIVELLO
+// ══════════════════════════════════════════════════════════════
+// Un livello raggiunto e non portabile fuori dalla piattaforma vale poco: si
+// scarica come SVG, che e' un file solo, si apre in qualunque browser, si
+// stampa senza sgranare e si carica su LinkedIn come immagine. Niente
+// librerie esterne: il documento e' testo, generato qui.
+//
+// Il nome e la data NON sono decorativi: vengono dall'utente in sessione e dal
+// momento del rilascio. Il codice in fondo e' derivato da nome e livello, cosi'
+// due attestati diversi non hanno lo stesso, e chi lo riceve puo' almeno
+// confrontarlo con quello di chi lo mostra.
+function attestatoCodice(nome,livello){
+  var s=String(nome)+'|'+livello;
+  var h=0;
+  for(var i=0;i<s.length;i++){ h=((h<<5)-h+s.charCodeAt(i))|0 }
+  return 'RL-'+livello+'-'+Math.abs(h).toString(36).toUpperCase().padStart(6,'0').substring(0,6);
+}
+
+function attestatoSVG(livello){
+  var L=livelloInfo(livello);
+  var nome=utenteCorrente();
+  var ruolo=(typeof profileData!=='undefined'&&profileData.role)?profileData.role:'';
+  var org=(typeof profileData!=='undefined'&&profileData.org)?profileData.org:'';
+  var data=new Date().toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
+  var perc=PATHS.filter(function(p){return (p.livello||1)<=livello});
+  var lezioni=perc.reduce(function(a,p){return a+p.lessons.length},0);
+  var e=function(t){ return String(t==null?'':t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') };
+
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="850" viewBox="0 0 1200 850">'+
+    '<defs>'+
+      '<linearGradient id="b" x1="0" y1="0" x2="1" y2="1">'+
+        '<stop offset="0" stop-color="#0F172A"/><stop offset="1" stop-color="#1E293B"/></linearGradient>'+
+      '<linearGradient id="a" x1="0" y1="0" x2="1" y2="0">'+
+        '<stop offset="0" stop-color="'+L.col+'"/><stop offset="1" stop-color="#6366F1"/></linearGradient>'+
+    '</defs>'+
+    '<rect width="1200" height="850" fill="url(#b)"/>'+
+    '<rect x="40" y="40" width="1120" height="770" fill="none" stroke="'+L.col+'" stroke-width="2" opacity=".55" rx="14"/>'+
+    '<rect x="52" y="52" width="1096" height="746" fill="none" stroke="#FFFFFF" stroke-width="1" opacity=".12" rx="10"/>'+
+    '<rect x="0" y="0" width="1200" height="8" fill="url(#a)"/>'+
+
+    '<text x="600" y="132" text-anchor="middle" fill="#F1F5F9" font-family="Segoe UI,Helvetica,Arial" '+
+      'font-size="26" font-weight="700" letter-spacing="3">RelAItion</text>'+
+    '<text x="600" y="158" text-anchor="middle" fill="#94A3B8" font-family="Segoe UI,Helvetica,Arial" '+
+      'font-size="13" letter-spacing="2">AI AGENT MARKETPLACE</text>'+
+
+    '<text x="600" y="238" text-anchor="middle" fill="#CBD5E1" font-family="Segoe UI,Helvetica,Arial" '+
+      'font-size="15" letter-spacing="5">ATTESTATO DI COMPLETAMENTO</text>'+
+
+    '<text x="600" y="300" text-anchor="middle" font-size="62">'+L.ic+'</text>'+
+
+    '<text x="600" y="372" text-anchor="middle" fill="'+L.col+'" font-family="Segoe UI,Helvetica,Arial" '+
+      'font-size="44" font-weight="800">'+e(L.nome)+'</text>'+
+    '<text x="600" y="404" text-anchor="middle" fill="#94A3B8" font-family="Segoe UI,Helvetica,Arial" '+
+      'font-size="14">Livello '+livello+' di 4 · '+e(L.desc)+'</text>'+
+
+    '<line x1="360" y1="452" x2="840" y2="452" stroke="#334155" stroke-width="1"/>'+
+    '<text x="600" y="492" text-anchor="middle" fill="#94A3B8" font-family="Segoe UI,Helvetica,Arial" '+
+      'font-size="14">conferito a</text>'+
+    '<text x="600" y="552" text-anchor="middle" fill="#FFFFFF" font-family="Georgia,serif" '+
+      'font-size="42" font-weight="700">'+e(nome)+'</text>'+
+    (ruolo||org
+      ? '<text x="600" y="584" text-anchor="middle" fill="#94A3B8" font-family="Segoe UI,Helvetica,Arial" '+
+        'font-size="14">'+e([ruolo,org].filter(Boolean).join(' · '))+'</text>'
+      : '')+
+
+    '<text x="600" y="646" text-anchor="middle" fill="#CBD5E1" font-family="Segoe UI,Helvetica,Arial" '+
+      'font-size="13.5">per aver completato '+perc.length+' percors'+(perc.length===1?'o':'i')+' formativ'+(perc.length===1?'o':'i')+
+      ' e '+lezioni+' lezioni</text>'+
+
+    '<line x1="150" y1="716" x2="450" y2="716" stroke="#334155" stroke-width="1"/>'+
+    '<text x="300" y="742" text-anchor="middle" fill="#94A3B8" font-family="Segoe UI,Helvetica,Arial" font-size="12">Data di rilascio</text>'+
+    '<text x="300" y="700" text-anchor="middle" fill="#F1F5F9" font-family="Segoe UI,Helvetica,Arial" font-size="15">'+e(data)+'</text>'+
+
+    '<line x1="750" y1="716" x2="1050" y2="716" stroke="#334155" stroke-width="1"/>'+
+    '<text x="900" y="742" text-anchor="middle" fill="#94A3B8" font-family="Segoe UI,Helvetica,Arial" font-size="12">Codice attestato</text>'+
+    '<text x="900" y="700" text-anchor="middle" fill="#F1F5F9" font-family="Consolas,monospace" font-size="15">'+
+      e(attestatoCodice(nome,livello))+'</text>'+
+
+    '<text x="600" y="790" text-anchor="middle" fill="#64748B" font-family="Segoe UI,Helvetica,Arial" '+
+      'font-size="11">Percorso formativo svolto sulla piattaforma RelAItion · prototipo dimostrativo</text>'+
+  '</svg>';
+}
+
+function scaricaAttestato(livello){
+  if(livelloRaggiunto()<livello){
+    showToast('⚠️ Questo livello non è ancora stato raggiunto');
+    return;
+  }
+  var nome='attestato-relaition-livello'+livello+'-'+
+    utenteCorrente().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.svg';
+  if(typeof foDownload==='function')foDownload(nome,'image/svg+xml',attestatoSVG(livello));
+  showToast('📄 Attestato scaricato: '+nome);
+  if(typeof addAct==='function')addAct('Scaricato l\'attestato di livello '+livello+': '+livelloInfo(livello).nome);
+}
+
+// L'ultima riga della pagina dichiara che e' un prototipo: un attestato che si
+// spaccia per un titolo rilasciato da un ente sarebbe un problema, non una
+// funzione. Meglio dirlo sul documento stesso che nelle note.
+// ══════════════════════════════════════════════════════════════
+// ANTEPRIMA A SCHERMO INTERO DELLE IMMAGINI
+// ══════════════════════════════════════════════════════════════
+// Nella scheda l'immagine e' ritagliata a 260px per non rendere ogni post alto
+// una schermata. Ma uno schema di flusso o un grafico, ridotti a una striscia,
+// non si leggono — ed erano esattamente il tipo di contenuto per cui le
+// immagini servivano. Qui si apre intera, si ingrandisce e si scorre fra le
+// immagini degli altri post senza tornare indietro ogni volta.
+//
+// Non usa la modale dell'applicazione: quella ha una larghezza massima pensata
+// per i moduli, e un'immagine larga ci starebbe dentro rimpicciolita.
+var IMG_APERTA={indice:-1, zoom:1, elenco:[]};
+
+function immaginiDeiPost(){
+  return (typeof POSTS!=='undefined'?POSTS:[]).filter(function(p){
+    return p.attach_data && /^image\//.test(p.attach_mime||'');
+  });
+}
+
+function apriImmaginePost(postId){
+  IMG_APERTA.elenco=immaginiDeiPost();
+  IMG_APERTA.indice=IMG_APERTA.elenco.map(function(p){return p.id}).indexOf(postId);
+  if(IMG_APERTA.indice<0)IMG_APERTA.indice=0;
+  if(!IMG_APERTA.elenco.length)return;
+  IMG_APERTA.zoom=1;
+
+  var v=document.getElementById('visoreImmagine');
+  if(!v){
+    v=document.createElement('div');
+    v.id='visoreImmagine';
+    v.style.cssText='position:fixed;inset:0;z-index:2000;background:rgba(8,15,30,.92);'+
+      'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px;gap:12px';
+    // Il clic sullo sfondo chiude: e' il gesto che tutti si aspettano da un
+    // visore a schermo intero. Sull'immagine invece no, altrimenti si chiude
+    // per sbaglio mentre la si guarda.
+    v.onclick=function(e){ if(e.target===v)chiudiImmaginePost() };
+    document.body.appendChild(v);
+    document.addEventListener('keydown',visoreTasti);
+  }
+  disegnaVisore();
+}
+
+function visoreTasti(e){
+  if(!document.getElementById('visoreImmagine'))return;
+  if(e.key==='Escape'){ chiudiImmaginePost() }
+  else if(e.key==='ArrowRight'){ scorriImmaginePost(1) }
+  else if(e.key==='ArrowLeft'){ scorriImmaginePost(-1) }
+  else if(e.key==='+'||e.key==='='){ zoomImmaginePost(0.25) }
+  else if(e.key==='-'){ zoomImmaginePost(-0.25) }
+}
+
+function disegnaVisore(){
+  var v=document.getElementById('visoreImmagine');
+  if(!v)return;
+  var p=IMG_APERTA.elenco[IMG_APERTA.indice];
+  if(!p){ chiudiImmaginePost(); return }
+  var piu=IMG_APERTA.elenco.length>1;
+  v.innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;width:100%;max-width:1100px;color:#E2E8F0">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.title||'')+'</div>'+
+        '<div style="font-size:11px;color:#94A3B8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+
+          escHtml(p.attach_name||'')+' · '+escHtml(p.user||'')+
+          (piu?(' · '+(IMG_APERTA.indice+1)+' di '+IMG_APERTA.elenco.length):'')+'</div>'+
+      '</div>'+
+      '<button class="tb-btn" style="height:30px;font-size:11px" onclick="zoomImmaginePost(-0.25)" title="Riduci">−</button>'+
+      '<span style="font-size:11px;color:#94A3B8;min-width:44px;text-align:center">'+Math.round(IMG_APERTA.zoom*100)+'%</span>'+
+      '<button class="tb-btn" style="height:30px;font-size:11px" onclick="zoomImmaginePost(0.25)" title="Ingrandisci">+</button>'+
+      '<button class="tb-btn" style="height:30px;font-size:11px" onclick="scaricaAllegatoPost('+p.id+')" title="Scarica">⬇️</button>'+
+      '<button class="tb-btn" style="height:30px;font-size:11px" onclick="chiudiImmaginePost()" title="Chiudi (Esc)">✕</button>'+
+    '</div>'+
+    '<div style="flex:1;min-height:0;width:100%;max-width:1100px;display:flex;align-items:center;gap:10px">'+
+      (piu?'<button class="tb-btn" style="height:44px;flex:0 0 40px;justify-content:center" onclick="scorriImmaginePost(-1)" title="Precedente (←)">‹</button>':'')+
+      '<div style="flex:1;min-width:0;height:100%;overflow:auto;display:flex;align-items:center;justify-content:center;'+
+        'background:#FFFFFF;border-radius:12px">'+
+        '<img src="'+p.attach_data+'" alt="'+escHtml(p.attach_name||'')+'" '+
+          'style="max-width:none;width:'+(IMG_APERTA.zoom*100)+'%;height:auto;display:block">'+
+      '</div>'+
+      (piu?'<button class="tb-btn" style="height:44px;flex:0 0 40px;justify-content:center" onclick="scorriImmaginePost(1)" title="Successiva (→)">›</button>':'')+
+    '</div>'+
+    '<div style="font-size:10.5px;color:#64748B">Esc chiude · ← → scorrono · + e − ingrandiscono</div>';
+}
+
+function scorriImmaginePost(d){
+  if(IMG_APERTA.elenco.length<2)return;
+  IMG_APERTA.indice=(IMG_APERTA.indice+d+IMG_APERTA.elenco.length)%IMG_APERTA.elenco.length;
+  IMG_APERTA.zoom=1;
+  disegnaVisore();
+}
+
+function zoomImmaginePost(d){
+  IMG_APERTA.zoom=Math.max(0.25,Math.min(4,Math.round((IMG_APERTA.zoom+d)*100)/100));
+  disegnaVisore();
+}
+
+function chiudiImmaginePost(){
+  var v=document.getElementById('visoreImmagine');
+  if(v)v.remove();
+  document.removeEventListener('keydown',visoreTasti);
 }

@@ -35,7 +35,12 @@
 .b-port-true{bottom:-6px;left:30%;margin-left:-6px;border-color:#10B981}
 .b-port-false{bottom:-6px;left:70%;margin-left:-6px;border-color:#EF4444}
 
-.canvas-controls{position:absolute;bottom:16px;right:16px;display:flex;gap:4px;z-index:20}
+/* I comandi si appoggiano SOPRA il registro, non sopra il suo testo:
+   `--altezza-registro` viene scritta da impostaAltezzaRegistro() a ogni cambio.
+   Il valore di ripiego e' l'altezza del registro chiuso, cosi' la barra e' al
+   posto giusto anche prima che il Builder si sia inizializzato. */
+.canvas-controls{position:absolute;right:16px;display:flex;gap:4px;z-index:20;
+  bottom:calc(var(--altezza-registro, 36px) + 12px);transition:bottom .18s}
 .canvas-controls button{width:36px;height:36px;border-radius:8px;border:1px solid var(--bo);background:var(--card);cursor:pointer;display:grid;place-items:center;font-size:14px;transition:var(--trans);box-shadow:var(--sh)}
 .canvas-controls button:hover{background:var(--bg2)}
 .zoom-label{min-width:50px;text-align:center;line-height:36px;font-size:11px;font-weight:700;color:var(--tx3)}
@@ -83,7 +88,7 @@ textarea.prop-input{min-height:80px;resize:vertical}
 .exec-log-grip:hover{background:var(--ac);opacity:.25}
 .exec-log-dot{width:8px;height:8px;border-radius:50%;background:var(--tx4)}
 .exec-log-dot.running{background:var(--ac3);animation:pulse 1s infinite}
-.exec-log-dot.ok{background:var(--ac)}.exec-log-dot.err{background:#EF4444}
+.exec-log-dot.ok{background:var(--ok)}.exec-log-dot.err{background:#EF4444}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .exec-log-body{overflow-y:auto;flex:1;min-height:0;font-size:11px;font-family:"SF Mono",monospace}
 .exec-entry{padding:4px 16px;border-bottom:1px solid var(--bg2);display:flex;gap:8px;align-items:center}
@@ -143,7 +148,21 @@ textarea.prop-input{min-height:80px;resize:vertical}
 /* Anteprima della composizione conversazionale: sta sotto la barra, dove
    l'utente ha appena scritto, perché è lì che guarda. Nulla viene applicato
    al canvas finché non conferma. */
-.compose-preview{margin-top:8px;background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:12px 14px;box-shadow:var(--sh-lg);max-height:340px;overflow-y:auto;animation:composeIn .18s ease-out}
+/* L'anteprima della chat vive SOPRA l'interfaccia, non dentro la fascia della
+   chat. Stava dentro `.builder-header`, che ha `max-height:45vh` e scorre: la
+   proposta del modello compariva sotto il bordo e nessuno se ne accorgeva —
+   si premeva Genera e sembrava non fosse successo niente. Con `fixed` nessun
+   contenitore la puo' tagliare, e la posizione la calcola `ccPosizionaAnteprima()`
+   a partire dalla barra della chat. */
+.compose-preview{position:fixed;z-index:120;width:min(560px,92vw);
+  background:var(--card);border:1px solid var(--ac);border-radius:14px;padding:0;
+  max-height:min(58vh,470px);overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 24px 60px rgba(2,8,23,.28),0 0 0 4px rgba(37,99,235,.12);
+  animation:composeIn .2s cubic-bezier(.4,0,.2,1)}
+.compose-preview .cp-testa{display:flex;align-items:center;gap:8px;padding:10px 14px;
+  border-bottom:1px solid var(--bo);background:var(--ac-ul);border-radius:14px 14px 0 0;flex-shrink:0}
+.compose-preview .cp-corpo{padding:12px 14px;overflow-y:auto;flex:1;min-height:0}
+.compose-preview .cp-piede{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--bo);flex-shrink:0}
 @keyframes composeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .chat-builder-hint{text-align:center;font-size:10px;color:var(--tx4);margin-top:6px;background:var(--glass);backdrop-filter:var(--glass-b);border-radius:8px;padding:4px 10px;display:inline-block;position:relative;left:50%;transform:translateX(-50%)}
 

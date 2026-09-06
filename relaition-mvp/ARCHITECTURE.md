@@ -2455,3 +2455,262 @@ codice — la configurazione è una sovrascrittura, non una copia.
 Verificato: sette sfide su sette si aprono come pagina, Indietro torna
 all'elenco, tre clic sul pollice danno 1, un commento troppo corto viene
 rifiutato, e sulla propria candidatura il pulsante di voto è inerte.
+
+### 5.107 Il canvas e il registro non si contendono più la rotella
+
+Il registro di esecuzione vive **dentro** `canvasArea`, e questo produceva due
+difetti che si vedevano solo usando il Builder sul serio, cioè con un flusso
+appena eseguito e un registro pieno di voci da leggere.
+
+**La rotella.** L'evento risaliva dal registro fino al gestore dello zoom: chi
+teneva il puntatore sul registro e girava la rotella per rileggere le voci più
+vecchie si ingrandiva il canvas sotto, mentre il registro restava fermo. La
+regola non è scritta sul registro ma sulla situazione: prima di zoomare,
+`onCanvasWheel()` risale dall'elemento sotto il puntatore fino al canvas e, se
+incontra un contenitore che **può davvero scorrere** — `overflow-y` scorrevole
+*e* contenuto più alto dello spazio disponibile — non fa nulla, nemmeno
+`preventDefault()`, così il browser lo fa scorrere come su qualunque pagina. La
+seconda condizione conta: su un registro corto, che non ha niente da scorrere,
+la rotella torna a zoomare invece di morire lì. Se domani nascesse un altro
+pannello scorrevole sopra il canvas, la regola varrebbe già per lui.
+
+**I comandi dello zoom.** Stavano a `bottom:16px`, cioè sopra un registro che
+parte da `bottom:0`: coprivano stabilmente le ultime due righe, proprio quelle
+che si finisce di leggere quando un flusso termina con un errore. Ora si
+appoggiano **sopra il pannello** e non sopra il suo testo:
+`impostaAltezzaRegistro()` — l'unica funzione da cui passano tutti i cambi di
+altezza, pulsanti, doppio clic e trascinamento della maniglia — pubblica la
+misura come variabile CSS `--altezza-registro`, e la barra la usa nel proprio
+`bottom`. Il valore di ripiego è l'altezza del registro chiuso, così la barra è
+al posto giusto anche prima che il Builder si sia inizializzato.
+
+Verificato con la rotella vera: sul registro le voci scorrono da 321 a 21 e lo
+zoom resta a 1; sul canvas lo zoom passa da 1 a 1.1. E nei tre stati del
+registro — chiuso a 36px, aperto a 220px, al massimo a 375px su un canvas di
+441px — la barra sale con il pannello, non lo copre mai e non esce dal canvas.
+
+### 5.108 La tendina dei modelli non seguiva il fornitore
+
+Sul nodo AI, cambiare fornitore lasciava la tendina **Modello** ferma
+sull'elenco precedente: chi passava da OpenAI a Claude o a Gemini continuava a
+vedere `GPT-4o mini` e compagni, cioè modelli che quel fornitore non ha.
+
+La causa non era nella tendina ma in `updConfig()`. Dopo aver scritto il valore,
+ridisegna il pannello **solo se** `campoDaCuiDipendonoAltri()` riconosce una
+dipendenza, e quella funzione legge l'elenco `fields` della definizione del
+nodo. Il pannello del nodo AI è però scritto a mano, senza `fields`: nessuna
+dipendenza dichiarata, nessun ridisegno, e la tendina restava quella di prima.
+Il caso va nominato esplicitamente, ed è quello che ora fa la condizione
+`n.type==='ai' && key==='model'`.
+
+Contestualmente il modello scelto per il fornitore precedente viene
+**azzerato**: `claude-sonnet-5` non ha senso sotto Gemini. In esecuzione non
+cambiava nulla — `modelloEffettivo()` ricadeva già sul predefinito quando
+l'identificativo non appartiene al fornitore — ma la configurazione salvata
+conteneva un identificativo di un altro vendor, ed è il genere di incoerenza che
+si scopre solo esportando il flusso.
+
+Verificato passando fra tutti i fornitori: OpenAI mostra i quattro `gpt-*`,
+Claude i quattro `claude-*`, Gemini i tre alias `-latest`, Mistral i due
+`mistral-*`; per il fornitore locale compare un campo di testo, non una tendina
+vuota, perché l'elenco lo conosce solo il server. Scelto `claude-sonnet-5`,
+resta in configurazione, resta mostrato e `modelloEffettivo()` restituisce
+proprio quello; cambiando poi fornitore la configurazione torna vuota e
+subentra il predefinito del nuovo. L'identificativo finisce nel corpo della
+richiesta HTTP di tutti i fornitori (`idModello` in `js/ai-client.js`): la
+scelta è reale, non un'etichetta.
+
+### 5.109 Le schede personali contavano la piattaforma intera
+
+L'intestazione del Profilo annunciava **10 agenti e 50 esecuzioni** mentre il
+corpo della stessa pagina, poche righe sotto, contava **2 creati, 5 installati e
+19 esecuzioni**. Stessa pagina, due risposte diverse alla stessa domanda, e
+visibili insieme senza scorrere. La Dashboard ripeteva gli stessi numeri sotto
+la scritta «Ecco una panoramica della **tua** attività».
+
+`updateStatCards()` (`js/storage.js`) filtrava per utente solo una delle tre
+interrogazioni: gli agenti installati sì, ma gli agenti creati e le esecuzioni
+no. Così il totale sommava i cinque agenti *di tutti* ai cinque installati da
+Mario, e mostrava le cinquanta esecuzioni della piattaforma al posto delle sue.
+Era la stessa classe di difetto già corretta per gli obiettivi pratici (§5.61),
+sfuggita su queste due schede.
+
+Il sottotitolo, già che c'era, ha smesso di dire «N totali» — che ripeteva il
+numero grande senza aggiungere niente — e dice ora com'è composto: «2 creati ·
+5 installati».
+
+**La correzione ne apriva un'altra.** Rese personali le schede, restava il
+numero di esecuzioni sulle carte di «I miei agenti», che era il totale
+dell'agente: ogni agente del seme ha esecuzioni di quattro utenti diversi, e
+quel numero smentiva la Dashboard appena sistemata. Ridurlo alle sole esecuzioni
+proprie avrebbe però nascosto un'informazione vera, cioè quanto quell'agente
+viene usato in azienda. Le carte mostrano quindi **entrambi** i conteggi
+(«4 tue · 11 in tutto»), uno solo quando coincidono, e «mai eseguito» quando non
+è mai partito.
+
+Verificato sui quattro profili dimostrativi: Mario 7 agenti e 17 esecuzioni,
+Giulia 4 e 15, Sara 3 e 7, Marco 2 e 9 — ciascuno coincidente con il proprio
+conteggio nel database e con il corpo della propria pagina.
+
+### 5.110 La ricerca cercava e poi buttava via il risultato
+
+`onGlobalSearch()` filtrava davvero il catalogo, contava i risultati e poi li
+**scartava**: mostrava un avviso «3 agenti trovati per fattura» e portava al
+Marketplace **non filtrato**, lasciando all'utente il compito di ritrovarli fra
+ventitré schede. Il codice calcolava la risposta e non la usava.
+
+Ora il testo cercato è un filtro come la categoria — vive nello stato
+(`mktRicerca`), si combina con essa, e resta scritto sopra i risultati con il
+numero trovato e un pulsante per toglierlo. Senza quella riga, chi non ricorda
+di aver scritto qualcosa nella barra vede un catalogo dimezzato e crede sia
+rotto.
+
+**Le desinenze.** Con il confronto letterale «fattura» non trovava «fatture»:
+non ne è una sottostringa. Chi cercava al singolare quello che il catalogo
+scrive al plurale concludeva che la ricerca non funzionasse — ed è esattamente
+il difetto segnalato dalle prove con utenti. Si confronta la **radice**, tolta
+l'ultima vocale sopra i cinque caratteri: «fattur» copre entrambe. Gli accenti
+vengono normalizzati.
+
+**Il ripiego parziale.** Con più parole si pretende prima che ci siano tutte;
+se così non si trova niente si ripiega su quelle che ci sono, ordinate per
+quante ne corrispondono, **dichiarando** che il risultato è parziale. «Estrazione
+fatture» dava zero perché la scheda dice *estrae*: meglio un elenco parziale
+etichettato come tale che una pagina vuota. La ricerca guarda nome,
+descrizione, categoria, autore ed etichette.
+
+Verificato: `fattura` e `fatture` trovano entrambe *Invoice Extractor*,
+`revisione contratti` cinque agenti in modalità parziale, `onboarding hr` uno
+solo, una parola inventata mostra il messaggio con la via d'uscita.
+
+### 5.111 La classifica per esperienza era scritta nel codice
+
+Nella Community sei nomi con l'esperienza fissata nel sorgente — *Andrea L.
+4820, Marco R. 4210, Giulia D. 3890* — mentre la piattaforma tiene i valori veri
+in `xp_log`. Completare una lezione, vincere una sfida o pubblicare un agente
+**non spostava la classifica di un punto**, e il proprio nome restava inchiodato
+al quinto posto qualunque cosa si facesse. Due dei sei nomi non erano nemmeno
+utenti della piattaforma.
+
+`classificaXP()` (`js/utenti.js`) somma le righe di `xp_log` per utente e include
+tutti gli account noti, anche a zero: una classifica che nasconde chi non ha
+ancora fatto niente non è una classifica, e chi entra per la prima volta non si
+troverebbe.
+
+La stessa classifica compare ora anche **in cima alle Sfide**, con la propria
+posizione dichiarata («Sei 1° su 4»): le classifiche già presenti misurano una
+singola sfida, questa misura la persona. Stessa fonte e stesso ordine nelle due
+pagine, così non si contraddicono fra loro.
+
+Verificato: l'ordine coincide riga per riga con `SELECT user, SUM(amount) FROM
+xp_log GROUP BY user`; aggiungendo 400 punti a un altro utente la classifica si
+riordina davvero e lo mostra a schermo.
+
+### 5.112 Il Loop dichiarava di iterare e non iterava
+
+Il blocco *Loop* esisteva nella palette dal principio, ma a runtime si limitava
+a scrivere una riga — *«🔄 Loop: iterazioni entro il guardrail di 100»* — e il
+flusso proseguiva dritto. Chi lo metteva per analizzare una sequenza di
+documenti ne vedeva analizzare **uno solo**, e nulla lo segnalava: il registro
+diceva «concluso» avendo fatto un giro invece di venti.
+
+Ora itera davvero, e il meccanismo segue la natura del motore. Il nodo Loop
+**dichiara** quanti giri servono; a ripeterli pensa `rtRiarmaCicli()`, chiamata
+dal motore **quando l'ondata si esaurisce** — cioè quando tutto ciò che poteva
+girare ha girato. È l'unico ordine corretto: nel primo tentativo il nodo
+azzerava sé stesso e i nodi a valle insieme, e il ciclo ripartiva *prima* che
+quei nodi girassero, producendo quattro iterazioni tutte vuote con il registro
+che dichiarava un lavoro mai fatto.
+
+**Quanti giri.** Se il nodo dichiara un `field`, si contano gli elementi che i
+nodi a monte hanno davvero prodotto — è ciò che distingue «ripeti cinque volte»
+da «ripeti per ogni documento». La pipeline è una stringa: quando contiene JSON
+viene interpretata (`rtInterpreta`), altrimenti la ricerca del campo non
+troverebbe mai nulla e il ciclo ricadrebbe in silenzio sul numero fisso.
+
+**Il tetto.** `LOOP_TETTO = 25`. Un ciclo senza limite dentro una pagina web
+blocca il browser, e durante una dimostrazione dal vivo non si recupera: il
+superamento è **dichiarato nel registro**, non nascosto. Il numero massimo di
+ondate del motore cresce con i cicli presenti, altrimenti un ciclo lungo veniva
+troncato a metà in silenzio.
+
+Verificato: una lista di quattro elementi produce quattro iterazioni e
+**quattro chiamate al modello** sul nodo a valle; cento elementi vengono
+limitati a venticinque con l'avviso; senza `field` si usa il numero dichiarato.
+
+### 5.113 I quattro livelli di certificazione esistevano solo nel testo
+
+La pagina del Learning Hub prometteva *«i 4 livelli di certificazione, da AI
+Aspirant ad AI Ambassador»* e nessun percorso era associato a un livello: chi
+leggeva cercava una struttura che non esisteva da nessuna parte. I due riquadri
+della scheda Certificazioni — «AI Agent Practitioner» e «Builder Expert» — non
+avevano alcun rapporto con quei livelli, e nessuno dei due era scaricabile.
+
+Ogni percorso dichiara ora il proprio `livello`, le schede lo mostrano, e il
+livello raggiunto si **calcola**: è il più alto per cui *tutti* i percorsi fino a
+quel livello sono completati. Basarsi su una percentuale complessiva avrebbe
+dato «AI Ambassador» a chi ha finito solo i percorsi facili.
+
+**L'attestato si scarica.** Un livello raggiunto e non portabile fuori dalla
+piattaforma vale poco: `scaricaAttestato()` genera un SVG con nome, ruolo,
+organizzazione, data di rilascio e un codice derivato da nome e livello. Nessuna
+libreria esterna, il documento è testo generato. In fondo dichiara di provenire
+da un prototipo: un attestato che si spacciasse per un titolo rilasciato da un
+ente sarebbe un problema, non una funzione.
+
+### 5.114 «Esegui» da «I miei agenti» non eseguiva niente
+
+`quickRunAgent()` aspettava due secondi con un `setTimeout` e registrava
+un'esecuzione **riuscita con zero nodi**. Chi lo premeva vedeva «completato con
+successo» e poi cercava invano il risultato: non c'era, perché non era successo
+nulla. Nelle prove con utenti la domanda ricorrente era *«dove trovo l'esito?»*,
+e la risposta onesta era che non esisteva.
+
+Ora usa lo stesso motore del Builder (`runAgentHeadless`) e, a fine corsa, apre
+un riepilogo di **dove è finito** ciò che ha prodotto: file scaricato, documento
+in Knowledge Base, email inviata, oppure — quando il flusso non produce nulla di
+esterno — lo dice e mostra l'esito finale con il collegamento al registro. Le
+azioni simulate restano dichiarate come tali.
+
+Verificato: l'esecuzione registra **7 nodi** e una durata reale, e il riepilogo
+compare.
+
+### 5.115 Cose che c'erano e non si trovavano
+
+Lo **spostamento della vista** sul canvas esisteva da sempre — Ctrl, Shift o
+tasto centrale con trascinamento — e non era scritto da nessuna parte: nelle
+prove risultava «frustrante», che è il giudizio giusto su una funzione che non
+si scopre. Le scorciatoie sono ora elencate nel pannello delle proprietà quando
+nessun nodo è selezionato, cioè esattamente quando si sta guardando la tela
+senza sapere cosa fare.
+
+La **sandbox** aveva già il proprio banner con la differenza dichiarata (palette
+ridotta, nessuna scrittura esterna, nessun salvataggio): non è stata toccata.
+
+### 5.116 Immagini nella Community
+
+Le immagini si **mostrano**, non si annunciano: una community in cui ogni
+contenuto visivo è una riga «📎 schema.svg — Scarica» somiglia a un archivio.
+Gli allegati con tipo `image/*` compaiono in linea nella scheda del post; gli
+altri formati restano una riga con il pulsante, che per un CSV o un JSON è
+giusto.
+
+I due post aggiunti portano **grafica vettoriale generata nel codice**, non
+fotografie: uno schema di flusso e un grafico di andamento. Riempire la
+dimostrazione di immagini inventate o di finte schermate avrebbe arredato la
+piattaforma con cose che non esistono.
+
+### 5.117 Il colore del marchio separato da quello del successo
+
+La tinta della piattaforma era verde, che in questo settore si legge come
+«riuscito» più che come «innovazione» — e infatti il colore del marchio finiva
+per confondersi con lo stato dei flussi. Il marchio è ora **blu con secondo
+viola**; il verde resta, ma solo come semantica.
+
+La separazione andava fatta **prima** di cambiare tinta: `--ac` faceva da colore
+del marchio *e* da colore del successo, e cambiarlo avrebbe reso blu anche
+«Pubblicato» e «Esecuzione riuscita». Le nuove variabili `--ok*` tengono la
+semantica; i verdi rimasti nei fogli di stile sono soltanto quelli: ramo «sì» di
+una condizione, indicatore di provider attivo, valore in crescita, risposta
+corretta di un quiz. `govColori()` usava già un verde esplicito e non è stata
+toccata.
