@@ -4,7 +4,7 @@
 .builder-sidebar-header{padding:16px;border-bottom:1px solid var(--bo)}
 .builder-sidebar-header h3{font-size:14px;font-weight:700;margin-bottom:8px}
 .palette-search{width:100%;padding:7px 10px;border:1px solid var(--bo);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;transition:var(--trans)}
-.palette-search:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(16,185,129,.1)}
+.palette-search:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .palette-tabs{display:flex;border-bottom:1px solid var(--bo)}
 .palette-tab{flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:600;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:var(--trans)}
 .palette-tab:hover{color:var(--tx)}
@@ -55,7 +55,7 @@
 .prop-group{margin-bottom:16px}
 .prop-label{font-size:11px;font-weight:600;color:var(--tx3);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
 .prop-input{width:100%;padding:8px 10px;border:1px solid var(--bo);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;transition:var(--trans)}
-.prop-input:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(16,185,129,.1)}
+.prop-input:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 textarea.prop-input{min-height:80px;resize:vertical}
 .prop-select{width:100%;padding:8px 10px;border:1px solid var(--bo);border-radius:var(--r);font-size:12px;font-family:inherit;outline:none;background:var(--card);cursor:pointer}
 
@@ -280,7 +280,7 @@ textarea.prop-input{min-height:80px;resize:vertical}
 .bgrip-h{height:5px;cursor:row-resize;margin:-2px 0;z-index:6}
 .bgrip-h::after{top:2px;left:0;right:0;height:1px}
 .bgrip:hover::after,.bgrip.attivo::after{background:var(--ac)}
-.bgrip:hover,.bgrip.attivo{background:rgba(16,185,129,.06)}
+.bgrip:hover,.bgrip.attivo{background:rgba(37,99,235,.06)}
 /* Mentre si trascina il cursore non deve cambiare passando sopra altri
    elementi, e il testo non deve selezionarsi. */
 body.bgrip-trascino{user-select:none}

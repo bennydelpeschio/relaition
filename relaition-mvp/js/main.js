@@ -238,13 +238,7 @@ initDatabase().then(function(){
   renderDashboard();
   // Il pallino sul menu Governo conta i segnali aperti: senza, il cruscotto
   // andrebbe visitato per scoprire che c'era qualcosa da guardare.
-  if(typeof govRischi==='function'){
-    try{
-      var _r=govRischi(govStats()).filter(function(x){return x.liv!=='basso'});
-      var _b=document.getElementById('monBadge');
-      if(_b&&_r.length){_b.textContent=_r.length;_b.style.display=''}
-    }catch(e){}
-  }
+  if(typeof aggiornaBadgeMonitoraggio==='function')aggiornaBadgeMonitoraggio();
   startScheduler();
   var ov=document.getElementById('bootOverlay');
   if(ov)ov.remove();

@@ -28,7 +28,7 @@ var UTENTI=[
   },
   {
     email:'marco.russo@relaition.com', password:'marco1234',
-    name:'Marco R.', iniziali:'MR', colore:'#10B981',
+    name:'Marco R.', iniziali:'MR', colore:'#EC4899',
     role:'Analista di processo', org:'Miglioramento Continuo',
     bio:'Sperimento molto e fallisco spesso: è il modo più rapido che conosco per capire dove l\'automazione conviene davvero e dove no.',
     linkedin:'linkedin.com/in/marcorusso'

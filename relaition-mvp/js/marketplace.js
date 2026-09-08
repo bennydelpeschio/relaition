@@ -261,7 +261,7 @@ function openAgentDetail(id){
       '<span class="badge '+(a.price==='Gratis'?'badge-g':'badge-y')+'">'+a.price+'</span>'+
       (a.compliance?a.compliance.map(function(c){return '<span class="badge badge-p">🛡️ '+c+'</span>'}).join(''):'')+
     '</div>'+
-    (a.compliance?'<div style="background:var(--ac-ul);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:11px;color:var(--tx2)"><strong>✅ Governance verificata:</strong> audit log immutabile, esecuzione in sandbox isolata, dati processati in EU. Conforme a '+a.compliance.join(', ')+'.</div>':'')+
+    (a.compliance?'<div style="background:var(--ac-ul);border:1px solid rgba(37,99,235,.2);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:11px;color:var(--tx2)"><strong>✅ Governance verificata:</strong> audit log immutabile, esecuzione in sandbox isolata, dati processati in EU. Conforme a '+a.compliance.join(', ')+'.</div>':'')+
     '<p style="font-size:13px;color:var(--tx2);line-height:1.7;margin-bottom:16px">'+a.desc+'</p>'+
     '<div style="font-size:12px;font-weight:700;margin-bottom:8px">🏷️ Integrazioni</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">'+a.tags.map(function(t){return '<span class="badge badge-gray">'+t+'</span>'}).join('')+'</div>'+
@@ -318,8 +318,14 @@ function installAgent(id){
   showToast('✅ '+a.name+' installato nel Builder!');
   addAct('Installato agente: '+a.name);
   // Save to my agents
+  // Il capitolo 4.4 prevede che gli agenti piu' installati generino esperienza
+  // per chi li ha scritti: il merito e' di chi ha costruito, non di chi installa.
+  // Vale una volta sola per persona, altrimenti basterebbe disinstallare e
+  // reinstallare per far salire il proprio autore preferito.
   if(!dbGetOne('SELECT id FROM my_agents WHERE catalog_id=? AND user=?',[id,utenteCorrente()])){
     dbRun('INSERT INTO my_agents (catalog_id,installed_at,user) VALUES (?,?,?)',[id,new Date().toISOString(),utenteCorrente()]);
+    if(a.author && a.author!==utenteCorrente() && typeof addXPa==='function')
+      addXPa(a.author,15,'Un tuo agente e\u0300 stato installato: '+a.name);
   }
 }
 // ── MY AGENTS ──

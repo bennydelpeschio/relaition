@@ -1,6 +1,6 @@
 /* ─── MARKETPLACE ─── */
-.mkt-hero{background:linear-gradient(135deg,#ECFDF5 0%,#E0E7FF 50%,#FEF3C7 100%);border-radius:var(--rxl);padding:32px;margin-bottom:24px;position:relative;overflow:hidden}
-.mkt-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(16,185,129,.15),transparent 70%);border-radius:50%}
+.mkt-hero{background:linear-gradient(135deg,#EFF6FF 0%,#EDE9FE 50%,#FEF3C7 100%);border-radius:var(--rxl);padding:32px;margin-bottom:24px;position:relative;overflow:hidden}
+.mkt-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(37,99,235,.15),transparent 70%);border-radius:50%}
 .mkt-hero h1{font-size:28px;font-weight:900;letter-spacing:-.8px;margin-bottom:6px}
 .mkt-hero p{font-size:14px;color:var(--tx2);max-width:500px;line-height:1.6}
 .mkt-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center}

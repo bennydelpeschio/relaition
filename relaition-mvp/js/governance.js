@@ -667,8 +667,14 @@ function renderMonitoraggio(){
 
   // ── Segnali ──
   if(rischi.length){
+    // Il menu conta solo i segnali di livello medio o alto, la pagina li elenca
+    // tutti: due numeri diversi calcolati bene, che però messi uno accanto
+    // all'altro sembravano una contraddizione («2» sul menu, «4 segnali» qui).
+    // Dirlo qui costa una riga e toglie il dubbio.
+    var attenzione=rischi.filter(function(r){return r.liv!=='basso'}).length;
     h+='<div class="section-title" style="font-size:15px;margin:22px 0 2px">⚠️ Richiede attenzione</div>'+
-       '<div class="section-sub">'+rischi.length+' segnali rilevati sui dati reali.</div>'+
+       '<div class="section-sub">'+rischi.length+' segnali rilevati sui dati reali'+
+       (attenzione?(', di cui <strong>'+attenzione+'</strong> di livello medio o alto: sono quelli contati nel menu.'):'. Nessuno di livello medio o alto.')+'</div>'+
        rischi.map(function(r){
       var c=r.liv==='alto'?'#EF4444':r.liv==='medio'?'#F59E0B':'#94A3B8';
       return '<div class="card" style="padding:11px 14px;margin-bottom:8px;border-left:3px solid '+c+'">'+
@@ -836,4 +842,16 @@ function govExport(){
     foDownload('governance_'+new Date().toISOString().substring(0,10)+'.json','application/json',JSON.stringify(s,null,2));
     showToast('📥 Quadro di governo esportato');
   }
+}
+
+// Pallino del menu Monitoraggio: conta i segnali di livello medio o alto.
+// Prima veniva calcolato una volta sola all'avvio e non veniva mai nascosto:
+// se durante la sessione i segnali si risolvevano, il numero restava lì a
+// indicare un problema che non c'era più.
+function aggiornaBadgeMonitoraggio(){
+  var b=document.getElementById('monBadge');
+  if(!b)return;
+  var n=0;
+  try{ n=govRischi(govStats()).filter(function(x){return x.liv!=='basso'}).length }catch(e){ return }
+  if(n){ b.textContent=n; b.style.display='' } else { b.style.display='none' }
 }

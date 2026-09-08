@@ -116,7 +116,7 @@ function festeggiaPercorso(p){
         : '<div style="font-size:11.5px;color:var(--tx3);line-height:1.6;margin-bottom:14px">Tutti i quiz superati.</div>')+
       '<div style="font-size:12px;color:var(--tx2);margin-bottom:16px">'+
         (fatti>=PATHS.length
-          ? 'Sono completi tutti e '+PATHS.length+' i percorsi: la certificazione <strong>AI Agent Practitioner</strong> e\u0300 ottenuta.'
+          ? 'Sono completi tutti e '+PATHS.length+' i percorsi: il livello <strong>'+livelloInfo(livelloRaggiunto()||4).nome+'</strong> è raggiunto.'
           : fatti+' percorsi su '+PATHS.length+'. Ne mancano '+(PATHS.length-fatti)+' per la certificazione.')+
       '</div>'+
       '<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">'+

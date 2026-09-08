@@ -39,7 +39,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 .nav-group{padding:16px 8px 6px;font-size:10px;font-weight:600;color:rgba(148,163,184,.5);letter-spacing:1.2px;text-transform:uppercase}
 .ni{display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:13px;cursor:pointer;color:rgba(203,213,225,.7);border-radius:8px;transition:var(--trans);user-select:none;margin:1px 0;font-weight:500}
 .ni:hover{color:#F1F5F9;background:rgba(255,255,255,.06)}
-.ni.active{color:#fff;background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(16,185,129,.08));box-shadow:inset 0 0 0 1px rgba(16,185,129,.3)}
+.ni.active{color:#fff;background:linear-gradient(135deg,rgba(37,99,235,.2),rgba(37,99,235,.08));box-shadow:inset 0 0 0 1px rgba(37,99,235,.3)}
 .ni.active .ni-ic{color:#60A5FA}
 .ni-ic{font-size:15px;width:20px;text-align:center;flex-shrink:0}
 .ni-badge{margin-left:auto;background:rgba(96,165,250,.18);color:#93C5FD;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
@@ -58,13 +58,13 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 .tb-sub{font-size:12px;color:var(--tx3);margin-left:4px}
 .tb-spacer{flex:1}
 .tb-search{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bo);border-radius:8px;padding:6px 12px;width:280px;transition:var(--trans)}
-.tb-search:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px rgba(16,185,129,.1)}
+.tb-search:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .tb-search input{border:none;outline:none;background:none;font-size:12px;font-family:inherit;color:var(--tx);flex:1}
 .tb-search input::placeholder{color:var(--tx4)}
 .tb-btn{height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--bo);background:var(--card);font-size:12px;font-weight:600;cursor:pointer;transition:var(--trans);display:inline-flex;align-items:center;gap:6px;color:var(--tx2);font-family:inherit}
 .tb-btn:hover{background:var(--bg2);border-color:var(--bo2)}
 .tb-btn.primary{background:linear-gradient(135deg,#2563EB,#4F46E5);color:#fff;border:none;box-shadow:0 2px 8px rgba(37,99,235,.3)}
-.tb-btn.primary:hover{box-shadow:0 4px 12px rgba(16,185,129,.4);transform:translateY(-1px)}
+.tb-btn.primary:hover{box-shadow:0 4px 12px rgba(37,99,235,.4);transform:translateY(-1px)}
 .tb-icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--bo);background:var(--card);display:grid;place-items:center;cursor:pointer;transition:var(--trans);font-size:16px;position:relative}
 .tb-icon-btn:hover{background:var(--bg2)}
 .notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;background:#EF4444;border-radius:50%;border:2px solid var(--card)}
@@ -81,7 +81,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 ::-webkit-scrollbar-thumb:hover{background:var(--bo2)}
 
 /* ─── RESPONSIVE UTILS ─── */
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
 .flex-center{display:flex;align-items:center}
 .gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
 .mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}.mt-24{margin-top:24px}
@@ -143,7 +143,7 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
   position:relative;width:44px;height:44px;padding:0;margin:0;gap:0;
   justify-content:center;border-radius:12px}
 .sidebar.compatta .ni-ic{font-size:19px;width:auto}
-.sidebar.compatta .ni.active{box-shadow:inset 0 0 0 1px rgba(16,185,129,.35)}
+.sidebar.compatta .ni.active{box-shadow:inset 0 0 0 1px rgba(37,99,235,.35)}
 
 /* I gruppi non spariscono: diventano una linea. Perdono il nome, non la
    funzione di separare piattaforma, apprendimento, social e account. */

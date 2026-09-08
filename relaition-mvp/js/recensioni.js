@@ -155,6 +155,11 @@ function recSalva(id){
   else dbRun('INSERT INTO recensioni (agent_key,autore,stelle,testo,created_at) VALUES (?,?,?,?,?)',
     [chiave,utenteCorrente(),recStelleScelte,testo,ora]);
   if(typeof persistDatabaseNow==='function')persistDatabaseNow();
+  // 4.4: «anche gli agenti con il rating piu' alto generano punti esperienza».
+  // Solo alla PRIMA recensione e solo da 4 stelle in su: se contasse anche la
+  // modifica, si potrebbe far salire un autore alzando e riabbassando il voto.
+  if(!mia && recStelleScelte>=4 && a.author && a.author!==utenteCorrente() && typeof addXPa==='function')
+    addXPa(a.author,10,'Recensione positiva ricevuta su "'+a.name+'" ('+recStelleScelte+'/5)');
   showToast(mia?'✏️ Recensione aggiornata':'💬 Recensione pubblicata');
   addAct((mia?'Aggiornata':'Pubblicata')+' una recensione su "'+a.name+'" ('+recStelleScelte+'/5)');
   recRidisegna(id);

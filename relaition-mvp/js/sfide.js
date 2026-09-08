@@ -16,9 +16,12 @@
 // piattaforma; se assente è un evento, e si prenota soltanto.
 var SFIDE=[
   {id:'hack1', tipo:'hackathon', titolo:'Hackathon: Agent for Good', icona:'🏆', colore:'#F59E0B', giorni:21, dove:'Online',
-   desc:'Costruisci un agente che risolva un problema sociale o ambientale. Team di 2-4 persone, 48 ore.',
-   premi:'1° €5.000 e presenza nel Marketplace · 2° €2.000 · 3° €1.000',
+   desc:'Costruisci un agente che risolva un problema sociale o ambientale. Team cross-funzionali di 2-4 persone, tre giorni.',
+   premi:'1° borsa di studio per un master in IA · 2° visore VR · 3° cuffie di fascia alta · ai primi tre budget e supporto per portare il prototipo in produzione',
    criteri:[['Impatto sociale',30],['Innovazione tecnica',25],['Usabilità',25],['Presentazione',20]],
+   binari:["Efficienza operativa","Impatto sul cliente","Innovazione di prodotto"],
+   mentori:"AI Champions di reparto ed esperti IT, presenti per tutta la durata su questioni tecniche, di sicurezza e di governance.",
+   cadenza:"Quadrimestrale",
    posti:80, iscrittiBase:47},
 
   {id:'sprint1', tipo:'sfida', titolo:'Sprint: il miglior agente commerciale', icona:'⚡', colore:'#10B981', giorni:5, dove:'Online',
@@ -30,14 +33,14 @@ var SFIDE=[
 
   {id:'challenge1', tipo:'sfida', titolo:'Challenge: finanza senza errori', icona:'🎯', colore:'#6366F1', giorni:12, dove:'Online',
    desc:'Un agente che elabori documenti finanziari con il minor tasso di errore possibile. Si candida un proprio flusso e si misura sulle sue esecuzioni reali.',
-   premi:'800 XP, badge Esperto Finance e certificazione',
+   premi:'800 XP e voucher viaggio · attestato di partecipazione',
    criteri:[['Tasso di successo',50],['Numero di esecuzioni',25],['Controlli attivi',25]],
    posti:40, iscrittiBase:15,
    metrica:{id:'qualita', l:'Tasso di successo, pesato sul numero di esecuzioni'}},
 
   {id:'gov1', tipo:'sfida', titolo:'Challenge: presidio dimostrabile', icona:'🛡️', colore:'#0D9488', giorni:18, dove:'Online',
    desc:'Vince l\'agente meglio presidiato: mascheramento, convalida, approvazione umana, gestione delle eccezioni. Il punteggio conta i controlli davvero configurati nel flusso candidato.',
-   premi:'600 XP e badge Governance',
+   premi:'600 XP e badge Ethical AI Guardian',
    criteri:[['Controlli configurati',60],['Esecuzioni con presidio attivo',40]],
    posti:40, iscrittiBase:9,
    metrica:{id:'presidio', l:'Controlli configurati nel flusso candidato'}},
@@ -48,16 +51,19 @@ var SFIDE=[
    criteri:[['Posti limitati',100]],
    posti:30, iscrittiBase:18},
 
-  {id:'ama1', tipo:'evento', titolo:'Incontro aperto: portare gli agenti in produzione', icona:'🎤', colore:'#0EA5E9', giorni:15, dove:'Online',
+  {id:'ama1', tipo:'evento', titolo:'AMA: portare gli agenti in produzione', icona:'🎤', colore:'#0EA5E9', giorni:15, dove:'Online',
    desc:'Novanta minuti di domande e risposte su scala, sicurezza e costi degli agenti in esercizio. Le domande si raccolgono prima, in Community.',
    premi:'100 XP e registrazione disponibile dopo',
    criteri:[['Domande raccolte in anticipo',100]],
+   mentori:"Esperti di data governance e AI ethics.",
+   cadenza:"Mensile",
    posti:200, iscrittiBase:62},
 
   {id:'demo1', tipo:'evento', titolo:'Demo Day: agenti in esercizio', icona:'🎬', colore:'#EF4444', giorni:30, dove:'Roma e online',
-   desc:'Chi ha un agente in produzione lo presenta. Voto della community più giuria.',
-   premi:'1° €3.000 e badge Ambassador · i primi tre in evidenza nel catalogo',
-   criteri:[['Impatto reale',40],['Innovazione',30],['Presentazione',30]],
+   desc:'Chi ha un agente in produzione lo presenta con una dimostrazione dal vivo del flusso. Giuria di responsabili aziendali ed esperti esterni, più il voto della community.',
+   premi:'Al primo classificato budget, tempo e supporto per portare l’agente in esercizio · i primi tre in evidenza nel catalogo',
+   criteri:[['Impatto sul business',35],['Scalabilità',25],['Etica e presidio',20],['Presentazione',20]],
+   cadenza:"Al termine di ogni hackathon",
    posti:15, iscrittiBase:8}
 ];
 
@@ -306,6 +312,27 @@ function sfContenutoPagina(s){
           '<div style="width:'+c[1]+'%;height:100%;background:'+s.colore+'"></div></div>'+
         '<span style="width:32px;text-align:right;color:var(--tx4)">'+c[1]+'%</span></div>';
     }).join('')+'</div>';
+
+  // Binari tematici, mentori e cadenza: il capitolo 4.3 li chiede esplicitamente
+  // («per guidare l'innovazione verso obiettivi strategici vengono definiti dei
+  // binari tematici»; «gli AI Champions e gli esperti IT devono essere presenti
+  // come mentori»). Compaiono solo dove sono dichiarati, così una scheda non
+  // mostra sezioni vuote per uniformità.
+  var contorno='';
+  if(s.binari&&s.binari.length){
+    contorno+='<div style="margin-top:14px"><div style="font-size:11px;font-weight:700;margin-bottom:5px">Binari tematici</div>'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">'+s.binari.map(function(b){
+        return '<span class="badge badge-b" style="font-size:10px">'+escHtml(b)+'</span>';
+      }).join('')+'</div></div>';
+  }
+  if(s.mentori){
+    contorno+='<div style="margin-top:12px;font-size:11.5px;color:var(--tx3);line-height:1.5">'+
+      '<strong style="color:var(--tx2)">Mentori</strong> · '+escHtml(s.mentori)+'</div>';
+  }
+  if(s.cadenza){
+    contorno+='<div style="margin-top:8px;font-size:11px;color:var(--tx4)">Cadenza: '+escHtml(s.cadenza)+'</div>';
+  }
+  pesi+=contorno;
 
   var azioni='';
   if(s.giorni>=0){

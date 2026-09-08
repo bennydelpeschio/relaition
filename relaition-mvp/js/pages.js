@@ -8,10 +8,10 @@
 // il livello raggiunto si calcola: e' il piu' alto fra quelli i cui percorsi
 // sono TUTTI completati, non un'etichetta che si assegna da sola.
 var LIVELLI=[
-  {n:1, nome:'AI Aspirant',     ic:'🌱', col:'#10B981', desc:'Sa cosa sono gli agenti e come funzionano'},
-  {n:2, nome:'AI Practitioner', ic:'🔧', col:'#6366F1', desc:'Costruisce e mette in produzione flussi propri'},
-  {n:3, nome:'AI Professional', ic:'💼', col:'#F59E0B', desc:'Porta l\'automazione dentro processi aziendali reali'},
-  {n:4, nome:'AI Ambassador',   ic:'🛡️', col:'#EF4444', desc:'Presidia governo, conformità e diffusione in azienda'}
+  {n:1, nome:'AI Aspirant',     ic:'🌱', col:'#10B981', desc:'Conosce le basi e sa usare in sicurezza gli strumenti AI'},
+  {n:2, nome:'AI Translator',   ic:'🧭', col:'#6366F1', desc:'Usa gli agenti del Marketplace nel proprio reparto'},
+  {n:3, nome:'AI Creator',      ic:'🔧', col:'#F59E0B', desc:'Costruisce agenti propri nel builder no-code e nella sandbox'},
+  {n:4, nome:'AI Ambassador',   ic:'🛡️', col:'#EF4444', desc:'Misura le performance dei team e presidia governo e conformità'}
 ];
 
 function livelloInfo(n){ return LIVELLI.filter(function(l){return l.n===n})[0]||LIVELLI[0] }
@@ -42,18 +42,18 @@ function avanzamentoLivello(n){
 var PATHS=[
   {id:1,livello:1,name:'Fondamenti AI Agent',icon:'🤖',color:'#10B981',desc:'Impara le basi: cosa sono gli agenti AI, come funzionano i LLM, architetture agentic e primi workflow.',banner:'linear-gradient(135deg,#D1FAE5,#A7F3D0)',
    lessons:[{t:'Cos\'è un AI Agent',dur:'15 min',type:'Video',done:true},{t:'LLM: come funzionano',dur:'20 min',type:'Articolo',done:true},{t:'Architettura ReAct',dur:'25 min',type:'Video',done:true},{t:'Il tuo primo workflow',dur:'30 min',type:'Lab',done:false},{t:'Prompt engineering basics',dur:'20 min',type:'Quiz',done:false},{t:'Testing e validazione',dur:'15 min',type:'Articolo',done:false}]},
-  {id:2,livello:2,name:'Builder Avanzato',icon:'🔧',color:'#6366F1',desc:'Padroneggia il builder visuale: nodi condizionali, loop, API esterne, gestione errori e debugging.',banner:'linear-gradient(135deg,#E0E7FF,#C7D2FE)',
+  {id:2,livello:3,name:'Builder Avanzato',icon:'🔧',color:'#6366F1',desc:'Padroneggia il builder visuale: nodi condizionali, loop, API esterne, gestione errori e debugging.',banner:'linear-gradient(135deg,#E0E7FF,#C7D2FE)',
    lessons:[{t:'Nodi condizionali e branching',dur:'20 min',type:'Video',done:true},{t:'Loop e iterazioni',dur:'25 min',type:'Lab',done:true},{t:'Integrare API REST',dur:'30 min',type:'Lab',done:false},{t:'Error handling patterns',dur:'20 min',type:'Articolo',done:false},{t:'Debugging workflows',dur:'25 min',type:'Video',done:false},{t:'Ottimizzazione performance',dur:'20 min',type:'Quiz',done:false}]},
-  {id:3,livello:3,name:'AI per il Business',icon:'💼',color:'#F59E0B',desc:'Casi d\'uso reali per Sales, HR, Finance e Legal. ROI, metriche di successo e change management.',banner:'linear-gradient(135deg,#FEF3C7,#FDE68A)',
+  {id:3,livello:2,name:'AI per il Business',icon:'💼',color:'#F59E0B',desc:'Casi d\'uso reali per Sales, HR, Finance e Legal. ROI, metriche di successo e change management.',banner:'linear-gradient(135deg,#FEF3C7,#FDE68A)',
    lessons:[{t:'AI agent per Sales: lead scoring',dur:'25 min',type:'Case Study',done:true},{t:'Automazione HR: onboarding',dur:'20 min',type:'Case Study',done:false},{t:'Finance: invoice processing',dur:'25 min',type:'Lab',done:false},{t:'Legal: contract review AI',dur:'30 min',type:'Case Study',done:false},{t:'Calcolare il ROI dell\'automazione',dur:'15 min',type:'Articolo',done:false},{t:'Change management per AI',dur:'20 min',type:'Video',done:false}]},
   {id:4,livello:4,name:'Sicurezza & Governance',icon:'🛡️',color:'#EF4444',desc:'GDPR, privacy by design, audit trail, guardrails per LLM, bias detection e responsible AI.',banner:'linear-gradient(135deg,#FEE2E2,#FECACA)',
    lessons:[{t:'AI e GDPR: guida pratica',dur:'20 min',type:'Articolo',done:false},{t:'Privacy by design per agenti',dur:'25 min',type:'Video',done:false},{t:'Guardrails per output LLM',dur:'30 min',type:'Lab',done:false},{t:'Audit trail e logging',dur:'20 min',type:'Articolo',done:false},{t:'Bias detection e fairness',dur:'25 min',type:'Lab',done:false},{t:'Framework Responsible AI',dur:'20 min',type:'Quiz',done:false}]},
-  {id:5,livello:3,name:'Marketing AI Agent',icon:'📣',color:'#8B5CF6',desc:'Agenti per content creation, social media, email marketing, A/B testing e analytics automatizzati.',banner:'linear-gradient(135deg,#F3E8FF,#E9D5FF)',
+  {id:5,livello:2,name:'Marketing AI Agent',icon:'📣',color:'#8B5CF6',desc:'Agenti per content creation, social media, email marketing, A/B testing e analytics automatizzati.',banner:'linear-gradient(135deg,#F3E8FF,#E9D5FF)',
    lessons:[{t:'Content generation con LLM',dur:'20 min',type:'Lab',done:false},{t:'Social media agent: scheduling',dur:'25 min',type:'Video',done:false},{t:'Email marketing automation',dur:'30 min',type:'Lab',done:false},{t:'A/B testing automatizzato',dur:'20 min',type:'Case Study',done:false},{t:'Analytics e reporting AI',dur:'25 min',type:'Lab',done:false},{t:'Multi-channel orchestration',dur:'20 min',type:'Video',done:false}]},
   // Percorso sui meccanismi che questa piattaforma implementa davvero: sono
   // le lezioni che si possono verificare aprendo l'applicazione, invece di
   // restare teoria generica sugli agenti.
-  {id:6,livello:2,name:'Padroneggiare RelAItion',icon:'⚡',color:'#0EA5E9',desc:'I meccanismi propri della piattaforma: knowledge base con recupero verificabile, spiegabilità delle decisioni, ciclo di pubblicazione e monitoraggio dell\'adozione.',banner:'linear-gradient(135deg,#E0F2FE,#BAE6FD)',
+  {id:6,livello:3,name:'Padroneggiare RelAItion',icon:'⚡',color:'#0EA5E9',desc:'I meccanismi propri della piattaforma: knowledge base con recupero verificabile, spiegabilità delle decisioni, ciclo di pubblicazione e monitoraggio dell\'adozione.',banner:'linear-gradient(135deg,#E0F2FE,#BAE6FD)',
    lessons:[{t:'Knowledge Base: segmentare per struttura',dur:'20 min',type:'Lab',done:false},{t:'Recupero ibrido e filtro permessi',dur:'25 min',type:'Articolo',done:false},{t:'Leggere «Perché questo risultato»',dur:'20 min',type:'Lab',done:false},{t:'Politiche e controlli obbligatori',dur:'25 min',type:'Articolo',done:false},{t:'Pubblicare: ambiti e revisione',dur:'30 min',type:'Lab',done:false},{t:'Monitorare l\'adozione',dur:'20 min',type:'Case Study',done:false}]}
 ];
 
@@ -67,6 +67,7 @@ function renderLearning(){
   var pct=total?Math.round(done/total*100):0;
   document.getElementById('learnProgressFill').style.width=pct+'%';
   document.getElementById('learnProgressText').textContent=pct+'% completato ('+done+'/'+total+' lezioni)';
+  disegnaLivelli();
 
   // La guida interattiva sta in cima al Learning Hub perché è il primo passo
   // sensato per chi arriva: mostra la piattaforma invece di descriverla.
@@ -754,7 +755,12 @@ function renderCommunity(){
   document.getElementById('leaderboard').innerHTML=classificaXP().map(function(l,i){
     var medaglie={0:'🥇',1:'🥈',2:'🥉'};
     var io=(l.nome===utenteCorrente());
-    return '<div class="leaderboard-row"'+(io?' onclick="go(\'profile\')" title="Vai al tuo profilo"':'')+'>'+
+    // Ogni riga apre un profilo: la propria porta alla pagina Profilo, quella
+    // di un altro apre i suoi riconoscimenti. Un badge che vede solo chi lo
+    // possiede non riconosce niente davanti a nessuno.
+    return '<div class="leaderboard-row" style="cursor:pointer" onclick="'+
+        (io?'go(&quot;profile&quot;)':'apriProfiloPubblico(&quot;'+escHtml(l.nome)+'&quot;)')+'" title="'+
+        (io?'Vai al tuo profilo':'Vedi i riconoscimenti di '+escHtml(l.nome))+'">'+
       '<span class="lb-rank">'+(medaglie[i]||(i+1))+'</span>'+
       '<span class="lb-name">'+(io?'<strong>'+escHtml(l.nome)+'</strong>':escHtml(l.nome))+'</span>'+
       '<span class="lb-xp">'+l.xp.toLocaleString('it-IT')+' XP</span></div>';
@@ -925,7 +931,7 @@ function inviaRispostaRapida(id){
   if(t.length<3){ if(av)av.textContent='Scrivi almeno qualche parola.'; return }
   if(t.length>500)t=t.substring(0,500);
   (COMMENTS[id]=COMMENTS[id]||[]).push({user:utenteCorrente(),ava:inizialiDaNome(utenteCorrente())||'IO',
-    color:(profileData&&profileData.color)||'#10B981',text:t,time:'ora'});
+    color:(profileData&&profileData.color)||'#6366F1',text:t,time:'ora'});
   if(typeof saveForumState==='function')saveForumState();
   if(typeof persistDatabaseNow==='function')persistDatabaseNow();
   addXP(5,'Risposta nella Community');
@@ -952,7 +958,7 @@ function scaricaAllegatoPost(id){
 function profileStats(){
   var s={agenti:0,pubblicati:0,inRevisione:0,installati:0,esecuzioni:0,esecuzioniOk:0,
          lezioni:0,lezioniTot:0,percorsi:0,quiz:0,post:0,commenti:0,sfide:0,
-         docKB:0,politicheAttive:0,controlliUsati:0,tipiControllo:{},connettoriUsati:{},inProduzione:0,xp:0};
+         docKB:0,politicheAttive:0,controlliUsati:0,tipiControllo:{},connettoriUsati:{},inProduzione:0,xp:0,promptScritti:0,costanza:0};
   try{
     // Il profilo racconta CIO' CHE HAI FATTO TU: agenti scritti, esecuzioni
     // lanciate, progressi. Marketplace, Community e Knowledge Base restano
@@ -972,15 +978,24 @@ function profileStats(){
     s.docKB       = dbGetOne('SELECT COUNT(*) c FROM kb_docs').c;
     s.politicheAttive = dbGetOne('SELECT COUNT(*) c FROM policies WHERE active=1').c;
     s.xp          = (typeof getXP==='function')?getXP():0;
-    // Quali controlli e connettori l'utente ha davvero usato nei suoi flussi:
-    // è la misura della sua padronanza, non un livello dichiarato.
-    dbAll('SELECT nodes_json FROM agents').forEach(function(r){
+    // Quali controlli, connettori e prompt l'utente ha davvero scritto nei
+    // PROPRI flussi: è la misura della sua padronanza, non un livello
+    // dichiarato. Il filtro sull'autore mancava, quindi «i controlli che hai
+    // inserito» contava anche quelli scritti dagli altri.
+    dbAll('SELECT nodes_json FROM agents WHERE author=?',[io]).forEach(function(r){
       var nodi=[];try{nodi=JSON.parse(r.nodes_json)}catch(e){}
       nodi.forEach(function(n){
         if(n.type==='gr'){s.controlliUsati++;s.tipiControllo[n.name]=(s.tipiControllo[n.name]||0)+1}
         if(n.type==='ac')s.connettoriUsati[n.name]=(s.connettoriUsati[n.name]||0)+1;
+        // Un prompt scritto a mano, non il segnaposto lasciato dal builder:
+        // sotto i 25 caratteri non è una consegna, è un titolo.
+        if(n.type==='ai'){
+          var pr=(n.config&&(n.config.prompt||n.config.system))||'';
+          if(String(pr).trim().length>=25)s.promptScritti++;
+        }
       });
     });
+    s.costanza = (typeof giorniConsecutivi==='function')?giorniConsecutivi(io):0;
   }catch(e){}
   if(typeof PATHS!=='undefined'){
     PATHS.forEach(function(p){
@@ -994,14 +1009,25 @@ function profileStats(){
 // I badge si guadagnano: ognuno dichiara la soglia e mostra quanto manca.
 // Prima erano otto etichette fisse uguali per chiunque, che non
 // significavano nulla.
+// I tre badge nominati nel capitolo 4.4 del documento — «Prompt Master»,
+// «Ethical AI Guardian», «Automation Hero» — non esistevano con quel nome.
+// Due corrispondevano a badge gia' presenti sotto un altro nome e sono stati
+// rinominati; «Prompt Master» mancava del tutto e ora conta i prompt scritti
+// davvero nei nodi AI dei propri flussi, non un'autovalutazione.
+//
+// «Costanza» sostituisce il «7-Day Streak» che le notifiche annunciavano senza
+// che il badge esistesse da nessuna parte, con la soglia del documento
+// (5 giorni) e un conteggio vero.
 function profileBadges(s){
   return [
     {icon:'🚀',name:'Primo agente',        ok:s.agenti>=1,       hint:'Crea il tuo primo agente'},
     {icon:'🏗️',name:'Builder',             ok:s.agenti>=5,       hint:s.agenti+'/5 agenti creati'},
     {icon:'▶️',name:'Operativo',           ok:s.esecuzioni>=10,  hint:s.esecuzioni+'/10 esecuzioni'},
-    {icon:'🛡️',name:'Attento ai presidi',  ok:s.controlliUsati>=3,hint:s.controlliUsati+'/3 controlli inseriti'},
+    {icon:'✍️',name:'Prompt Master',        ok:s.promptScritti>=5,hint:s.promptScritti+'/5 prompt scritti nei nodi AI'},
+    {icon:'🛡️',name:'Ethical AI Guardian', ok:s.controlliUsati>=3,hint:s.controlliUsati+'/3 controlli inseriti nei flussi'},
+    {icon:'⚡',name:'Automation Hero',      ok:s.inProduzione>=1, hint:'Metti un agente in esecuzione automatica'},
+    {icon:'🔥',name:'Costanza',            ok:s.costanza>=COSTANZA_SOGLIA,hint:s.costanza+'/'+COSTANZA_SOGLIA+' giorni consecutivi di attività'},
     {icon:'🚀',name:'Pubblicato',          ok:s.pubblicati>=1,   hint:'Pubblica un agente nel Marketplace'},
-    {icon:'⏱️',name:'In produzione',        ok:s.inProduzione>=1, hint:'Metti un agente in esecuzione automatica'},
     {icon:'📚',name:'Studente',            ok:s.lezioni>=5,      hint:s.lezioni+'/5 lezioni completate'},
     {icon:'🎓',name:'Percorso completo',   ok:s.percorsi>=1,     hint:'Completa un intero percorso formativo'},
     {icon:'💬',name:'Community',           ok:(s.post+s.commenti)>=3,hint:(s.post+s.commenti)+'/3 contributi'},
@@ -1040,7 +1066,28 @@ function renderProfile(){
     badges.map(function(b){
       return '<div class="badge-item" title="'+escHtml(b.hint)+'" style="'+(b.ok?'':'opacity:.4;filter:grayscale(1)')+'">'+
         '<span>'+b.icon+'</span>'+b.name+'</div>';
-    }).join('');
+    }).join('')+
+    // La scala dei privilegi: il documento dice che l'accumulo di XP sblocca
+    // qualcosa, e finora non sbloccava niente. Sta sotto i badge perché è la
+    // stessa domanda vista dall'altro lato — non «cosa ho fatto» ma «cosa posso
+    // fare adesso» — e ogni riga si può verificare andando a provarla.
+    (function(){
+      var pr=(typeof prossimoPrivilegio==='function')?prossimoPrivilegio():null;
+      return '<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--bo)">'+
+        '<div style="font-size:11px;font-weight:700;margin-bottom:7px">Cosa sblocca l’esperienza</div>'+
+        PRIVILEGI.map(function(p){
+          var ok=privilegioSbloccato(p.xp);
+          return '<div title="'+escHtml(p.desc)+'" style="display:flex;align-items:center;gap:7px;font-size:11px;'+
+            'padding:3px 0;color:'+(ok?'var(--tx2)':'var(--tx4)')+'">'+
+            '<span style="width:14px">'+(ok?'✅':'🔒')+'</span>'+
+            '<span style="flex:1">'+escHtml(p.nome)+'</span>'+
+            '<span style="font-size:10px;color:var(--tx4)">'+(p.xp?p.xp+' XP':'sempre')+'</span></div>';
+        }).join('')+
+        (pr?'<div style="font-size:10.5px;color:var(--tx4);margin-top:6px">Ti mancano <strong>'+pr.manca+
+            ' XP</strong> per «'+escHtml(pr.p.nome)+'».</div>'
+           :'<div style="font-size:10.5px;color:var(--tx4);margin-top:6px">Tutti i privilegi sono sbloccati.</div>')+
+      '</div>';
+    })();
 
   // Competenze calcolate dall'attività reale, non dichiarate.
   var pct=function(v,max){return Math.min(100,Math.round(v/max*100))};
@@ -1626,7 +1673,7 @@ function renderDashboard(){
     {text:'Completata lezione: Loop e iterazioni (+50 XP)',time:'1 ora fa',dot:'#6366F1',action:'go(\'learning\')'},
     {text:'Installato Invoice Extractor dal marketplace',time:'2 ore fa',dot:'#F59E0B',action:'go(\'myagents\')'},
     {text:'Nuovo commento di Andrea L. al tuo post',time:'3 ore fa',dot:'#8B5CF6',action:'go(\'community\')'},
-    {text:'Badge sbloccato: 7-Day Streak 🔥',time:'ieri',dot:'#EF4444',action:'go(\'profile\')'}
+    {text:'Badge «Costanza»: 5 giorni consecutivi di attività 🔥',time:'ieri',dot:'#EF4444',action:'go(\'profile\')'}
   ];
   document.getElementById('dash-activity').innerHTML=dActs.map(function(a){
     return '<div class="activity-item" style="cursor:pointer" onclick="'+a.action+'"><div class="activity-dot" style="background:'+a.dot+'"></div><div><div class="activity-text">'+a.text+'</div><div class="activity-time">'+a.time+'</div></div></div>';
@@ -2372,4 +2419,128 @@ function chiudiImmaginePost(){
   var v=document.getElementById('visoreImmagine');
   if(v)v.remove();
   document.removeEventListener('keydown',visoreTasti);
+}
+
+// ══════════════════════════════════════════════════════════════
+// LA FASCIA DEI QUATTRO LIVELLI
+// ══════════════════════════════════════════════════════════════
+// Era scritta a mano dentro index.html e diceva sempre le stesse cose:
+// «Livello 1 · Completato ✓», «Livello 2 · In corso: 40%», gli altri due
+// bloccati. Restava così anche con zero lezioni completate, e portava i nomi
+// vecchi mentre la scheda Certificazioni sotto ne mostrava altri: la stessa
+// pagina si contraddiceva a due centimetri di distanza.
+function disegnaLivelli(){
+  var t=document.getElementById('levelTrack');
+  if(!t)return;
+  var raggiunto=livelloRaggiunto();
+  t.innerHTML=LIVELLI.map(function(L){
+    var a=avanzamentoLivello(L.n);
+    var ottenuto=(raggiunto>=L.n);
+    var attuale=(!ottenuto && raggiunto===L.n-1);
+    var stato=ottenuto?'Completato ✓':(attuale?'In corso: '+a.pct+'%':'Bloccato 🔒');
+    return '<div title="'+escHtml(L.desc)+'" style="flex:1;min-width:130px;border-radius:12px;padding:12px;'+
+      'background:'+((ottenuto||attuale)?'var(--card)':'var(--bg2)')+';'+
+      'border:2px solid '+(ottenuto?L.col:(attuale?'var(--ac3)':'var(--bo)'))+';'+
+      ((ottenuto||attuale)?'':'opacity:.7')+'">'+
+      '<div style="font-size:18px">'+L.ic+'</div>'+
+      '<div style="font-size:12px;font-weight:700;margin-top:4px">'+escHtml(L.nome)+'</div>'+
+      '<div style="font-size:10px;color:'+(attuale?'#D97706':'var(--tx4)')+';'+
+        (attuale?'font-weight:600':'')+'">Livello '+L.n+' · '+stato+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// BADGE VISIBILI SUL PROFILO DI QUALCUN ALTRO
+// ══════════════════════════════════════════════════════════════
+// Il capitolo 4.4 dice che i badge sono «visualizzabili sui profili aziendali»
+// e che «forniscono un riconoscimento immediato del talento». Un badge che vede
+// solo chi lo possiede non riconosce niente davanti a nessuno: era metà del
+// meccanismo. Dalla classifica si apre ora il profilo pubblico di chiunque.
+//
+// Tutti i numeri sono ricalcolati per QUELLA persona, comprese lezioni e
+// percorsi, che stanno in `learn_progress_u` per utente e non nell'array PATHS
+// in memoria (quello riflette solo chi è collegato).
+function profileStatsDi(utente){
+  var s={agenti:0,pubblicati:0,inRevisione:0,installati:0,esecuzioni:0,esecuzioniOk:0,
+         lezioni:0,lezioniTot:0,percorsi:0,quiz:0,post:0,commenti:0,sfide:0,
+         docKB:0,politicheAttive:0,controlliUsati:0,tipiControllo:{},connettoriUsati:{},
+         inProduzione:0,xp:0,promptScritti:0,costanza:0};
+  try{
+    s.agenti      = dbGetOne('SELECT COUNT(*) c FROM agents WHERE author=?',[utente]).c;
+    s.inProduzione= dbGetOne('SELECT COUNT(*) c FROM agents WHERE active=1 AND author=?',[utente]).c;
+    s.pubblicati  = dbGetOne("SELECT COUNT(*) c FROM published_agents WHERE status='pubblicato' AND author=?",[utente]).c;
+    s.installati  = dbGetOne('SELECT COUNT(*) c FROM my_agents WHERE user=?',[utente]).c;
+    s.esecuzioni  = dbGetOne('SELECT COUNT(*) c FROM exec_log WHERE user=?',[utente]).c;
+    s.esecuzioniOk= dbGetOne("SELECT COUNT(*) c FROM exec_log WHERE status='ok' AND user=?",[utente]).c;
+    s.quiz        = dbGetOne('SELECT COUNT(*) c FROM quiz_done WHERE user=?',[utente]).c;
+    s.post        = dbGetOne('SELECT COUNT(*) c FROM forum_posts WHERE user=?',[utente]).c;
+    s.commenti    = dbGetOne('SELECT COUNT(*) c FROM forum_comments WHERE user=?',[utente]).c;
+    s.docKB       = dbGetOne('SELECT COUNT(*) c FROM kb_docs').c;
+    s.xp          = dbGetOne('SELECT COALESCE(SUM(amount),0) t FROM xp_log WHERE user=?',[utente]).t;
+    s.costanza    = (typeof giorniConsecutivi==='function')?giorniConsecutivi(utente):0;
+    dbAll('SELECT nodes_json FROM agents WHERE author=?',[utente]).forEach(function(r){
+      var nodi=[];try{nodi=JSON.parse(r.nodes_json)}catch(e){}
+      nodi.forEach(function(n){
+        if(n.type==='gr'){s.controlliUsati++;s.tipiControllo[n.name]=(s.tipiControllo[n.name]||0)+1}
+        if(n.type==='ac')s.connettoriUsati[n.name]=(s.connettoriUsati[n.name]||0)+1;
+        if(n.type==='ai'){
+          var pr=(n.config&&(n.config.prompt||n.config.system))||'';
+          if(String(pr).trim().length>=25)s.promptScritti++;
+        }
+      });
+    });
+    // Lezioni e percorsi dalla tabella per utente: l'array PATHS porta i
+    // progressi di chi e' collegato adesso, non di chi si sta guardando.
+    var fatte={};
+    dbAll('SELECT path_id,lesson_index FROM learn_progress WHERE user=? AND done=1',[utente])
+      .forEach(function(r){ fatte[r.path_id+'-'+r.lesson_index]=1 });
+    PATHS.forEach(function(p){
+      var n=0;
+      p.lessons.forEach(function(l,i){ s.lezioniTot++; if(fatte[p.id+'-'+i]){s.lezioni++;n++} });
+      if(n===p.lessons.length)s.percorsi++;
+    });
+  }catch(e){}
+  return s;
+}
+
+function apriProfiloPubblico(nome){
+  if(!nome)return;
+  if(nome===utenteCorrente()){ go('profile'); return }
+  var s=profileStatsDi(nome);
+  var badges=profileBadges(s);
+  var ottenuti=badges.filter(function(b){return b.ok});
+  var u=(typeof UTENTI!=='undefined')?UTENTI.filter(function(x){
+    return (typeof nomeDellAccount==='function'?nomeDellAccount(x.email,x.name):x.name)===nome })[0]:null;
+  var ini=(typeof inizialiDaNome==='function')?inizialiDaNome(nome):nome.substring(0,2).toUpperCase();
+  openModal(
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'+
+      '<div style="display:flex;align-items:center;gap:11px;min-width:0">'+
+        '<div style="width:44px;height:44px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;'+
+          'justify-content:center;font-weight:800;color:#fff;font-size:15px;'+
+          'background:linear-gradient(135deg,var(--ac),var(--ac2))">'+escHtml(ini)+'</div>'+
+        '<div style="min-width:0">'+
+          '<h2 style="margin:0;font-size:17px">'+escHtml(nome)+'</h2>'+
+          '<div style="font-size:11.5px;color:var(--tx3)">'+escHtml((u&&u.role)||'Profilo pubblico')+
+            ' · '+s.xp.toLocaleString('it-IT')+' XP</div>'+
+        '</div>'+
+      '</div>'+
+      '<button class="modal-close" onclick="closeModal()">✕</button>'+
+    '</div>'+
+    '<div style="display:flex;gap:7px;flex-wrap:wrap;margin:15px 0 6px">'+
+      '<span class="badge badge-b">'+s.agenti+' agent'+(s.agenti===1?'e':'i')+' creat'+(s.agenti===1?'o':'i')+'</span>'+
+      '<span class="badge badge-b">'+s.esecuzioni+' esecuzioni</span>'+
+      '<span class="badge badge-b">'+s.pubblicati+' pubblicat'+(s.pubblicati===1?'o':'i')+'</span>'+
+      '<span class="badge badge-b">'+s.lezioni+'/'+s.lezioniTot+' lezioni</span>'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--tx4);margin:12px 0 7px">'+ottenuti.length+' di '+badges.length+' riconoscimenti ottenuti</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+      badges.map(function(b){
+        return '<div class="badge-item" title="'+escHtml(b.hint)+'" style="'+(b.ok?'':'opacity:.35;filter:grayscale(1)')+'">'+
+          '<span>'+b.icon+'</span>'+b.name+'</div>';
+      }).join('')+
+    '</div>'+
+    '<div style="font-size:10.5px;color:var(--tx4);margin-top:14px;line-height:1.5">'+
+      'Ogni riconoscimento è calcolato sull’attività registrata di questa persona. Passa il mouse su un badge per vedere la soglia.</div>',
+  true);
 }

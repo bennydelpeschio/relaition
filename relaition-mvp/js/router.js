@@ -82,7 +82,7 @@ function go(page,daStoria){
   if(page==='challenges') renderChallenges();
   if(page==='myagents') renderMyAgents();
   if(page==='execlog') renderExecLogPage();
-  if(page==='monitoraggio') renderMonitoraggio();
+  if(page==='monitoraggio'){ renderMonitoraggio(); if(typeof aggiornaBadgeMonitoraggio==='function')aggiornaBadgeMonitoraggio(); }
   if(page==='dashboard') renderDashboard();
   if(page==='builder') initBuilder();
 }
@@ -187,8 +187,45 @@ function alternaMenu(compatto){
   window.dispatchEvent(new Event('resize'));
 }
 
+// Sotto una certa larghezza il menu esteso si prende due terzi dello schermo e
+// il contenuto resta in una colonna illeggibile. Il progetto non ha una
+// impaginazione per telefono — è uno strumento da scrivania — ma il menu sa
+// già ridursi, e usarlo qui trasforma una schermata inservibile in una
+// usabile con poco.
+//
+// La preferenza salvata NON viene sovrascritta: sotto soglia si comprime
+// comunque, sopra soglia si torna a quello che l'utente aveva scelto. Se
+// riducendo la finestra si perdesse l'impostazione, riallargandola si
+// troverebbe un menu diverso da quello che si era lasciato.
+var MENU_SOGLIA=900;
+var _menuCompressoDaLarghezza=false;
+
+function adattaMenuALarghezza(){
+  var sb=document.getElementById('sidebar');
+  if(!sb)return;
+  // Una larghezza di 0 non e' uno schermo stretto: e' una pagina non ancora
+  // disegnata (scheda in secondo piano, riquadro nascosto). Comprimere il menu
+  // in quel caso lo farebbe trovare compresso a chi non ha ridotto niente.
+  var l=window.innerWidth;
+  if(!l)return;
+  var stretto=l<MENU_SOGLIA;
+  if(stretto && !sb.classList.contains('compatta')){
+    _menuCompressoDaLarghezza=true;
+    sb.classList.add('compatta');
+    if(typeof b_render==='function'&&currentPage==='builder')setTimeout(b_render,200);
+  }else if(!stretto && _menuCompressoDaLarghezza){
+    _menuCompressoDaLarghezza=false;
+    var preferenza=null;
+    try{preferenza=localStorage.getItem(MENU_CHIAVE)}catch(e){}
+    if(preferenza!=='1')sb.classList.remove('compatta');
+    if(typeof b_render==='function'&&currentPage==='builder')setTimeout(b_render,200);
+  }
+}
+
 function ripristinaMenu(){
   var v=null;
   try{v=localStorage.getItem(MENU_CHIAVE)}catch(e){}
   if(v==='1')alternaMenu(true);
+  adattaMenuALarghezza();
 }
+window.addEventListener('resize',adattaMenuALarghezza);

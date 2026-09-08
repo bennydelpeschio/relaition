@@ -22,7 +22,7 @@ var SFIDA_CONTENUTI={
     fasi:[
       {q:-14,t:'Apertura iscrizioni',d:'I team si formano e dichiarano l’area di intervento.'},
       {q:-2, t:'Sessione di preparazione',d:'Un’ora online su come impostare un flusso valutabile.'},
-      {q:0,  t:'Avvio delle 48 ore',d:'Consegna del tema e apertura delle candidature.'},
+      {q:0,  t:'Avvio dei tre giorni',d:'Consegna del tema e apertura delle candidature.'},
       {q:2,  t:'Chiusura consegne',d:'Dopo questo momento le candidature restano visibili ma non modificabili.'},
       {q:5,  t:'Proclamazione',d:'Valutazione della giuria sui quattro criteri dichiarati e annuncio.'}
     ],
@@ -161,12 +161,13 @@ var SFIDA_CONTENUTI={
       {o:'00:00',t:'Apertura',d:'Come funziona il voto e come si vince.'},
       {o:'00:15',t:'Presentazioni',d:'Sei minuti a testa: cosa fa l’agente, quanto gira, cosa ha cambiato.'},
       {o:'01:30',t:'Voto della community',d:'Aperto per un’ora anche a chi segue online.'},
-      {o:'02:30',t:'Giuria e proclamazione',d:'Il voto della community pesa quanto la giuria.'}
+      {o:'02:30',t:'Giuria esterna e proclamazione',d:'Il voto della community pesa quanto la giuria.'}
     ],
     regolamento:[
       'Si candida un agente già in esercizio: deve avere esecuzioni registrate, non essere una bozza.',
       'Sei minuti di presentazione, non uno di più. Le domande vengono dopo tutte le demo.',
-      'Il voto della community vale il 50%, la giuria il restante 50% sui tre criteri dichiarati.',
+      'La presentazione è una dimostrazione dal vivo del flusso in esecuzione, non un insieme di diapositive.',
+      'Il voto della community vale il 50%, la giuria il restante 50% sui quattro criteri dichiarati.',
       'Ogni persona esprime un voto solo, e non può votare la propria candidatura.',
       'I primi tre finiscono in evidenza nel catalogo per un mese.'
     ],
@@ -218,7 +219,15 @@ function sfHoVotato(tipo,refId){
 }
 // Il voto si toglie ricliccando: un voto irrevocabile fa esitare, e chi esita
 // non vota.
+// Il voto sulle candidature e la revisione fra pari sono i due privilegi che
+// l'esperienza accumulata sblocca (capitolo 4.4: «l'accumulo di punti permette
+// di sbloccare funzionalita' avanzate o privilegi»). Il voto sulle DOMANDE
+// resta libero: serve a far emergere cosa si vuole chiedere, non a giudicare
+// il lavoro di qualcuno.
 function sfVota(tipo,refId,sfida){
+  if(tipo==='candidatura' && !privilegioSbloccato(250)){
+    showToast('🔒 Il voto sulle candidature si sblocca a 250 XP (ne hai '+getXP()+')'); return;
+  }
   if(sfHoVotato(tipo,refId))dbRun('DELETE FROM challenge_votes WHERE tipo=? AND ref_id=? AND user=?',[tipo,refId,utenteCorrente()]);
   else dbRun('INSERT OR IGNORE INTO challenge_votes (tipo,ref_id,user,ts) VALUES (?,?,?,?)',[tipo,refId,utenteCorrente(),new Date().toISOString()]);
   persistDatabaseNow();
@@ -385,6 +394,9 @@ function sfCommentiCandidatura(subId){
 }
 
 function sfInviaFeedback(subId,sfida){
+  if(!privilegioSbloccato(500)){
+    showToast('🔒 La revisione fra pari si sblocca a 500 XP (ne hai '+getXP()+')'); return;
+  }
   var el=document.getElementById('sfFb'+subId);
   if(!el)return;
   var t=el.value.trim();

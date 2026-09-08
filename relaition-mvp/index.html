@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/builder.css">
 <link rel="stylesheet" href="css/pages.css">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#10B981">
+<meta name="theme-color" content="#2563EB">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.svg">
 </head>
@@ -19,7 +19,7 @@
 <div id="loginScreen" style="position:fixed;inset:0;background:linear-gradient(160deg,#0F172A 0%,#1E293B 100%);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:Inter,sans-serif;padding:20px">
   <div style="width:100%;max-width:380px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:36px 32px;backdrop-filter:blur(12px)">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
-      <div style="width:44px;height:44px;background:linear-gradient(135deg,#10B981,#059669);border-radius:12px;display:grid;place-items:center;font-size:22px;box-shadow:0 4px 12px rgba(16,185,129,.4)">⚡</div>
+      <div style="width:44px;height:44px;background:linear-gradient(135deg,#2563EB,#7C3AED);border-radius:12px;display:grid;place-items:center;font-size:22px;box-shadow:0 4px 12px rgba(37,99,235,.35)"><svg viewBox="0 0 512 512" width="24" height="24" aria-hidden="true"><path d="M292 96 L168 288 h74 l-22 128 124 -192 h-74 z" fill="#fff"/></svg></div>
       <div><div style="color:#F8FAFC;font-size:19px;font-weight:800;letter-spacing:-.5px">RelAItion</div><div style="color:rgba(148,163,184,.7);font-size:11px;font-weight:500;letter-spacing:.5px">AI Agent Marketplace</div></div>
     </div>
     <div style="color:#F1F5F9;font-size:16px;font-weight:700;margin-bottom:4px">Bentornato</div>
@@ -34,7 +34,7 @@
         <input type="password" id="loginPassword" required placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#F1F5F9;font-size:13px;font-family:inherit">
       </div>
       <div id="loginError" style="color:#FCA5A5;font-size:11px;min-height:16px;margin-bottom:6px"></div>
-      <button type="submit" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#10B981,#059669);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">Accedi</button>
+      <button type="submit" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">Accedi</button>
       <button type="button" onclick="doGuestLogin()" style="width:100%;padding:11px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:transparent;color:#CBD5E1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px">👤 Continua come ospite</button>
     </form>
     <!-- Selezione rapida degli account. Le password non si mostrano: cliccando
@@ -48,7 +48,7 @@
   </div>
 </div>
 <div id="bootOverlay" style="position:fixed;inset:0;background:linear-gradient(160deg,#0F172A 0%,#1E293B 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:Inter,sans-serif;gap:12px">
-  <div style="font-size:32px;width:44px;height:44px;background:linear-gradient(135deg,#10B981,#059669);border-radius:12px;display:grid;place-items:center;box-shadow:0 4px 12px rgba(16,185,129,.4)">⚡</div>
+  <div style="font-size:32px;width:44px;height:44px;background:linear-gradient(135deg,#2563EB,#7C3AED);border-radius:12px;display:grid;place-items:center;box-shadow:0 4px 12px rgba(37,99,235,.35)"><svg viewBox="0 0 512 512" width="24" height="24" aria-hidden="true"><path d="M292 96 L168 288 h74 l-22 128 124 -192 h-74 z" fill="#fff"/></svg></div>
   <div style="font-size:13px;color:#94A3B8">Inizializzazione database locale (SQLite)...</div>
 </div>
 <div class="app">
@@ -57,7 +57,7 @@
   <div class="logo-area">
     <div style="display:flex;align-items:center;gap:8px">
       <div class="logo-row" style="flex:1;min-width:0" onclick="go('dashboard')" title="Torna alla Dashboard">
-        <div class="logo-mark">⚡</div>
+        <div class="logo-mark"><svg viewBox="0 0 512 512" width="20" height="20" aria-hidden="true"><path d="M292 96 L168 288 h74 l-22 128 124 -192 h-74 z" fill="#fff"/></svg></div>
         <div><div class="logo-text">RelAItion</div><div class="logo-sub">AI Agent Marketplace</div></div>
       </div>
       <button class="sb-toggle" id="sbToggle" onclick="alternaMenu()" title="Riduci il menu" aria-label="Riduci il menu">☰</button>
@@ -412,10 +412,6 @@
             <h1>🎓 Learning Hub</h1>
             <p style="font-size:14px;color:var(--tx2);max-width:560px;line-height:1.6">Percorsi adattivi basati sul tuo ruolo. Progredisci attraverso i 4 livelli di certificazione: da AI Aspirant ad AI Ambassador.</p>
             <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap" id="levelTrack">
-              <div style="flex:1;min-width:130px;background:var(--card);border:2px solid var(--ac);border-radius:12px;padding:12px;position:relative"><div style="font-size:18px">🌱</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Aspirant</div><div style="font-size:10px;color:var(--tx4)">Livello 1 · Completato ✓</div></div>
-              <div style="flex:1;min-width:130px;background:var(--card);border:2px solid var(--ac3);border-radius:12px;padding:12px"><div style="font-size:18px">⚙️</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Practitioner</div><div style="font-size:10px;color:#D97706;font-weight:600">Livello 2 · In corso: 40%</div></div>
-              <div style="flex:1;min-width:130px;background:var(--bg2);border:2px solid var(--bo);border-radius:12px;padding:12px;opacity:.7"><div style="font-size:18px">🏆</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Champion</div><div style="font-size:10px;color:var(--tx4)">Livello 3 · Bloccato 🔒</div></div>
-              <div style="flex:1;min-width:130px;background:var(--bg2);border:2px solid var(--bo);border-radius:12px;padding:12px;opacity:.7"><div style="font-size:18px">👑</div><div style="font-size:12px;font-weight:700;margin-top:4px">AI Ambassador</div><div style="font-size:10px;color:var(--tx4)">Livello 4 · Bloccato 🔒</div></div>
             </div>
             <div class="learn-progress">
               <div class="learn-progress-bar"><div class="learn-progress-fill" id="learnProgressFill" style="width:40%"></div></div>

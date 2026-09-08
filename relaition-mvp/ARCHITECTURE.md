@@ -281,6 +281,23 @@ esplicito e tracciato** (evento `capability:degraded`), mai in silenzio.
 Questa sezione elenca ciò che nel prototipo è dimostrativo o approssimato.
 Nessuna delle voci seguenti è presentata come completa nell'applicazione.
 
+### 5.0 Strumento da scrivania, non da telefono
+
+Il progetto non contiene alcuna regola `@media`: la larghezza dello schermo non
+è mai stata una variabile di progetto. È un tavolo di lavoro — una tela con
+nodi da collegare, tabelle di esecuzioni, pannelli di proprietà — e su un
+telefono quella modalità di lavoro non esiste.
+
+Restano due accorgimenti perché una finestra stretta non renda l'applicazione
+inservibile: il menu si comprime da solo sotto i 900px, e le griglie di schede
+si incolonnano invece di stringersi. A larghezza da telefono le pagine si
+leggono, ma **non sono state progettate per quel formato**, e il Builder in
+particolare resta impraticabile.
+
+Le due funzioni che dipendono da servizi locali (invio posta sulla porta 8787,
+ricezione webhook sulla 8788) richiedono che quegli script siano in esecuzione:
+non sono simulate, semplicemente non partono da sole.
+
 ### 5.1 Vettori TF-IDF, non embedding neurali
 
 La ricerca semantica usa vettori TF-IDF calcolati localmente, combinati con
@@ -2714,3 +2731,321 @@ semantica; i verdi rimasti nei fogli di stile sono soltanto quelli: ramo «sì»
 una condizione, indicatore di provider attivo, valore in crescita, risposta
 corretta di un quiz. `govColori()` usava già un verde esplicito e non è stata
 toccata.
+
+### 5.118 I nomi dei livelli, e i percorsi assegnati al livello sbagliato
+
+Il capitolo 4.2 del documento di tesi nomina i quattro livelli del Learning Hub
+come *AI Aspirant*, *AI Translator*, *AI Creator*, *AI Ambassador*. Il codice ne
+portava altri due, e non gli stessi in tutti i punti: `LIVELLI` in `pages.js`
+diceva «AI Practitioner» (2) e «AI Professional» (3), mentre la fascia in cima
+alla pagina, scritta a mano dentro `index.html`, diceva «AI Practitioner» (2) e
+«AI Champion» (3). Due nomi diversi per lo stesso livello, visibili insieme
+nella stessa schermata.
+
+«AI Champion» era anche il nome del programma di promotori interni descritto
+nel capitolo 4.2, che è un ruolo organizzativo e non un livello formativo: la
+collisione spariva solo rinominando.
+
+`LIVELLI` ora riporta i nomi del documento, con le descrizioni prese dai ruoli
+che il capitolo assegna a ciascun livello (livello 2: usa gli agenti del
+Marketplace nel proprio reparto; livello 3: costruisce nel builder no-code e
+nella sandbox).
+
+**I percorsi seguivano la vecchia semantica.** «Builder Avanzato» era al livello
+2 e «AI per il Business» al livello 3: con i nomi nuovi significava chiedere di
+costruire flussi a chi è ancora un utilizzatore, e di leggere casi d'uso di
+reparto a chi è già un costruttore. La mappatura è stata invertita dove serviva:
+
+| Livello | Percorsi |
+|---|---|
+| 1 · AI Aspirant | Fondamenti AI Agent |
+| 2 · AI Translator | AI per il Business, Marketing AI Agent |
+| 3 · AI Creator | Builder Avanzato, Padroneggiare RelAItion |
+| 4 · AI Ambassador | Sicurezza & Governance |
+
+**La fascia dei livelli era statica.** I quattro riquadri di `#levelTrack`
+vivevano in `index.html` con gli stati incisi nel markup: «Livello 1 ·
+Completato ✓», «Livello 2 · In corso: 40%», gli altri due bloccati. Nessun
+codice li aggiornava, quindi dichiaravano un livello completato anche con zero
+lezioni fatte, e la barra di avanzamento sotto (quella sì calcolata) poteva
+leggere «0% completato» a due centimetri da «Completato ✓». Ora i riquadri sono
+prodotti da `disegnaLivelli()` a partire da `livelloRaggiunto()` e
+`avanzamentoLivello()`, e `index.html` conserva solo il contenitore vuoto.
+
+`festeggiaPercorso()` in `lezioni-pratica.js` annunciava a percorsi completi la
+certificazione «AI Agent Practitioner», un nome che non esisteva in nessun altro
+punto del prodotto: ora nomina il livello effettivamente raggiunto.
+
+### 5.119 Gamification allineata al capitolo 4.4
+
+Il documento descrive un impianto di riconoscimento in tre parti: badge per
+milestone, meccanismi che premiano la costanza, e privilegi che l'accumulo di
+esperienza sblocca. Il prototipo aveva solo la prima, e nemmeno con i nomi
+giusti.
+
+**I badge del documento non esistevano.** Il capitolo nomina «Prompt Master»,
+«Ethical AI Guardian» e «Automation Hero». Due corrispondevano a badge già
+presenti sotto un nome italiano — «Attento ai presidi» e «In produzione» — e
+sono stati rinominati senza toccarne la soglia. «Prompt Master» non esisteva:
+ora conta i nodi AI dei propri flussi che portano un prompt scritto a mano,
+cioè lungo almeno 25 caratteri. Sotto quella soglia è un titolo, non una
+consegna, e contarlo gonfierebbe il badge con i segnaposto lasciati dal builder.
+
+**La costanza era il caso peggiore.** Le notifiche e il registro attività
+annunciavano *«Badge sbloccato: 7-Day Streak 🔥»* con un'azione che portava al
+profilo, dove quel badge non esisteva: un premio dichiarato, annunciato e
+irraggiungibile. `giorniConsecutivi()` in `storage.js` conta ora i giorni
+consecutivi di attività dalle date già presenti in `xp_log` ed `exec_log` — non
+serviva una nuova tracciatura, i dati c'erano — e il badge «Costanza» usa la
+soglia del documento, cinque giorni. La serie parte da oggi, oppure da ieri se
+oggi non c'è ancora attività: va interrotta da un giorno saltato per intero,
+non dal fatto che si stia guardando la pagina di mattina presto.
+
+**Gli XP non sbloccavano niente.** Il capitolo dice che l'accumulo di punti
+«permette di sbloccare funzionalità avanzate o privilegi all'interno della
+community»; nel prototipo erano un punteggio e basta. `PRIVILEGI` dichiara ora
+una scala di quattro gradini, mostrata nel profilo con quanto manca al
+prossimo, e due di essi filtrano davvero un'azione: il voto sulle candidature
+alle sfide (250 XP) e la revisione fra pari (500 XP).
+
+Le soglie stanno dove stanno per una ragione. Mettere un cancello davanti alla
+partecipazione di base — installare un agente, scrivere in Community, seguire
+un percorso — contraddirebbe l'abbattimento delle barriere che è il senso
+dichiarato del prodotto. Quello che si sblocca è il ruolo di chi **giudica il
+lavoro altrui**, che è l'unica cosa per cui l'esperienza accumulata sia
+davvero un requisito e non un pedaggio. Il voto sulle *domande* resta libero:
+serve a far emergere cosa si vuole chiedere, non a valutare qualcuno.
+
+**L'esperienza dal merito altrui.** Il capitolo prevede che gli agenti più
+installati e meglio valutati generino punti per chi li ha scritti. `addXPa()`
+scrive nel registro XP di un utente diverso da quello collegato: l'installazione
+di un agente porta 15 punti al suo autore, una recensione da quattro stelle in
+su ne porta 10. Entrambe valgono una volta sola per persona — l'installazione
+perché il controllo su `my_agents` la rende idempotente, la recensione perché
+il bonus scatta solo alla prima e non alle modifiche: se contasse anche quelle,
+si potrebbe far salire un autore alzando e riabbassando il voto.
+
+**Un difetto trovato per strada.** `profileStats()` leggeva i nodi con
+`SELECT nodes_json FROM agents` senza filtro sull'autore: «i controlli che hai
+inserito nei flussi» contava anche quelli scritti dagli altri. Ora filtra su
+`author`, come le altre statistiche del profilo.
+
+### 5.120 Eventi allineati al capitolo 4.3
+
+L'impianto c'era già e regge il confronto: hackathon, Demo Day e incontro aperto
+esistono come eventi con iscrizione, candidatura e ritiro, e i criteri di
+valutazione con i loro pesi sono visibili **prima** di iscriversi, che è
+esattamente quello che il capitolo chiede. Mancavano quattro dettagli.
+
+| Dettaglio del 4.3 | Stato precedente | Ora |
+|---|---|---|
+| Hackathon di tre giorni | «48 ore», in due punti | tre giorni, nella descrizione e nella scaletta |
+| Binari tematici | assenti | tre binari sulla scheda dell'hackathon |
+| Mentori durante l'evento | assenti | dichiarati per hackathon e incontro aperto |
+| Cadenza (quadrimestrale, mensile) | assente | dichiarata dove il capitolo la prevede |
+
+I campi `binari`, `mentori` e `cadenza` sono opzionali e compaiono solo dove
+sono dichiarati: una scheda non mostra sezioni vuote per uniformità.
+
+**I premi nominavano badge inesistenti.** «badge Esperto Finance», «badge
+Governance», «badge Ambassador»: nessuno dei tre esisteva nel prodotto, e
+«Ambassador» era per giunta il nome di un livello formativo, non di un badge.
+I premi seguono ora le categorie che il capitolo elenca — dispositivi, voucher,
+borse di studio — e l'unico badge citato è «Ethical AI Guardian», che esiste ed
+è pertinente alla sfida sul presidio. Il Demo Day e l'hackathon promettono ai
+vincitori budget e supporto per portare il prototipo in esercizio, che è il
+piano di follow-up descritto nel capitolo.
+
+### 5.121 Le ultime voci del 4.3 e del 4.4
+
+Il confronto voce per voce con i due capitoli ha lasciato scoperte quattro cose,
+tutte chiuse qui.
+
+**Creare un agente non dava esperienza.** Il capitolo 4.4 nomina due attività
+per esempio — «completamento di moduli formativi nel Learning Hub o creazione di
+un agente nell'Agent Builder» — e la seconda era l'unica delle due a non
+generare punti. `saveAgent()` ne assegna ora 60, solo al primo salvataggio:
+risalvare aggiorna la riga esistente e non passa di lì, altrimenti basterebbe
+premere «Salva» a ripetizione.
+
+**I badge li vedeva solo chi li possedeva.** Il capitolo dice che sono
+«visualizzabili sui profili aziendali» e che «forniscono un riconoscimento
+immediato del talento»: metà del meccanismo è che li veda qualcun altro. Ogni
+riga della classifica apre ora il profilo pubblico di quella persona.
+`profileStatsDi(utente)` ricalcola tutto per lei, comprese lezioni e percorsi,
+che stanno in `learn_progress` per utente e non nell'array `PATHS` in memoria —
+quello riflette solo chi è collegato adesso.
+
+**Demo Day.** I criteri erano *Impatto reale · Innovazione · Presentazione*; il
+capitolo indica per esempio impatto sul business, scalabilità ed etica. Ora sono
+quattro e li comprendono. Il regolamento dichiara che la presentazione è una
+dimostrazione dal vivo del flusso in esecuzione, e la giuria comprende esperti
+esterni: entrambe erano richieste esplicite del 4.3 che il prototipo non
+riportava.
+
+**L'incontro aperto si chiama AMA**, come nel capitolo.
+
+### 5.122 Il verde rimasto, e quanto ne era rimasto
+
+Il cambio di identità cromatica da verde a blu/viola era stato fatto
+**sostituendo le variabili** in `base.css`. Tutto ciò che leggeva `var(--ac)` è
+diventato blu insieme a loro. Ma un colore scritto per esteso non segue la
+variabile che non usa, e di verdi scritti per esteso ce n'erano ovunque.
+
+La cosa è emersa in due passaggi, entrambi segnalati da chi guardava le
+schermate e non il codice.
+
+**Primo passaggio, il guscio.** Schermata di accesso, `icon.svg` e il
+`theme-color` del manifesto portavano il gradiente `#10B981 → #059669` scritto a
+mano dentro `index.html`, `icon.svg` e `manifest.webmanifest`. Sono fuori dai
+fogli di stile, quindi la sostituzione delle variabili non li aveva sfiorati.
+È il posto peggiore in cui lasciare un colore vecchio: la schermata di accesso è
+la prima cosa che si vede.
+
+**Secondo passaggio, e qui il conto era più lungo.** Un rastrellamento su tutti
+i fogli di stile ha trovato altre tredici occorrenze di `rgba(16,185,129,…)` in
+posizioni di **marchio**, cioè dove il colore dice «questo è il prodotto» e non
+«questo è andato bene»:
+
+| File | Cosa era ancora verde |
+|---|---|
+| `base.css` | voce di menu **attiva** nella barra laterale, fuoco della ricerca in alto, ombra del **pulsante primario**, voce attiva a barra compressa |
+| `builder.css` | fuoco dei campi della palette e del pannello proprietà, trascinatore del pannello |
+| `components.css` | **battito del logo**, velo della scheda agente, alone della scheda statistica, ombra del pulsante di accesso |
+| `marketplace.css` | sfondo e alone dell'intestazione del catalogo |
+| `pages.css` | sfondo dell'intestazione del Learning Hub, barre del grafico settimanale |
+
+Più due colori d'identità: il colore d'avatar di un utente dimostrativo, che
+sulla schermata di accesso metteva una scheda verde in mezzo alle altre tre, e
+il colore predefinito dell'avatar nel registro attività.
+
+Tutti portati su `rgba(37,99,235,…)` e sui gradienti blu/viola del marchio. I
+verdi rimasti nei fogli di stile sono ora **soltanto** quelli semantici, e
+devono restare: `--ok*`, ramo «sì» di una condizione (`.b-port-true`),
+indicatore di provider attivo (`.ai-dot.ok`), variazione in crescita
+(`.stat-up`), risposta corretta di un quiz (`.quiz-option.correct`).
+
+Restano verdi anche parecchi valori dentro il codice JavaScript, ma sono di due
+tipi che non c'entrano con il marchio: **esiti** (spunte, stato «pubblicato»,
+righe OK del registro) e **tavolozze categoriali**, dove il verde è uno dei
+colori che distinguono un agente, un nodo o un autore dagli altri. Cambiarli
+non renderebbe il prodotto più coerente: toglierebbe soltanto un colore alla
+tavolozza.
+
+**La lezione, per chi legge questo file dopo.** Un cambio di tema fatto sulle
+variabili non è finito quando le variabili sono cambiate: è finito quando si è
+cercato il valore vecchio scritto per esteso in tutti i file, e si è deciso caso
+per caso se quell'occorrenza significava *marchio* o *esito*. La prima volta
+non l'ho fatto, e il difetto è stato trovato da chi apriva l'applicazione.
+
+### 5.123 Un solo fulmine, non due
+
+L'icona dell'applicazione installata e il marchio dentro l'applicazione
+disegnavano lo stesso simbolo in due modi diversi. `icon.svg` traccia un
+fulmine **bianco** su tessera blu/viola; l'interfaccia scriveva l'emoji `⚡`,
+che quasi tutti i sistemi disegnano **gialla**. Stesso concetto, due marchi:
+chi installava l'applicazione trovava sulla schermata iniziale un'icona che non
+corrispondeva a quella che vedeva nel menu.
+
+L'emoji non era riproducibile nell'icona: dentro un SVG dipenderebbe dal font
+installato, e in un contesto di icona di sistema è proprio il caso in cui non
+si può contare su nulla. La direzione dell'allineamento era quindi obbligata,
+ed è anche quella giusta: **il tracciato vettoriale diventa la fonte unica**, e
+l'interfaccia lo riusa.
+
+Le tre tessere del marchio — barra laterale, schermata di accesso, velo di
+avvio — portano ora lo stesso `<path>` di `icon.svg`, con lo stesso gradiente
+`#2563EB → #7C3AED`. Verificato a confronto: il tracciato nel menu è
+carattere per carattere quello del file dell'icona.
+
+Effetto collaterale utile: il marchio non dipende più da come un sistema
+operativo decide di disegnare un'emoji. Prima cambiava aspetto fra Windows,
+macOS e Android senza che nessuno lo avesse scelto.
+
+### 5.124 L'applicazione installata mostrava ancora la versione vecchia
+
+Segnalazione: nel browser i colori sono giusti, nell'applicazione installata
+è tutto ancora verde — barra del titolo, tessera del marchio, pulsante di
+accesso. Due cause distinte, che vanno separate perché hanno rimedi diversi.
+
+**La barra del titolo e l'icona non si aggiornano mai da sole.** Sono proprietà
+del manifesto (`theme_color`, `icons`), e il sistema operativo le fotografa **al
+momento dell'installazione**. Nessuna modifica al codice può cambiarle in
+un'installazione già fatta: l'unico rimedio è disinstallare e reinstallare. È
+un limite della piattaforma, non un difetto da correggere.
+
+**Il contenuto era vecchio perché serviva la cache.** Il service worker è
+`network-first`: chiede prima alla rete e usa la copia locale solo quando la
+rete non risponde. Nell'applicazione installata la rete è il server locale, e se
+`servi-locale.ps1` non è in esecuzione **ogni richiesta fallisce e ogni file
+arriva dalla copia vecchia**. L'applicazione parte, funziona, e sembra
+soltanto che le modifiche non siano state fatte. È la modalità di guasto
+peggiore: silenziosa e verosimile.
+
+**Come si verifica quale versione è servita**, senza aggiungere niente
+all'interfaccia: `F12` → *Application* → *Cache Storage*, oppure in console
+`caches.keys()`. Il nome che compare è quello del service worker che sta
+effettivamente rispondendo, e se è vecchio si vede subito.
+
+Era stata provata la strada opposta — una riga nell'interfaccia con il nome
+della cache servita — ed è stata **tolta**: in un prodotto da presentare, un
+numero di versione in fondo al menu è rumore per chiunque non stia facendo
+diagnosi, e la diagnosi la fanno gli strumenti del browser meglio di una riga
+di testo. Il rimedio resta lo stesso: ricaricare con Ctrl+Shift+R con il server
+attivo, oppure disinstallare e reinstallare.
+
+### 5.125 Audit finale: cosa ha trovato e cosa ha lasciato aperto
+
+Un giro di controllo sistematico prima della consegna, cercando le tre classi
+di difetto che in questo progetto si sono ripetute: riferimenti morti, numeri
+dichiarati invece che calcolati, e resti del vecchio tema.
+
+**Riferimenti morti: nessuno.** Sono stati raccolti tutti i gestori di evento
+scritti negli attributi (`onclick`, `onchange`, `oninput`, `onsubmit`,
+`onkeydown`) su tutte e dieci le pagine dopo il disegno, estratti i nomi di
+funzione e verificato che ciascuno esista davvero: 103 su 103. Nessun pulsante
+che non fa niente.
+
+**Numeri dichiarati: nessuno rimasto nel markup.** Gli unici valori numerici in
+`index.html` sono segnaposto `0` che il codice sovrascrive, più l'etichetta
+dello zoom del Builder. I contatori del menu sono tutti calcolati.
+
+**Due numeri veri che sembravano contraddirsi.** Il pallino sul menu
+Monitoraggio diceva «2», la pagina «4 segnali». Entrambi corretti — il pallino
+conta i segnali di livello medio o alto, la pagina li elenca tutti — ma messi
+uno accanto all'altro sembravano un errore. Ora il sottotitolo della pagina
+dichiara entrambi i numeri e spiega quale finisce nel menu.
+
+Nello stesso punto è emerso un difetto vero: il pallino veniva calcolato **una
+volta sola all'avvio** e non veniva mai nascosto. Se durante la sessione i
+segnali si risolvevano, il numero restava lì a indicare un problema che non
+c'era più. Ora `aggiornaBadgeMonitoraggio()` viene richiamata anche quando si
+apre la pagina, e si nasconde a zero.
+
+**L'impaginazione stretta non esisteva.** Il progetto non ha **nessuna**
+`@media`: la larghezza non è mai stata una variabile. A 375px il menu esteso si
+prendeva due terzi dello schermo e il contenuto restava in una colonna con le
+parole spezzate, illeggibile.
+
+Non è stata scritta un'impaginazione per telefono — è uno strumento da
+scrivania e riprogettarlo alla vigilia della consegna sarebbe stato il rischio
+sbagliato da correre. Sono stati fatti i due interventi che costano poco e
+tolgono l'inutilizzabilità:
+
+- il menu **si comprime da solo** sotto i 900px, riusando la modalità compatta
+  che esisteva già. La preferenza salvata non viene sovrascritta: sotto soglia
+  si comprime comunque, sopra soglia si torna a quello che l'utente aveva
+  scelto;
+- le griglie a numero fisso di colonne (`.stats-row` a quattro, `.grid-2` a
+  due) diventano `auto-fit`, quindi le schede si incolonnano invece di
+  stringersi fino a spezzare le parole.
+
+Con questi due, a 375px la Dashboard è leggibile. **Non** è un'applicazione
+progettata per telefono, e resta dichiarato fra le semplificazioni.
+
+Una nota sul guardiano: `adattaMenuALarghezza()` esce subito se
+`window.innerWidth` vale 0. Una larghezza nulla non è uno schermo stretto, è
+una pagina non ancora disegnata — scheda in secondo piano, riquadro nascosto —
+e comprimere il menu in quel caso lo farebbe trovare compresso a chi non ha
+ridotto niente. È lo stesso inganno che durante lo sviluppo ha già prodotto
+misurazioni false.

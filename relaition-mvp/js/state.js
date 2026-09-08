@@ -75,7 +75,7 @@ var profileEditing=false;
 var notifications=[
   {id:1,text:'Andrea L. ha commentato il tuo post su Salesforce',time:'30 min fa',read:false,action:'community'},
   {id:2,text:'Nuovo agente disponibile: GDPR Data Mapper',time:'2 ore fa',read:false,action:'marketplace'},
-  {id:3,text:'Hai sbloccato il badge "7-Day Streak" 🔥',time:'ieri',read:true,action:'profile'},
+  {id:3,text:'Il badge «Costanza» premia 5 giorni consecutivi di attività 🔥',time:'ieri',read:true,action:'profile'},
   {id:4,text:'Hackathon "Agent for Good": iscrizioni aperte',time:'2 giorni fa',read:true,action:'challenges'},
   {id:5,text:'Invoice Extractor aggiornato alla v2.1',time:'3 giorni fa',read:true,action:'marketplace'}
 ];

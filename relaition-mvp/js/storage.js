@@ -88,6 +88,12 @@ function saveAgent(){
     dbRun('INSERT INTO agents (name,nodes_json,edges_json,next_id,context,created_at,updated_at,author) VALUES (?,?,?,?,?,?,?,?)',
       [name,JSON.stringify(B.nodes),JSON.stringify(B.edges),B.nextId,B.context||'',now,now,profileData.name]);
     B.dbAgentId=dbGetOne('SELECT last_insert_rowid() as id').id;
+    // Il capitolo 4.4 elenca «la creazione di un agente nell'Agent Builder»
+    // fra le attività che generano esperienza, ed era l'unica delle due
+    // nominate a non generarne. Solo alla PRIMA creazione: risalvare lo stesso
+    // agente aggiorna la riga esistente e non passa di qui, altrimenti
+    // basterebbe premere «Salva» a ripetizione.
+    if(typeof addXP==='function')addXP(60,'Creato un agente: '+name);
   }
   currentAgentName=name;
   showToast('💾 Agente "'+name+'" salvato nel database!');
@@ -895,3 +901,77 @@ function openKnowledgeBaseModal(){
 // ══════════════════════════════════════════
 // PUBLISH AGENT — pubblica nel marketplace
 // ══════════════════════════════════════════
+
+// ══════════════════════════════════════════
+// COSTANZA E PRIVILEGI
+// ══════════════════════════════════════════
+// Il capitolo 4.4 chiede due cose che il prodotto prometteva e non faceva:
+// premiare la costanza, e far sbloccare qualcosa all'accumulo di XP.
+//
+// La costanza era il caso peggiore: le notifiche annunciavano «Badge sbloccato:
+// 7-Day Streak», e chi cliccava arrivava a un profilo dove quel badge non
+// esisteva. Qui i giorni consecutivi si CONTANO, dalle date che l'attività ha
+// gia' lasciato nel database (xp_log ed exec_log): non serve una nuova
+// tracciatura, e il numero non puo' allontanarsi da cio' che e' successo.
+
+// Giorni consecutivi di attivita' che terminano oggi o ieri. Ieri conta perche'
+// una serie va spezzata da un giorno saltato per intero, non dal fatto che si
+// stia guardando la pagina di mattina presto.
+function giorniConsecutivi(utente){
+  var chi=utente||utenteCorrente();
+  var giorni={};
+  try{
+    dbAll('SELECT ts FROM xp_log WHERE user=?',[chi]).concat(
+    dbAll('SELECT ts FROM exec_log WHERE user=?',[chi])).forEach(function(r){
+      if(r.ts)giorni[String(r.ts).substring(0,10)]=1;
+    });
+  }catch(e){ return 0 }
+  var oggi=new Date(); oggi.setHours(12,0,0,0);
+  var iso=function(d){ return d.toISOString().substring(0,10) };
+  // Il punto di partenza e' oggi se c'e' attivita' oggi, altrimenti ieri: se
+  // manca anche ieri la serie e' interrotta e vale zero.
+  var cursore=new Date(oggi);
+  if(!giorni[iso(cursore)]){
+    cursore.setDate(cursore.getDate()-1);
+    if(!giorni[iso(cursore)])return 0;
+  }
+  var n=0;
+  while(giorni[iso(cursore)]){ n++; cursore.setDate(cursore.getDate()-1) }
+  return n;
+}
+
+// Soglia del documento: «accedere per 5 giorni consecutivi».
+var COSTANZA_SOGLIA=5;
+
+// XP a un utente diverso da quello collegato. Serve quando il merito e' di
+// qualcun altro: chi installa un agente non e' chi lo ha scritto.
+function addXPa(utente,n,reason){
+  if(!utente)return;
+  dbRun('INSERT INTO xp_log (amount,reason,ts,user) VALUES (?,?,?,?)',
+    [n,reason||'',new Date().toISOString(),utente]);
+  if(utente===utenteCorrente())updateXPDisplays();
+}
+
+// I privilegi che l'accumulo di XP sblocca davvero. Sono pochi e periferici di
+// proposito: mettere una soglia davanti alla partecipazione di base (installare
+// un agente, scrivere in Community) contraddirebbe l'abbattimento delle
+// barriere che e' il senso del prodotto. Qui si sblocca il ruolo di chi
+// GIUDICA il lavoro altrui, che e' l'unica cosa per cui l'esperienza accumulata
+// sia davvero un requisito.
+var PRIVILEGI=[
+  {xp:0,    nome:'Partecipare',            desc:'Installare agenti, seguire i percorsi, scrivere in Community'},
+  {xp:250,  nome:'Votare le candidature',  desc:'Esprimere il voto della community sulle candidature alle sfide'},
+  {xp:500,  nome:'Revisione fra pari',     desc:'Commentare le candidature altrui e contribuire alla valutazione'},
+  {xp:1000, nome:'Proporsi come revisore', desc:'Candidarsi a revisore delle pubblicazioni nel Marketplace'}
+];
+function privilegioSbloccato(xpRichiesti,utente){
+  var xp=utente?(dbGetOne('SELECT COALESCE(SUM(amount),0) t FROM xp_log WHERE user=?',[utente])||{t:0}).t:getXP();
+  return xp>=xpRichiesti;
+}
+// Quanto manca al prossimo privilegio: senza, la scala e' un elenco di regole
+// invece di un obiettivo.
+function prossimoPrivilegio(){
+  var xp=getXP();
+  for(var i=0;i<PRIVILEGI.length;i++) if(xp<PRIVILEGI[i].xp) return {p:PRIVILEGI[i], manca:PRIVILEGI[i].xp-xp};
+  return null;
+}

@@ -7,7 +7,7 @@
 #tourBox{position:fixed;background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:14px 16px;box-shadow:0 12px 40px rgba(15,23,42,.28);pointer-events:auto;transition:top .28s,left .28s}
 
 /* ─── LEARNING ─── */
-.learn-hero{background:linear-gradient(135deg,#EEF2FF 0%,#ECFDF5 100%);border-radius:var(--rxl);padding:32px;margin-bottom:24px}
+.learn-hero{background:linear-gradient(135deg,#EFF6FF 0%,#EDE9FE 100%);border-radius:var(--rxl);padding:32px;margin-bottom:24px}
 .learn-hero h1{font-size:24px;font-weight:900;letter-spacing:-.6px;margin-bottom:6px}
 .learn-progress{display:flex;align-items:center;gap:12px;margin-top:16px}
 .learn-progress-bar{flex:1;height:8px;background:var(--bg3);border-radius:10px;overflow:hidden}
@@ -116,7 +116,7 @@
 
 /* Dashboard chart */
 .mini-chart{display:flex;align-items:flex-end;gap:6px;height:100px;padding:8px 0}
-.mini-bar{flex:1;background:linear-gradient(to top,var(--ac),rgba(16,185,129,.4));border-radius:4px 4px 0 0;transition:height .5s;position:relative;min-width:20px;cursor:pointer}
+.mini-bar{flex:1;background:linear-gradient(to top,var(--ac),rgba(124,58,237,.4));border-radius:4px 4px 0 0;transition:height .5s;position:relative;min-width:20px;cursor:pointer}
 .mini-bar:hover{opacity:.8}
 .mini-bar-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--tx4);white-space:nowrap}
 .mini-bar-val{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--tx2);white-space:nowrap}

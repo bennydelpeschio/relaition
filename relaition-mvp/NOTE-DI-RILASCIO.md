@@ -39,6 +39,12 @@ Diverse segnalazioni riguardavano funzioni già presenti che nessuno riusciva a 
 
 ## Formazione
 
+* **I livelli 2 e 3 hanno il nome giusto.** Erano «AI Practitioner» e «AI Professional» nella scheda Certificazioni, ma «AI Practitioner» e «AI Champion» nella fascia in cima alla stessa pagina: due nomi diversi per lo stesso livello, a due centimetri di distanza. Ora sono **AI Translator** (livello 2, usa gli agenti del Marketplace nel proprio reparto) e **AI Creator** (livello 3, costruisce agenti nel builder no-code e nella sandbox), ovunque.
+
+* **I percorsi sono assegnati al livello che gli compete.** «Builder Avanzato» stava al livello 2, che riguarda chi usa gli agenti, non chi li costruisce. Ora: livello 2 raccoglie i percorsi d'uso per reparto (AI per il Business, Marketing AI Agent), livello 3 quelli di costruzione (Builder Avanzato, Padroneggiare RelAItion), livello 4 governo e conformità.
+
+* **La fascia dei quattro livelli dice la verità.** Era scritta a mano: annunciava «Livello 1 Completato ✓» e «Livello 2 In corso: 40%» anche a chi non aveva completato una sola lezione. Ora mostra l'avanzamento reale di ciascun livello.
+
 * **I quattro livelli di certificazione sono collegati ai percorsi.** Il testo prometteva la progressione da AI Aspirant ad AI Ambassador senza che alcun percorso vi fosse associato: nessuno poteva raggiungerli. Ora ogni percorso dichiara il livello a cui appartiene, e un livello si considera raggiunto quando sono completi tutti i percorsi fino a quel punto.
 
 * **L'attestato si scarica.** File grafico con nome, ruolo, organizzazione, data e codice di verifica. Se cambi il nome nel profilo e lo riscarichi, riporta quello nuovo.
@@ -46,6 +52,34 @@ Diverse segnalazioni riguardavano funzioni già presenti che nessuno riusciva a 
 * **La classifica compare anche in Sfide ed Eventi**, in cima, con la tua posizione sul totale.
 
 ---
+
+## Riconoscimenti ed eventi
+
+* **I badge hanno i nomi giusti.** «Prompt Master», «Ethical AI Guardian» e «Automation Hero» erano nominati nella documentazione del progetto ma non esistevano nel prodotto. Due c'erano sotto un altro nome e sono stati rinominati; **Prompt Master** è nuovo e conta i prompt scritti a mano nei nodi AI dei tuoi flussi.
+
+* **Il badge «7-Day Streak» ora esiste, e si chiama «Costanza».** Le notifiche annunciavano di averlo sbloccato e chi cliccava arrivava a un profilo dove quel badge non c'era. Ora i giorni consecutivi si contano davvero, dalle date della tua attività, con soglia a 5 giorni.
+
+* **L'esperienza sblocca qualcosa.** Prima gli XP erano solo un punteggio. Ora il profilo mostra una scala di privilegi con quanto manca al prossimo, e due sono reali: il **voto sulle candidature** alle sfide si apre a 250 XP, la **revisione fra pari** a 500. Restano fuori dai cancelli installare agenti, seguire i percorsi e scrivere in Community: mettere una soglia davanti alla partecipazione di base sarebbe stato il contrario del punto.
+
+* **Gli agenti installati e recensiti fruttano a chi li ha scritti.** Chi installa un tuo agente ti porta 15 XP, una recensione da 4 stelle in su ne porta 10. Una volta sola per persona, così non si gonfia il punteggio installando e disinstallando.
+
+* **Le sfide non promettono più badge che non esistono.** «badge Esperto Finance», «badge Governance», «badge Ambassador»: nessuno dei tre era nel prodotto. I premi ora sono coerenti con quanto previsto, e l'unico badge citato è uno che esiste.
+
+* **Hackathon e Demo Day più completi**: durata di tre giorni (era «48 ore»), tre binari tematici, mentori dichiarati, cadenza degli eventi e supporto ai vincitori per portare il prototipo in esercizio.
+
+* **Corretto un conteggio.** «I controlli che hai inserito nei flussi», nel profilo, contava anche quelli scritti dagli altri.
+
+* **Creare un agente dà esperienza** (60 XP, solo alla prima creazione). Era l'unica delle attività previste a non darne.
+
+* **I badge si vedono anche da fuori.** Ogni riga della classifica apre il profilo pubblico di quella persona con i suoi riconoscimenti, tutti calcolati sulla sua attività. Un badge che vede solo chi lo possiede non riconosce niente davanti a nessuno.
+
+* **Demo Day**: quattro criteri (impatto sul business, scalabilità, etica e presidio, presentazione), presentazione come dimostrazione dal vivo del flusso, giuria con esperti esterni.
+
+* **Il verde è sparito da tutte le parti in cui era il colore del prodotto.** Il cambio di tema era stato fatto sostituendo le variabili dei fogli di stile, ma un colore scritto per esteso non segue una variabile che non usa: erano rimasti verdi la schermata di accesso, l'icona dell'app, il colore della barra del browser, la **voce di menu attiva**, l'ombra del **pulsante primario**, il battito del logo, il fuoco dei campi, l'intestazione del Marketplace e quella del Learning Hub. Ora sono blu e viola. Restano verdi solo le cose che significano «è andata bene»: esiti riusciti, ramo «sì» di una condizione, risposta corretta di un quiz, indicatori in crescita.
+
+* **L'icona dell'app installata e il marchio nel menu sono la stessa cosa.** L'icona disegnava un fulmine bianco vettoriale, l'interfaccia usava l'emoji ⚡, che i sistemi disegnano gialla: chi installava l'app trovava sulla schermata iniziale un simbolo diverso da quello dentro il prodotto. Ora barra laterale, schermata di accesso e velo di avvio usano lo stesso tracciato del file dell'icona. Il marchio non cambia più aspetto fra Windows, macOS e Android.
+
+* **Nota sull'app installata.** Barra del titolo e icona vengono fotografate dal sistema operativo al momento dell'installazione e **non si aggiornano mai da sole**: per vederle cambiare bisogna disinstallare e reinstallare. Il contenuto invece si aggiorna, ma solo se il server locale è in esecuzione: se non risponde, l'app usa la copia salvata e mostra la versione precedente. In quel caso: chiudi l'app, avvia il server, riapri e premi Ctrl+Shift+R.
 
 ## Community
 
@@ -64,6 +98,12 @@ Diverse segnalazioni riguardavano funzioni già presenti che nessuno riusciva a 
 ---
 
 ## Corretto durante le verifiche
+
+* **Finestre strette e schermi piccoli.** Sotto i 900px di larghezza il menu si comprime da solo, e le schede dei numeri si incolonnano invece di stringersi fino a spezzare le parole. Prima, a larghezza da telefono, il menu si prendeva due terzi dello schermo e il contenuto era illeggibile. Resta uno strumento da scrivania, ma ora una finestra affiancata o uno schermo piccolo non lo rendono inservibile.
+
+* **Il pallino sul menu Monitoraggio si aggiorna.** Veniva calcolato una volta sola all'avvio e non spariva mai: se i segnali si risolvevano durante la sessione, il numero restava a indicare un problema che non c'era più.
+
+* **Due numeri che sembravano contraddirsi.** Il menu diceva «2», la pagina «4 segnali»: erano corretti entrambi, ma nessuno lo spiegava. Ora la pagina dichiara tutti e due e dice quale finisce nel menu.
 
 Segnalazioni emerse mentre si controllavano le modifiche precedenti.
 

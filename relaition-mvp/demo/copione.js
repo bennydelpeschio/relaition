@@ -1087,6 +1087,30 @@ var COPIONE=[
   sel:'#challenges-detail', pos:'left', durata:9500
 },
 {
+  capitolo:8, titolo:'Come si vince, dichiarato prima',
+  testo:function(){
+    var s=(W().SFIDE||[])[0]||{};
+    var b=(s.binari||[]).length;
+    return 'I <strong>criteri con i loro pesi</strong> sono visibili prima di iscriversi, non comunicati dopo: chi partecipa sa su cosa verra\u0300 giudicato.'+
+      (b?(' Sopra ci sono i <strong>'+b+' binari tematici</strong> che indirizzano l\'innovazione verso obiettivi aziendali, e i <em>mentori</em> disponibili durante l\'evento.'):'')+
+      ' I premi seguono tre categorie: sviluppo personale, dispositivi, tempo libero.';
+  },
+  azione:function(fine){
+    var w=W();
+    // Se si arriva qui saltando dall'indice, la pagina della sfida non e'
+    // aperta: la si apre, invece di illuminare un contenitore vuoto.
+    try{
+      var d=w.document.querySelector('#challenges-detail');
+      if((!d || !d.innerText.trim()) && w.SFIDE && w.SFIDE[0]) w.sfApriPagina(w.SFIDE[0].id);
+    }catch(e){}
+    setTimeout(function(){
+      try{ var el=w.document.querySelector('#challenges-detail'); if(el)el.scrollTop=Math.round(el.scrollHeight*0.35) }catch(e){}
+      fine();
+    },1200);
+  },
+  pagina:'challenges', sel:'#challenges-detail', pos:'left', durata:9000
+},
+{
   capitolo:8, titolo:'Community',
   testo:function(){
     var img=(W().POSTS||[]).filter(function(p){return /^image\//.test(p.attach_mime||'')}).length;
@@ -1116,12 +1140,43 @@ var COPIONE=[
   },
   sel:'#posts-list', pos:'right', durata:8500
 },
+{
+  capitolo:8, titolo:'I riconoscimenti si vedono da fuori',
+  testo:'La classifica non e\u0300 un elenco: ogni riga apre il <strong>profilo pubblico</strong> di quella persona, con i suoi riconoscimenti. Sono tutti <em>calcolati sulla sua attivita\u0300</em> — agenti scritti, esecuzioni, controlli inseriti, prompt, giorni consecutivi — non assegnati a mano. Un badge che vede solo chi lo possiede non riconosce niente davanti a nessuno.',
+  azione:function(fine){
+    var w=W();
+    try{
+      var righe=w.document.querySelectorAll('#leaderboard .leaderboard-row');
+      for(var i=0;i<righe.length;i++){
+        var nome=righe[i].querySelector('.lb-name');
+        if(nome && nome.innerText.trim()!==w.utenteCorrente()){ clicca(righe[i]); break }
+      }
+    }catch(e){}
+    setTimeout(fine,1500);
+  },
+  pagina:'community', sel:'#modalContent', pos:'left', durata:9500
+},
 
 // ── CAPITOLO 9 · Profilo e monitoraggio ────────────────────────
 {
   capitolo:9, titolo:'Il profilo',
   testo:'Il lavoro fatto, la governance applicata ai propri flussi, i badge e gli <em>obiettivi pratici</em>. I numeri dell\'intestazione coincidono con quelli del corpo, perché sono la stessa interrogazione: sarebbe imbarazzante il contrario.',
   pagina:'profile', sel:'.page-pad', pos:'bottom', durata:8500
+},
+{
+  capitolo:9, titolo:'Badge e privilegi',
+  testo:function(){
+    var w=W(), p='';
+    try{ var pr=w.prossimoPrivilegio(); if(pr)p=' Al momento mancano <strong>'+pr.manca+' XP</strong> per \u00ab'+pr.p.nome+'\u00bb.' }catch(e){}
+    return 'Ogni riconoscimento ha una soglia verificabile, e l\'esperienza accumulata <strong>sblocca qualcosa</strong>: il voto sulle candidature a 250 punti, la revisione fra pari a 500.'+p+
+      ' I cancelli stanno solo davanti al ruolo di chi <em>giudica il lavoro altrui</em>: installare un agente, seguire un percorso e scrivere in Community restano liberi, perche\u0301 una soglia sulla partecipazione di base sarebbe il contrario del punto.';
+  },
+  azione:function(fine){
+    var w=W();
+    try{ if(typeof w.closeModal==='function')w.closeModal(); var el=w.document.getElementById('badge-shelf'); if(el)el.scrollIntoView({block:'center'}) }catch(e){}
+    setTimeout(fine,1200);
+  },
+  pagina:'profile', sel:'#badge-shelf', pos:'right', durata:9500
 },
 {
   capitolo:9, titolo:'Cambio le mie informazioni',
