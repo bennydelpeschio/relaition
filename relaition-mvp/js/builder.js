@@ -145,7 +145,33 @@ function initBuilder(){
     document.addEventListener('mousemove',onCanvasMouseMove);
     document.addEventListener('mouseup',onCanvasMouseUp);
     // Load saved state
-    try{var s=localStorage.getItem('relaition_builder');if(s){var d=JSON.parse(s);B.nodes=d.nodes||[];B.edges=d.edges||[];B.nextId=d.nextId||1}}catch(e){}
+    // Ripresa della copia di lavoro: nodi, nome e riga di appartenenza.
+    //
+    // Il legame con la riga si accetta solo se quella riga esiste ANCORA ed è
+    // di chi sta usando l'applicazione adesso. localStorage è per origine, non
+    // per utente: senza questo controllo, entrando con un altro account il
+    // Builder avrebbe puntato alla riga di qualcun altro e il primo
+    // salvataggio automatico gliel'avrebbe sovrascritta.
+    try{
+      var s=(typeof chiaveCopiaDiLavoro==="function")?localStorage.getItem(chiaveCopiaDiLavoro()):null;
+      if(s){
+        var d=JSON.parse(s);
+        B.nodes=d.nodes||[]; B.edges=d.edges||[]; B.nextId=d.nextId||1;
+        var riga=null;
+        if(d.dbAgentId && typeof dbGetOne==='function'){
+          try{ riga=dbGetOne('SELECT id,name,author,context FROM agents WHERE id=?',[d.dbAgentId]) }catch(e){}
+        }
+        if(riga && riga.author===(typeof utenteCorrente==='function'?utenteCorrente():riga.author)){
+          B.dbAgentId=riga.id;
+          currentAgentName=riga.name||d.nome||currentAgentName;
+          B.context=riga.context||B.context||'';
+        }else if(d.nome){
+          // La riga non c'è più (o è di un altro): il lavoro resta sulla tela
+          // come bozza, con il suo nome, ma senza legame da sovrascrivere.
+          currentAgentName=d.nome;
+        }
+      }
+    }catch(e){}
     // Il canvas ripristinato dalla copia in localStorage non e' piu' un agente
     // di quanto lo sia il flusso di esempio: non ha una riga a cui puntare
     // (`dbAgentId` nullo) e l'utente non ha chiesto di salvarlo. Senza questa
@@ -1122,6 +1148,12 @@ function renderProps(nid){
       if(n.type==='ac'&&cfgDef&&cfgDef.servizioMail&&typeof mailPannelloStato==='function'){
         fieldsHtml+='<div style="margin-top:10px">'+mailPannelloStato()+'</div>';
       }
+      if(n.type==='ac'&&cfgDef&&cfgDef.allegatiUI&&typeof mailPannelloAllegati==='function'){
+        // Prima cosa verrà allegato dal flusso, poi gli allegati fissi: è
+        // l'ordine in cui partono davvero.
+        if(typeof mailPannelloFileDelFlusso==='function')fieldsHtml+=mailPannelloFileDelFlusso(nid);
+        fieldsHtml+=mailPannelloAllegati(nid);
+      }
       if(n.type==='gr'&&cfgDef&&cfgDef.deferred){
         fieldsHtml+='<div style="font-size:10px;color:#D97706;background:var(--ac3-l);border-radius:6px;padding:8px 10px;margin-top:8px">⚠️ '+escHtml(cfgDef.deferred)+'</div>';
       }
@@ -1548,18 +1580,39 @@ function addExecEntry(type,msg,status,nodeId){
   var body=document.getElementById('execLogBody');
   var nodo=(nodeId!=null)?B.nodes.find(function(x){return x.id===nodeId}):null;
   var cliccabile=!!nodo;
+  // La freccia di espansione compare solo dove serve davvero. Misurare
+  // l'overflow reale (scrollWidth) qui non e' affidabile: il pannello puo'
+  // essere chiuso o alto zero quando la voce arriva, e la misura verrebbe
+  // falsata. Si guarda quindi il testo senza tag: oltre gli ~85 caratteri, o
+  // se contiene un a capo, su una riga sola non ci sta.
+  var nudo=String(msg).replace(/<[^>]*>/g,'');
+  var lunga=nudo.length>85||nudo.indexOf('\n')>=0;
   body.innerHTML+=
     '<div class="exec-entry'+(cliccabile?' con-nodo':'')+'"'+
       (cliccabile?' onclick="vaiAlNodoDalRegistro('+nodeId+')" title="Vai al nodo «'+escHtml(nodo.name)+'»"':'')+'>'+
     '<span class="exec-time">'+time+'</span>'+
     '<span class="exec-tag" style="background:'+(colors[type]||'#64748B')+'20;color:'+(colors[type]||'#64748B')+'">'+type+'</span>'+
-    '<span style="flex:1">'+msg+'</span>'+
+    // Il messaggio sta su una riga sola: un output di mille caratteri non deve
+    // far franare il registro. La riga si apre al clic sulla freccia, e allora
+    // il testo si vede tutto, a capo compresi.
+    '<span class="exec-msg">'+msg+'</span>'+
+    (lunga?'<span class="exec-exp" onclick="event.stopPropagation();apriRigaRegistro(this)" title="Espandi/riduci il dettaglio">▾</span>':'')+
     // Il nome del nodo accanto al messaggio: leggendo il registro si capisce
     // subito la provenienza, senza doverci cliccare sopra.
     (cliccabile?'<span class="exec-nodo">'+nodo.icon+' '+escHtml(nodo.name)+'</span>':'')+
     '<span style="font-size:10px;color:'+execStatusColor(status)+'">'+status+'</span></div>';
   body.scrollTop=body.scrollHeight;
   document.getElementById('execCount').textContent=execEntries.length+' voci';
+}
+
+// Apre o richiude il dettaglio di una singola riga del registro. Il clic non
+// deve propagare alla riga, altrimenti espandere significherebbe anche saltare
+// al nodo: due azioni diverse sullo stesso gesto.
+function apriRigaRegistro(el){
+  var riga=el.closest('.exec-entry');
+  if(!riga)return;
+  riga.classList.toggle('aperta');
+  el.textContent=riga.classList.contains('aperta')?'▴':'▾';
 }
 
 // Dal registro al canvas: seleziona il nodo, lo porta in vista e ne apre il
@@ -1685,8 +1738,10 @@ function finalizeBuilderRun(res,_t0){
       addExecEntry('OUTPUT','   💾 <span style="text-decoration:underline;cursor:pointer" onclick="foRedownload('+i+')">'+escHtml(f.nome)+'</span>: clicca per riscaricare','OK');
     });
   }
-
-  try{localStorage.setItem('relaition_builder',JSON.stringify({nodes:B.nodes,edges:B.edges,nextId:B.nextId}))}catch(e){}
+  // A fine esecuzione la copia di lavoro si riallinea: la funzione sta in
+  // storage.js, accanto al salvataggio automatico che la tiene aggiornata
+  // durante la costruzione.
+  if(typeof salvaCopiaDiLavoro==='function')salvaCopiaDiLavoro();
   if(!inAttesa)setTimeout(function(){B.nodes.forEach(function(n){delete n._execState});b_render()},4000);
 }
 
@@ -2083,6 +2138,37 @@ function validateWorkflow(){
     (outByNode[e.from]=outByNode[e.from]||[]).push(e.fp);
   });
 
+  // ── Nodi che non corrispondono a nessuna voce di palette ──
+  // Un nodo il cui nome non è riconosciuto non ha definizione: nessun campo
+  // obbligatorio da compilare, quindi nessun errore da segnalare, quindi la
+  // convalida lo lasciava passare in silenzio. All'esecuzione non fa niente di
+  // ciò che il suo nome promette. È il caso dei nomi inventati dalla chat, ma
+  // vale anche per un nodo rinominato a mano.
+  //
+  // Riguarda solo i tipi la cui identità sta nel nome — azioni, trigger,
+  // controlli, condizioni. I nodi AI e di output hanno un nome libero per
+  // costruzione: quello che fanno sta nella loro configurazione, non
+  // nell'etichetta.
+  if(typeof PALETTE!=='undefined'){
+    // Le CONDIZIONI restano fuori: il loro nome e' l'etichetta del test
+    // («Punteggio >= 70?») e va scritta da chi costruisce, come per i nodi AI.
+    // Sono azioni, trigger e controlli ad avere il nome come identità: è da
+    // quello che l'applicazione risale ai loro parametri.
+    var conNomeVincolante={ac:"un'azione",tr:'un trigger',gr:'un controllo'};
+    nodes.forEach(function(n){
+      var etichetta=conNomeVincolante[n.type];
+      if(!etichetta)return;
+      var noto=PALETTE.some(function(p){ return p.type===n.type && p.name===n.name });
+      if(noto)return;
+      // Messaggio BREVE e specifico. La spiegazione — identica per tutti i
+      // nodi di questa famiglia — viaggia in `kind`, e chi mostra l'elenco la
+      // scrive una volta sola: ripeterla su ogni riga la rendeva illeggibile
+      // proprio quando i nodi da sistemare erano più di uno.
+      errors.push({nodeId:n.id, kind:'nome-ignoto',
+        msg:'"'+n.name+'" non corrisponde a '+etichetta+' della palette'});
+    });
+  }
+
   var triggers=nodes.filter(function(n){return n.type==='tr'});
   if(triggers.length===0)errors.push({nodeId:null,msg:'Manca un nodo Trigger: ogni workflow deve partire da un evento (Webhook, Scheduler, Email...).'});
 
@@ -2292,13 +2378,23 @@ function showValidationErrors(errors){
     '<button class="modal-close" onclick="closeModal()">✕</button></div>';
 
   if(errors.length){
-    html+='<p style="font-size:12px;color:var(--tx3);margin:10px 0 4px">Risolvi questi punti prima di eseguire, salvare, esportare o pubblicare il workflow:</p>'+
+    html+='<p style="font-size:12px;color:var(--tx3);margin:10px 0 4px">Il flusso si salva e si esporta comunque. Questi punti vanno risolti prima di <strong>eseguirlo</strong> o <strong>pubblicarlo</strong>:</p>'+
       '<div class="validation-list">'+
       errors.map(function(e){
         return '<div class="validation-item" onclick="'+(e.nodeId!=null?'jumpToNode('+e.nodeId+');':'')+'closeModal()">'+
           '<span class="vi-ic">'+(e.nodeId!=null?'📍':'🔴')+'</span><span class="vi-msg">'+escHtml(e.msg)+'</span></div>';
       }).join('')+
       '</div>';
+    // La spiegazione dei blocchi non riconosciuti è la stessa per tutti: sta
+    // sotto l'elenco, scritta una volta. Ripeterla su ogni riga rendeva
+    // l'elenco illeggibile proprio quando i nodi da sistemare erano parecchi.
+    if(errors.some(function(e){return e.kind==='nome-ignoto'})){
+      html+='<div style="display:flex;gap:9px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:9px;'+
+        'padding:10px 12px;margin-top:10px;font-size:11px;color:#92400E;line-height:1.5">'+
+        '<span style="flex-shrink:0">💡</span><span>I blocchi elencati non corrispondono a nessuna voce della '+
+        'palette: non hanno parametri da configurare e all’esecuzione non faranno quello che il nome promette. '+
+        'Sostituiscili con i blocchi corrispondenti presi dalla palette.</span></div>';
+    }
   }else{
     html+='<div style="display:flex;gap:10px;align-items:center;background:var(--ac-l);border-radius:8px;padding:12px 14px;margin:12px 0">'+
       '<span style="font-size:18px">✅</span><span style="font-size:12px;color:var(--ac-d);font-weight:600">Struttura valida: il flusso è eseguibile</span></div>';
@@ -2522,8 +2618,19 @@ var CONNECTOR_CONFIGS={
       {k:'bodytype',l:'Formato corpo',ph:'Testo',opts:['Testo','HTML']},
       {k:'attach',l:'Allega i file generati dal flusso',ph:'No',opts:['No','Sì']}],
     servizioMail:true,
-    sim:function(c){return '📧 → '+(c.to||'destinatario')+': "'+(c.subject||'Notifica')+'"'+
-      (c.attach==='Sì'?' con allegati':'')}},
+    // Pannello degli allegati fissi: file presi dal computer o documenti della
+    // Knowledge Base, scelti una volta e spediti a ogni esecuzione. Sono cosa
+    // diversa dai file generati dal flusso, che cambiano a ogni giro: qui si
+    // allega un listino, un modulo, delle condizioni contrattuali.
+    allegatiUI:true,
+    sim:function(c){
+      var fissi=(c.allegatiFissi||[]).length;
+      var parti=[];
+      if(c.attach==='Sì')parti.push('file del flusso');
+      if(fissi)parti.push(fissi+' allegato'+(fissi===1?'':'i')+' fisso'+(fissi===1?'':'i'));
+      return '📧 → '+(c.to||'destinatario')+': "'+(c.subject||'Notifica')+'"'+
+        (parti.length?' con '+parti.join(' e '):'');
+    }},
   'WhatsApp':{fields:[{k:'to',l:'Numero',ph:'+39 333 1234567'},{k:'template',l:'Template',ph:'notifica_ordine'}],
     sim:function(c){return '📱 WhatsApp inviato a '+(c.to||'+39 3xx xxxxxxx')+' via Twilio (SID: SM'+Math.random().toString(36).substring(2,12)+')'}},
   'Salesforce':{fields:[{k:'object',l:'Oggetto SF',ph:'Lead',req:true},{k:'operation',l:'Operazione',ph:'update / create',req:true},{k:'mapping',l:'Field mapping',ph:'Score__c = {{result.score}}',ta:true}],
@@ -3065,9 +3172,12 @@ function buildPythonCode(){
 
 
 function generatePythonCode(){
+  // Anche questo è un export: produce un file da portarsi via, non mette
+  // niente in esercizio. Un flusso incompleto genera uno script incompleto,
+  // ed è esattamente quello che serve a chi vuole continuare a lavorarci
+  // altrove. I punti aperti restano segnati sui nodi.
   var _errs=validateWorkflow();
-  if(_errs.length){showValidationErrors(_errs);return}
-  clearInvalidNodes();
+  if(_errs.length)markInvalidNodes(_errs); else clearInvalidNodes();
   var code=buildPythonCode();
   var esc=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   openModal(
@@ -3121,6 +3231,19 @@ function renderEdgeProps(idx){
     '<div style="text-align:center;padding:8px 4px 16px"><div style="font-size:26px;margin-bottom:8px">🔗</div><div style="font-size:13px;font-weight:700">Connessione selezionata</div></div>'+
     '<div class="prop-group"><div class="prop-label">Da</div><div class="prop-input" style="background:var(--bg2);cursor:default">'+(from?escHtml(from.icon+' '+from.name):'—')+(e.fp&&e.fp!=='out'?' <span style="color:var(--tx4)">('+e.fp+')</span>':'')+'</div></div>'+
     '<div class="prop-group"><div class="prop-label">A</div><div class="prop-input" style="background:var(--bg2);cursor:default">'+(to?escHtml(to.icon+' '+to.name):'—')+'</div></div>'+
+    // L'etichetta esisteva nel modello, si disegnava sulla freccia, si
+    // esportava e si reimportava — ma non c'era modo di scriverla. Compariva
+    // solo dove la metteva il codice (i rami «Sì»/«No» di una condizione, o
+    // l'«allegato» inserito automaticamente) o un JSON importato: visibile e
+    // intoccabile, che è il modo peggiore di avere un campo.
+    '<div class="prop-group"><div class="prop-label">Etichetta sulla freccia</div>'+
+      '<input class="prop-input" id="edgeLabel'+idx+'" value="'+escHtml(e.label||'')+'" maxlength="24" '+
+        'placeholder="es. sopra soglia, approvato, scarto" '+
+        'oninput="aggiornaEtichettaArco('+idx+',this.value)">'+
+      '<div style="font-size:10px;color:var(--tx4);margin-top:5px;line-height:1.45">'+
+        'Serve a dire <em>perché</em> si prende questa strada. Sui rami di una condizione è già compilata; '+
+        'lasciala vuota e la freccia resta pulita.</div>'+
+    '</div>'+
     '<div class="props-actions"><button class="tb-btn wide" style="color:#EF4444;border-color:#FEE2E2" onclick="deleteEdge('+idx+')">🗑️ Elimina connessione</button></div>'+
     '<div style="font-size:10px;color:var(--tx4);margin-top:10px;text-align:center">Puoi anche premere Canc, doppio click sulla freccia, o cliccare la ✕ rossa sul canvas</div>';
 }
@@ -4104,4 +4227,13 @@ function aggiornaBottoneEsportaRegistro(){
   b.style.opacity=ok?'':'0.35';
   b.style.pointerEvents=ok?'':'none';
   b.title=ok?'Esporta il registro di questa esecuzione':'Esegui il flusso per avere un registro da esportare';
+}
+
+// Scrittura dell'etichetta di un arco. Non si ridisegna il pannello a ogni
+// tasto — si perderebbe il fuoco dopo la prima lettera — ma solo la tela.
+function aggiornaEtichettaArco(idx,val){
+  var e=B.edges[idx];
+  if(!e)return;
+  e.label=String(val||'').substring(0,24);
+  b_render();
 }

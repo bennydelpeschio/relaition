@@ -188,6 +188,9 @@ var MIGRATIONS=[
   "ALTER TABLE forum_posts ADD COLUMN attach_mime TEXT",
   "ALTER TABLE forum_posts ADD COLUMN attach_data TEXT",
   "ALTER TABLE forum_posts ADD COLUMN edited_at TEXT",
+  // Allegati multipli: l'elenco completo in JSON. I tre campi singoli
+  // restano allineati al primo, perche' una decina di punti li legge ancora.
+  "ALTER TABLE forum_posts ADD COLUMN allegati_json TEXT",
 
   // ── Dati per utente ──
   // Agenti, esecuzioni, installazioni, progressi e punti appartengono a una

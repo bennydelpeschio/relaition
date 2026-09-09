@@ -104,6 +104,9 @@ function applicaUtente(u){
   // riscrive sotto il nome nuovo — un utente si ritrova i corsi di un altro,
   // e quell'altro li perde.
   if(typeof loadPersistedContent==='function'){try{loadPersistedContent()}catch(e){}}
+  // Anche la tela del Builder appartiene a chi la sta usando: senza questo
+  // entrando con un altro account restavano i nodi del precedente.
+  if(typeof ricaricaTelaPerUtente==='function'){try{ricaricaTelaPerUtente()}catch(e){}}
   aggiornaIntestazioneUtente();
 }
 

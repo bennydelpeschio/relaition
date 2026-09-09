@@ -9,6 +9,36 @@ Qui sotto c'è cosa è cambiato e, dove utile, perché.
 
 ## Cose che non funzionavano
 
+* **La tela del Builder è di chi la sta usando.** Uscendo come Mario ed entrando come Giulia restavano sulla tela i nodi di Mario, nello stesso posto in cui si preme Salva. Ora ogni utente ha la propria copia di lavoro: chi entra ritrova la sua, chi entra per la prima volta parte pulito, e tornando indietro si ritrova la propria com'era.
+
+* **Le iscrizioni alle sfide non passano più da un utente all'altro.** La mappa in memoria veniva ricaricata per chi entrava senza essere svuotata prima: si ereditavano le iscrizioni del precedente. Lezioni, quiz, esperienza, candidature, badge e livello erano già distinti e restano tali.
+
+* **Un flusso salvato torna con il suo nome.** Chiudendo e riaprendo l'applicazione i nodi tornavano ma il titolo diventava «Workflow Builder · non ancora salvato»: sembrava di aver perso il lavoro, che invece era nel database. La copia di lavoro conservava solo la geometria, e veniva scritta soltanto dopo un'esecuzione — chi costruiva senza mai eseguire ritrovava una tela vecchia. Ora conserva anche nome e legame con la riga, e si aggiorna a ogni modifica.
+
+* **Il legame non passa da un utente all'altro.** La copia di lavoro è per browser, non per persona: entrando con un altro account il Builder avrebbe potuto puntare alla riga di qualcun altro e sovrascriverla al primo salvataggio automatico. Ora il legame si accetta solo se la riga è di chi sta usando l'app.
+
+* **Un post può portare fino a 5 allegati.** Chi racconta un flusso porta il JSON dell'agente, un CSV di prova e uno schema: prima serviva un post per file. Il compositore mostra i file scelti con un contatore, le immagini si aprono a schermo intero e si scorrono in fila, e un JSON allegato ha il pulsante che lo apre nel Builder.
+
+* **Le schede degli agenti installati sono allineate.** «Apri nel Builder» andava a capo su alcune schede e no su altre, le larghezze dei pulsanti non tornavano e le altezze differivano. Ora sono uguali. Le date hanno un formato solo: prima si leggeva «29 giorni fa» accanto a «06/08/2026».
+
+* **«Allega i file generati dal flusso» ti fa scegliere cosa generare.** Se a monte c'è già un blocco che produce file, il pannello elenca cosa verrà allegato, con i nomi dei file. Se non c'è, propone i formati e inserisce un «Esporta file» subito prima dell'invio, collegandolo al posto giusto. Nessun errore: la richiesta è legittima, e viene completata invece che vietata.
+
+* **Esegui e Interrompi hanno la stessa larghezza** e si allineano con i pulsanti sotto. Prima erano uno elastico e uno fisso, e la fila non tornava con nessuna delle altre.
+
+* **Il nodo email allega file veri.** Prima sapeva allegare solo i file prodotti dal flusso durante l'esecuzione. Ora dal suo pannello si aggiungono **allegati fissi**, presi dal computer o da un documento della Knowledge Base, che partono a ogni invio: un listino, un modulo, delle condizioni contrattuali. Si sommano ai file generati, e il pannello mostra peso e tetto (2 MB complessivi, perché restano dentro l'agente salvato).
+
+* **Tre flussi di esempio da importare**, nella cartella `esempi/`: onboarding fornitore con dossier allegato, rassegna settimanale con ciclo sulle fonti, ticket di assistenza con instradamento. Importati, convalidati ed eseguiti prima di essere consegnati.
+
+* **Il flusso si salva e si esporta sempre, anche incompleto.** Prima la convalida sbarrava allo stesso modo esecuzione, salvataggio ed export: il lavoro a metà non si poteva mettere via, e si finiva per costruire tutto in una sessione sola per paura di perderlo. Ora salvataggio, export JSON ed export Python passano comunque, dicendo quanti punti restano da sistemare; i nodi con problemi restano segnati sulla tela. Restano sbarrate **esecuzione** e **pubblicazione**: la prima perché un flusso rotto produce un errore e non un risultato, la seconda perché è l'unica azione rivolta ad altre persone.
+
+* **I nodi generati dalla chat sono esattamente quelli della palette.** Un «Approvazione Umana» proposto dal modello nasceva con icona e descrizione sue e **senza i campi del controllo** — chi approva, quale messaggio, entro quando — perché quei campi vengono riconosciuti dal nome esatto. Sembrava un presidio e non lo era, che è peggio di un presidio assente. Ora ogni nodo proposto viene ricondotto alla voce di palette corrispondente prima ancora dell'anteprima, quindi quello che confermi è quello che ottieni. I valori specifici proposti dal modello restano.
+
+* **Se la chat propone un blocco che non esiste, lo dice prima di applicare.** Capitava con richieste legittime formulate male — «Allega file mail» non è un blocco della palette, è un campo di «Invia email» — e il flusso andava in errore dopo. Ora l'anteprima segnala quali blocchi non esistono e perché il flusso non partirà, sopra i pulsanti Applica e Annulla. Non vengono scartati d'ufficio: la decisione resta a te.
+
+* **L'allineamento vale per tutte le 81 voci della palette**, non solo per i controlli: trigger, nodi AI, azioni, condizioni, output e sotto-agenti. Verificato uno per uno.
+
+* **Un nodo con un nome inventato ora viene segnalato.** La convalida lo lasciava passare in silenzio: controllava i campi obbligatori della definizione, e un nome sconosciuto non ha definizione, quindi non ha campi, quindi non ha errori. Un'azione inventata passava il controllo e all'esecuzione non faceva quello che il nome prometteva. Restano libere di chiamarsi come vuoi le condizioni («Punteggio >= 70?») e i nodi AI, dove il nome è un'etichetta e non un'identità.
+
 * **Il nodo Loop ora itera davvero.** Il blocco esisteva ma attraversava il flusso una volta sola: il registro riportava una riga e si proseguiva. Adesso conta gli elementi realmente prodotti dai nodi a monte e ripercorre i nodi a valle uno per ciascun elemento, scrivendo "Iterazione 3 di 50". Nel campo *lista* si indica il nome del campo che contiene l'elenco; in alternativa si dichiara un numero fisso di ripetizioni. C'è un tetto di sicurezza a 25 iterazioni, e quando interviene il registro lo dichiara invece di troncare in silenzio.
 
 * **La ricerca del catalogo filtra i risultati.** Prima li calcolava e li scartava, mostrando un avviso e portando al marketplace non filtrato: in pratica bisognava conoscere il nome esatto dell'agente. Ora la ricerca cerca in nome, descrizione, categoria, autore ed etichette, si combina con il filtro di categoria, ignora gli accenti e confronta la radice della parola, quindi *fatture* trova quello che trovava *fattura*. Con più parole, se nulla le contiene tutte, ripiega sulle corrispondenze parziali dicendo che lo sta facendo. Se non trova nulla lo spiega e offre una via d'uscita, invece di lasciare una griglia vuota.
@@ -24,6 +54,8 @@ Qui sotto c'è cosa è cambiato e, dove utile, perché.
 ---
 
 ## Cose che c'erano ma non si trovavano
+
+* **Le frecce si possono etichettare.** L'etichetta esisteva già — i rami «Sì»/«No» di una condizione la portano — ma compariva solo dove la metteva il codice o un flusso importato: si vedeva e non si poteva scrivere. Ora selezionando una connessione c'è il campo per scriverla: serve a dire perché si prende quella strada, o a lasciarsi un promemoria su una tela grande.
 
 Diverse segnalazioni riguardavano funzioni già presenti che nessuno riusciva a scoprire. Non le abbiamo rifatte: le abbiamo rese visibili.
 
@@ -98,6 +130,26 @@ Diverse segnalazioni riguardavano funzioni già presenti che nessuno riusciva a 
 ---
 
 ## Corretto durante le verifiche
+
+* **Gli errori di convalida non ripetono più la stessa spiegazione.** Con tre blocchi affetti dallo stesso problema si leggevano tre volte le stesse due righe, e i nomi — l'unica cosa che cambiava — annegavano nel testo. Ora i blocchi sono raccolti sotto un'intestazione che li conta, i nomi sono pastiglie che portano al nodo con un clic, e il perché è scritto una volta sola.
+
+* **Al cambio pagina l'evidenziazione non indica più il punto sbagliato.** Restava accesa sul bersaglio del passo precedente mentre la schermata cambiava, e si riposizionava a scorrimento non ancora finito: misurati 114px di scarto per due decimi di secondo. Ora si spegne all'istante e si aggancia al nuovo bersaglio prima dello scorrimento, accompagnandolo.
+
+* **Ogni passo della demo è più svelto di un quarto di secondo.** Il controllo che aspettava la fine di un'eventuale esecuzione partiva sempre con un'attesa, anche nei moltissimi passi che non eseguono niente.
+
+* **L'evidenziazione della demo segue lo scorrimento.** Scorrendo a mano, il riquadro che indica la sezione restava indietro: veniva posizionato una volta e non si aggiornava più, e la sua transizione di 0,4s aggiungeva altro ritardo. Ora si aggancia al bersaglio e lo segue senza ritardo, insieme al riquadro della narrazione.
+
+* **L'accesso non mostra più il contenuto precedente.** La pagina di destinazione ora si disegna mentre la schermata di accesso è ancora davanti: quando si dissolve, sotto c'è già il contenuto giusto. Prima si toglieva il velo e poi si disegnava, e per un istante restavano visibili i dati e la voce di menu di chi c'era prima.
+
+* **Uscire è immediato.** Prima ricaricava tutta la pagina, rifacendo da zero l'inizializzazione del database: qualche secondo di attesa. Ora la schermata di accesso torna subito.
+
+* **Transizioni più morbide.** La schermata di accesso esce con una dissolvenza invece che di colpo, e il cambio pagina è più breve (0,22s invece di 0,35s). Chi ha ridotto le animazioni nelle impostazioni del sistema le trova ridotte anche qui.
+
+* **Il player della demo si può nascondere senza restare senza player.** C'era un pulsante che toglieva la barra dei comandi, e l'unico modo di riaverla era un tasto scritto nella barra appena sparita: chi lo premeva per sbaglio restava senza avanti, indietro e indice. Ora, mentre è nascosta, muovendo il mouse compare in basso una maniglia «⌃ comandi» che la riporta. Se durante la registrazione non tocchi il mouse, la maniglia non compare e non finisce nel video.
+
+* **La demo ha i colori nuovi.** Il palco che circonda l'applicazione — riquadro della narrazione, alone che illumina gli elementi, indice dei capitoli — era rimasto verde: non eredita gli stili dell'app, quindi il cambio di tema non l'aveva toccato. Ora è blu e viola, e la schermata di attesa porta lo stesso marchio dell'applicazione.
+
+* **Aprire la demo con il server spento non mostra più l'app al suo posto.** Quando la rete non rispondeva, la copia di riserva restituiva la pagina dell'applicazione per qualunque richiesta: si apriva la demo e compariva l'app, senza errori e senza spiegazioni. Ora la riserva vale solo per le pagine, e ciascuna ripiega sulla propria. I file della demo sono inclusi nella copia offline.
 
 * **Finestre strette e schermi piccoli.** Sotto i 900px di larghezza il menu si comprime da solo, e le schede dei numeri si incolonnano invece di stringersi fino a spezzare le parole. Prima, a larghezza da telefono, il menu si prendeva due terzi dello schermo e il contenuto era illeggibile. Resta uno strumento da scrivania, ma ora una finestra affiancata o uno schermo piccolo non lo rendono inservibile.
 

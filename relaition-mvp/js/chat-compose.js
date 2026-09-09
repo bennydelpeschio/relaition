@@ -77,7 +77,11 @@ function ccBaseRules(){
     '- "ac" (azione): usa ESATTAMENTE uno di questi connettori (con i loro campi config):\n'+connectorCatalog+'\n'+
     '- "gr" (controllo): usa ESATTAMENTE uno di questi nomi:\n'+guardCatalog+'\n'+
     '- "ou" (output): nodo finale.\n'+
-    'Nomi max 20 caratteri, descrizioni max 30, emoji "ic" pertinente.';
+    'Nomi max 20 caratteri, descrizioni max 30, emoji "ic" pertinente.\n'+
+    "REGOLA VINCOLANTE: per \"tr\", \"ac\" e \"gr\" NON inventare nomi. Se una capacità non ha un blocco "+
+    "dedicato — allegare un file a una email, mettere in copia, scegliere un formato — NON creare un "+
+    "blocco nuovo: usa il blocco esistente più vicino e metti quella capacità nella sua configurazione. "+
+    "Un blocco con un nome fuori elenco non ha parametri e il flusso non parte.";
 }
 
 // Il grafo va passato al modello con gli id REALI dei nodi: è ciò che gli
@@ -329,7 +333,74 @@ function ccUntouchedCount(ops){
   return B.nodes.filter(function(n){return !toccati[n.id]}).length;
 }
 
+// ══════════════════════════════════════════════════════════════
+// I NODI GENERATI DALLA CHAT SONO GLI STESSI DELLA PALETTE
+// ══════════════════════════════════════════════════════════════
+// Il modello proponeva nome, icona e descrizione a modo suo: nasceva un
+// «Approvazione Umana» con la U maiuscola e l'icona ✅, che SEMBRAVA il
+// controllo della palette ma non lo era. `nodoConfigIniziale()` riconosce i
+// controlli dal nome esatto, quindi quel nodo restava senza i propri campi —
+// niente «chi deve approvare», niente messaggio, niente scadenza — e il
+// pannello mostrava un blocco vuoto al posto della configurazione.
+//
+// Due nodi che si chiamano quasi uguale e si comportano diversamente sono
+// peggio di due nodi diversi: chi guarda non ha modo di accorgersene.
+// Qui ogni nodo proposto viene ricondotto alla voce di palette che gli
+// corrisponde, e da quel momento è identico a quello che si trascinerebbe.
+function ccChiave(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,' ').trim();
+}
+
+function ccVoceDiPalette(nome,tipo){
+  if(typeof PALETTE==='undefined')return null;
+  var k=ccChiave(nome);
+  if(!k)return null;
+  // Prima il nome esatto: è il caso normale, e non deve poter essere scavalcato
+  // da una corrispondenza approssimata.
+  var esatta=PALETTE.filter(function(p){ return ccChiave(p.name)===k })[0];
+  if(esatta)return esatta;
+  // Poi, solo fra i nodi dello stesso tipo, una corrispondenza per contenimento:
+  // «Approvazione» trova «Approvazione umana». La soglia di lunghezza evita che
+  // parole cortissime aggancino la prima voce che le contiene.
+  if(!tipo||k.length<5)return null;
+  var candidate=PALETTE.filter(function(p){
+    if(p.type!==tipo)return false;
+    var pk=ccChiave(p.name);
+    return pk.indexOf(k)>=0 || k.indexOf(pk)>=0;
+  });
+  return candidate.length===1?candidate[0]:null;
+}
+
+// Riconduce un nodo proposto (t/ic/n/d) alla sua voce di palette. La
+// configurazione proposta dal modello NON viene toccata: è lì che sta la
+// specificità del caso, ed è l'unico posto in cui ha senso.
+function ccAllineaNodo(n){
+  if(!n)return n;
+  var v=ccVoceDiPalette(n.n,n.t);
+  if(!v){
+    // Nomi liberi per costruzione: un nodo AI descrive il proprio compito, una
+    // condizione la propria domanda, un output il proprio esito.
+    // Per gli altri tre tipi il nome E' l'identita': se non corrisponde a
+    // niente, il nodo nascera' senza parametri e il flusso non partira'. Va
+    // detto PRIMA di applicare, non scoperto premendo Esegui.
+    if(n.t==='ac'||n.t==='tr'||n.t==='gr')n.fuoriPalette=true;
+    return n;
+  }
+  delete n.fuoriPalette;
+  n.t=v.type; n.ic=v.icon; n.n=v.name; n.d=v.desc;
+  return n;
+}
+
+function ccAllineaPiano(plan){
+  if(!plan)return plan;
+  (plan.nodes||[]).forEach(ccAllineaNodo);
+  (plan.ops||[]).forEach(function(o){ if(o&&o.op==='add')ccAllineaNodo(o) });
+  return plan;
+}
+
 function previewChanges(plan){
+  ccAllineaPiano(plan);
   ccPendingPlan=plan;
   var box=document.getElementById('composePreview');
   if(!box){applyPendingPlan();return}   // senza pannello si applica comunque
@@ -365,6 +436,25 @@ function previewChanges(plan){
       '<div style="font-size:11.5px;color:var(--tx2);line-height:1.45;margin-bottom:10px;font-style:italic">'+escHtml(plan.interpretation||'(nessuna interpretazione dichiarata dal modello)')+'</div>'+
       '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:2px">'+(plan.mode==='create'?'Nodi da creare':'Modifiche proposte')+'</div>'+
       body+
+      // Blocchi che il modello ha inventato: si dicono QUI, mentre la proposta
+      // è ancora una proposta. Non vengono nascosti né scartati d'ufficio —
+      // l'intenzione dietro «Allega file mail» è legittima, sbagliato è il modo
+      // — ma chi conferma deve sapere che quei blocchi non esistono e che il
+      // flusso non partirà finché restano lì.
+      (function(){
+        var fuori=(plan.nodes||[]).concat(plan.ops||[]).filter(function(n){return n&&n.fuoriPalette});
+        if(!fuori.length)return '';
+        return '<div class="cc-fuoripalette">'+
+          '<div class="cc-fuoripalette-testa">⚠️ '+fuori.length+
+            (fuori.length===1?' blocco non esiste':' blocchi non esistono')+' nella palette</div>'+
+          '<div class="cc-pastiglie">'+fuori.map(function(n){
+            return '<span class="cc-pastiglia cc-pastiglia-ko">'+escHtml(n.n||'senza nome')+'</span>';
+          }).join('')+'</div>'+
+          '<div class="cc-perche">Nascono senza parametri e il flusso non sarà eseguibile finché ci sono. '+
+          'Spesso è una capacità di un blocco esistente — un allegato, una copia, un formato — che va messa '+
+          'nella sua configurazione. Conviene <strong>annullare</strong> e chiedere usando il nome del blocco.</div>'+
+        '</div>';
+      })()+
     '</div>'+
     '<div class="cp-piede">'+
       '<button class="chat-builder-btn" style="flex:1;height:32px;justify-content:center" onclick="applyPendingPlan()">Applica</button>'+
@@ -451,7 +541,11 @@ function ccApplyCreate(plan){
     mappa[n.id!==undefined?n.id:(i+1)]=id;
     if(n.config){
       var node=ccNodeById(id);
-      if(node)node.config=Object.assign({model:'auto',temperature:0.7},n.config);
+      // La configurazione proposta si SOMMA a quella iniziale del nodo, non la
+      // sostituisce. Prima partiva da {model,temperature} — i valori di un nodo
+      // AI — qualunque fosse il tipo: un controllo perdeva così i propri campi
+      // e ne guadagnava due che non gli appartengono.
+      if(node)node.config=Object.assign(node.config||{},n.config);
     }
   });
   if(plan.agentName)currentAgentName=plan.agentName;
@@ -539,18 +633,75 @@ function ccFinalize(toast,verbo){
   }
 }
 
+// Elenco dei problemi rimasti dopo aver applicato una modifica.
+//
+// Prima era una fila di punti elenco con dentro la frase intera, ripetuta
+// identica per ogni nodo: con tre nodi affetti dallo stesso problema si
+// leggevano tre volte le stesse due righe e i nomi — l'unica cosa che
+// cambiava — annegavano nel testo. I nodi vanno tenuti tutti, perché sono
+// tutti da sistemare: è la SPIEGAZIONE che va detta una volta.
+//
+// Qui i problemi della stessa famiglia si raccolgono sotto un'intestazione
+// che li conta, i nomi diventano pastiglie cliccabili che portano al nodo, e
+// il perché sta in fondo al gruppo, scritto una volta sola.
+var CC_FAMIGLIE={
+  'nome-ignoto':{
+    titolo:'Blocchi non riconosciuti',
+    perche:'Non corrispondono a nessuna voce della palette: non hanno parametri da configurare e '+
+           'all\u2019esecuzione non faranno quello che il nome promette. Sostituiscili con i blocchi '+
+           'corrispondenti presi dalla palette.'
+  }
+};
+
+function ccPastiglia(e){
+  var nome=String(e.msg||'').replace(/^"([^"]*)".*$/,'$1')||'nodo';
+  var salta=(e.nodeId!=null)?('jumpToNode('+e.nodeId+')'):'';
+  return '<span class="cc-pastiglia"'+(salta?' onclick="'+salta+'" title="Vai al blocco"':'')+'>'+
+    escHtml(nome)+'</span>';
+}
+
 function ccMostraResidui(errori){
   var box=document.getElementById('composePreview');
   if(!box)return;
   ccApriRiquadro();
-  box.innerHTML='<div style="font-size:12px;font-weight:700;margin-bottom:6px;color:#B45309">'+
-      '⚠️ Modifica applicata, ma il flusso non è ancora eseguibile</div>'+
-    '<div style="max-height:160px;overflow:auto">'+errori.slice(0,6).map(function(e){
-      return '<div style="font-size:11px;color:var(--tx2);padding:4px 0;line-height:1.45">• '+escHtml(e.msg)+'</div>';
-    }).join('')+
-    (errori.length>6?'<div style="font-size:10px;color:var(--tx4)">…e altri '+(errori.length-6)+'</div>':'')+'</div>'+
-    '<div style="font-size:10px;color:var(--tx4);margin-top:6px">Completa i campi indicati nel pannello a destra, oppure chiedimelo qui.</div>'+
-    '<button class="tb-btn" style="width:100%;margin-top:8px" onclick="document.getElementById(\'composePreview\').style.display=\'none\'">Ho capito</button>';
+
+  var perFamiglia={}, sciolti=[];
+  errori.forEach(function(e){
+    if(e.kind&&CC_FAMIGLIE[e.kind])(perFamiglia[e.kind]=perFamiglia[e.kind]||[]).push(e);
+    else sciolti.push(e);
+  });
+
+  var corpo='';
+  Object.keys(perFamiglia).forEach(function(k){
+    var g=perFamiglia[k], f=CC_FAMIGLIE[k];
+    corpo+='<div class="cc-gruppo">'+
+      '<div class="cc-gruppo-testa">'+escHtml(f.titolo)+
+        '<span class="cc-conteggio">'+g.length+'</span></div>'+
+      '<div class="cc-pastiglie">'+g.map(ccPastiglia).join('')+'</div>'+
+      '<div class="cc-perche">'+f.perche+'</div>'+
+    '</div>';
+  });
+  sciolti.slice(0,5).forEach(function(e){
+    var salta=(e.nodeId!=null)?(' onclick="jumpToNode('+e.nodeId+')" title="Vai al blocco"'):'';
+    corpo+='<div class="cc-riga"'+salta+'><span class="cc-punto"></span>'+escHtml(e.msg)+'</div>';
+  });
+  if(sciolti.length>5)corpo+='<div class="cc-altri">e altri '+(sciolti.length-5)+'</div>';
+
+  box.innerHTML=
+    '<div class="cp-testa cc-testa-avviso">'+
+      '<span style="font-size:15px">\u26a0\ufe0f</span>'+
+      '<span style="flex:1;font-size:12.5px;font-weight:800">Modifica applicata, ma il flusso non \u00e8 ancora eseguibile</span>'+
+      '<span class="modal-close" title="Chiudi" style="cursor:pointer;font-size:15px;line-height:1" '+
+        'onclick="document.getElementById(\'composePreview\').style.display=\'none\'">\u2715</span>'+
+    '</div>'+
+    '<div class="cp-corpo">'+corpo+'</div>'+
+    '<div class="cp-piede">'+
+      '<span style="flex:1;font-size:10.5px;color:var(--tx4);line-height:1.4">'+
+        'Completa i campi nel pannello a destra, oppure chiedimelo qui.</span>'+
+      '<button class="chat-builder-btn" style="flex:0 0 96px;height:32px;justify-content:center" '+
+        'onclick="document.getElementById(\'composePreview\').style.display=\'none\'">Ho capito</button>'+
+    '</div>';
+  ccPosizionaAnteprima();
 }
 
 // Fa spazio verticale nella colonna in cui si inserisce, senza scomporre il

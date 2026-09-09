@@ -196,7 +196,13 @@ textarea.prop-input{min-height:80px;resize:vertical}
    della propria etichetta, quindi "Verifica" e "Nuovo" finivano su una riga di
    larghezze diverse e il risultato sembrava messo a caso. Una griglia a due
    colonne uguali riempie il pannello e allinea tutto. */
-.props-run-row{display:flex;gap:6px}
+/* Stessa griglia a due colonne della barra sotto: i due pulsanti hanno la
+   stessa larghezza e si allineano con quelli che seguono. Prima Esegui era
+   elastico e Interrompi fisso a 116px, e la fila non tornava con nessuna
+   delle altre. Restano un filo piu' alti, perche' sono le due azioni che si
+   premono davvero. */
+.props-run-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.props-run-row .tb-btn{width:100%;min-width:0;height:36px;justify-content:center;padding:0 8px;font-size:13px}
 .props-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .props-toolbar .tb-btn{width:100%;min-width:0;height:32px;justify-content:center;padding:0 8px;
   font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -297,3 +303,61 @@ body.bgrip-trascino.row{cursor:row-resize}
 .exec-nodo{flex-shrink:0;font-size:9.5px;color:var(--tx4);border:1px solid var(--bo);
   border-radius:10px;padding:1px 7px;max-width:150px;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;transition:var(--trans)}
+
+/* ── Riquadro dei problemi rimasti dopo una modifica dalla chat ──
+   I nomi dei blocchi sono l'informazione che cambia da riga a riga: stanno in
+   evidenza, come pastiglie cliccabili che portano al nodo. La spiegazione,
+   uguale per tutti quelli dello stesso gruppo, sta sotto una volta sola. */
+.cc-testa-avviso{background:#FFFBEB;border-bottom-color:#FDE68A;color:#B45309}
+.cc-gruppo{border:1px solid var(--bo);border-radius:10px;padding:10px 12px;margin-bottom:9px;background:var(--card)}
+.cc-gruppo-testa{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;color:var(--tx);margin-bottom:8px}
+.cc-conteggio{background:#FEF3C7;color:#B45309;border-radius:20px;padding:1px 8px;font-size:10.5px;font-weight:800}
+.cc-pastiglie{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.cc-pastiglia{display:inline-flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--bo);
+  border-radius:7px;padding:3px 9px;font-size:11px;font-weight:600;color:var(--tx2);cursor:pointer;transition:var(--trans)}
+.cc-pastiglia::before{content:'📍';font-size:9px}
+.cc-pastiglia:hover{background:var(--ac-ul);border-color:var(--ac);color:var(--ac-d)}
+.cc-perche{font-size:10.5px;color:var(--tx3);line-height:1.5}
+.cc-riga{display:flex;align-items:flex-start;gap:7px;font-size:11px;color:var(--tx2);line-height:1.45;
+  padding:7px 10px;border:1px solid var(--bo);border-radius:8px;margin-bottom:6px;background:var(--card);cursor:pointer}
+.cc-riga:hover{border-color:var(--ac);background:var(--ac-ul)}
+.cc-punto{width:6px;height:6px;border-radius:50%;background:#F59E0B;flex-shrink:0;margin-top:5px}
+.cc-altri{font-size:10px;color:var(--tx4);padding:2px 2px 6px}
+.cc-fuoripalette{border:1px solid #FDE68A;background:#FFFBEB;border-radius:10px;padding:10px 12px;margin-top:10px}
+.cc-fuoripalette-testa{font-size:11.5px;font-weight:800;color:#B45309;margin-bottom:8px}
+.cc-pastiglia-ko{border-color:#FCD34D;background:#FEF3C7;color:#92400E;cursor:default}
+.cc-pastiglia-ko::before{content:'⚠️'}
+.cc-pastiglia-ko:hover{background:#FEF3C7;border-color:#FCD34D;color:#92400E}
+
+/* ── Allegati fissi del nodo email ── */
+.allegati-box{border:1px solid var(--bo);border-radius:9px;padding:10px 11px;margin-top:10px;background:var(--bg2)}
+.allegati-testa{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:var(--tx2);margin-bottom:7px}
+.allegati-conteggio{margin-left:auto;font-size:10px;font-weight:700;color:var(--ac-d);background:var(--ac-ul);border-radius:20px;padding:1px 8px}
+.allegati-vuoto{font-size:10.5px;color:var(--tx4);line-height:1.45;margin-bottom:8px}
+.allegati-lista{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.allegato-chip{display:inline-flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--bo);
+  border-radius:7px;padding:3px 7px 3px 9px;font-size:10.5px;max-width:100%}
+.allegato-nome{font-weight:600;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px}
+.allegato-peso{color:var(--tx4);font-size:9.5px;flex-shrink:0}
+.allegato-x{cursor:pointer;color:var(--tx4);font-size:11px;line-height:1;padding:0 1px;flex-shrink:0}
+.allegato-x:hover{color:#B91C1C}
+.allegati-azioni{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.allegati-azioni .tb-btn{height:28px;font-size:10.5px}
+.allegati-sel{height:28px;font-size:10.5px;flex:1;min-width:120px}
+.allegati-nota{font-size:9.5px;color:var(--tx4);line-height:1.45;margin-top:7px}
+.allegati-manca{border-color:#FDE68A;background:#FFFBEB}
+.allegati-manca .allegati-testa{color:#B45309}
+
+/* ── Righe del registro espandibili ──
+   Ogni voce sta su una riga sola: un output AI da mille caratteri non deve
+   spingere il resto del registro fuori schermo. Chi vuole leggerlo apre la
+   riga con la freccia, e il testo si mostra intero, a capo compresi. Il tetto
+   vero (4000 caratteri) e' nel runtime, dichiarato nel testo stesso. */
+.exec-msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.exec-entry.aperta{align-items:flex-start}
+.exec-entry.aperta .exec-msg{white-space:pre-wrap;overflow:visible;word-break:break-word;
+  background:var(--bg2);border-radius:6px;padding:6px 8px;line-height:1.5;
+  font-family:var(--mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:11px}
+.exec-exp{flex-shrink:0;cursor:pointer;color:var(--tx4);font-size:10px;line-height:1;
+  padding:2px 5px;border:1px solid var(--bo);border-radius:5px;transition:var(--trans)}
+.exec-exp:hover{color:var(--ac-d);border-color:var(--ac);background:var(--ac-l,var(--bg2))}

@@ -4,9 +4,59 @@
 
 // ── LOGIN (demo — nessuna autenticazione reale, nessun dato lascia il
 // browser: serve solo a dare completezza all'esperienza prodotto) ──
-function hideLoginScreen(){
+// La schermata non viene più rimossa dal documento, ma nascosta: così l'uscita
+// può riportarla senza ricaricare la pagina. Ricaricare significava rifare da
+// zero l'inizializzazione di SQLite — qualche secondo di attesa per tornare a
+// una schermata che era già lì.
+// Della dissolvenza vanno tenuti DUE riferimenti, non uno: il temporizzatore e
+// l'ascoltatore di fine transizione. Se si esce mentre la dissolvenza è ancora
+// pendente, il temporizzatore scatta dopo e nasconde la schermata appena
+// riportata; e l'ascoltatore — registrato con `once` ma mai consumato, perché
+// la transizione non è arrivata in fondo — si aggancia alla transizione
+// SUCCESSIVA, che è proprio quella di riapparizione, e la spegne sul nascere.
+// Sintomo di entrambi: si preme «Esci» e sembra che non succeda niente.
+var _veloTimer=null, _veloVia=null;
+
+function fermaDissolvenza(ls){
+  clearTimeout(_veloTimer);
+  if(_veloVia && ls){ ls.removeEventListener('transitionend',_veloVia); _veloVia=null }
+}
+
+function hideLoginScreen(immediato){
   var ls=document.getElementById('loginScreen');
-  if(ls)ls.remove();
+  if(!ls)return;
+  fermaDissolvenza(ls);
+  var via=function(){ ls.style.display='none'; ls.classList.remove('uscita'); _veloVia=null };
+  // `immediato` serve all'avvio: se l'accesso è già stato fatto in precedenza
+  // la schermata non deve nemmeno comparire, e dissolverla mostrerebbe un
+  // lampo di login a chi non lo ha chiesto.
+  if(immediato){ via(); return }
+  // Dissolvenza invece di sparizione istantanea: al taglio secco si vedeva il
+  // salto fra due schermate diverse.
+  ls.classList.add('uscita');
+  _veloVia=via;
+  ls.addEventListener('transitionend',via,{once:true});
+  // Rete di sicurezza: se la transizione non parte — scheda in secondo piano,
+  // animazioni ridotte a livello di sistema — il velo deve sparire lo stesso.
+  _veloTimer=setTimeout(via,420);
+}
+
+function mostraLoginScreen(){
+  var ls=document.getElementById('loginScreen');
+  if(!ls){ location.reload(); return }
+  fermaDissolvenza(ls);
+  var e=document.getElementById('loginEmail'); if(e)e.value='';
+  var p=document.getElementById('loginPassword'); if(p)p.value='';
+  var err=document.getElementById('loginError'); if(err)err.textContent='';
+  if(typeof renderAccountDisponibili==='function')renderAccountDisponibili();
+  // Compare trasparente e si accende: entra come esce. Il ricalcolo forzato
+  // fa partire la transizione da zero senza dipendere da `requestAnimationFrame`,
+  // che a finestra minimizzata non arriva — e senza, la schermata resterebbe
+  // invisibile pur essendo lì.
+  ls.classList.add('uscita');
+  ls.style.display='flex';
+  void ls.offsetWidth;
+  ls.classList.remove('uscita');
 }
 
 function completeLogin(email){
@@ -16,11 +66,24 @@ function completeLogin(email){
   // disegnano leggendo profileData, e farlo dopo mostrerebbe per un istante
   // i dati dell'utente precedente.
   if(typeof applicaUtente==='function')applicaUtente(utenteDaEmail(email));
-  hideLoginScreen();
+  // La pagina di destinazione si disegna MENTRE il velo è ancora davanti, così
+  // quando si dissolve sotto c'è già il contenuto giusto. L'ordine inverso —
+  // togliere il velo e poi disegnare — lasciava vedere il contenuto vecchio
+  // per tutto il tempo del disegno.
+  //
   // L'indirizzo comanda anche dopo l'accesso: chi apre un collegamento a
   // `#monitoraggio` e passa dalla schermata di login deve arrivare dove
   // voleva andare, non sulla dashboard.
   if(typeof navPaginaIniziale==='function')go(navPaginaIniziale());
+  // Un fotogramma di respiro prima di scoprire: dà al browser il tempo di
+  // dipingere quello che è appena stato disegnato.
+  var scoperto=false;
+  var scopri=function(){ if(scoperto)return; scoperto=true; hideLoginScreen() };
+  requestAnimationFrame(function(){ requestAnimationFrame(scopri) });
+  // I fotogrammi non arrivano se la finestra è minimizzata o la scheda è in
+  // secondo piano: senza questa rete l'accesso resterebbe fermo sulla
+  // schermata di login finché qualcuno non riporta la finestra in primo piano.
+  setTimeout(scopri,250);
 }
 
 function doLogin(e){
@@ -48,7 +111,12 @@ function doGuestLogin(){completeLogin(UTENTE_OSPITE.email)}
 function logout(){
   if(!confirm('Uscire da RelAItion?'))return;
   localStorage.removeItem('relaition_logged_in');
-  location.reload();
+  localStorage.removeItem('relaition_login_email');
+  // Niente ricaricamento: rifare l'inizializzazione di SQLite costava qualche
+  // secondo di schermata vuota per tornare a una schermata che c'è già.
+  // Chi rientra passa comunque da `applicaUtente`, che ricarica i contenuti
+  // dell'utente scelto: nessun dato dell'uno resta in mano all'altro.
+  mostraLoginScreen();
 }
 
 // Se in questo browser è già stato fatto login in precedenza, salta la
@@ -56,7 +124,7 @@ function logout(){
 // L'identita' va ripristinata prima di nascondere la schermata di accesso:
 // le pagine si disegnano leggendo profileData.
 if(typeof ripristinaUtente==='function')ripristinaUtente();
-if(localStorage.getItem('relaition_logged_in'))hideLoginScreen();
+if(localStorage.getItem('relaition_logged_in'))hideLoginScreen(true);
 else if(typeof renderAccountDisponibili==='function')renderAccountDisponibili();
 
 document.addEventListener('click',function(e){

@@ -3049,3 +3049,762 @@ una pagina non ancora disegnata — scheda in secondo piano, riquadro nascosto �
 e comprimere il menu in quel caso lo farebbe trovare compresso a chi non ha
 ridotto niente. È lo stesso inganno che durante lo sviluppo ha già prodotto
 misurazioni false.
+
+### 5.126 La demo aveva ancora i colori vecchi, e il ripiego offline la faceva sparire
+
+Due difetti trovati insieme, mentre si controllava la demo dopo il cambio di
+tema.
+
+**Il palco della demo era rimasto verde.** `demo/demo.html` non eredita niente
+dall'applicazione — è deliberato: l'app vive dentro il riquadro e il palco che
+le sta intorno ha i propri stili — ma proprio per questo il cambio di tema non
+l'aveva toccato. Le sue variabili (`--acc`, `--acc-l`, `--viola`), l'alone del
+faro che illumina gli elementi e il colore del testo sulla voce attiva
+dell'indice erano tutti tarati sul verde. Il testo della voce attiva era
+`#062E22`, un verde quasi nero scelto per leggersi su fondo verde: su fondo blu
+sarebbe rimasto scuro su scuro.
+
+Ora il palco usa il blu e il viola del marchio, e la schermata di attesa porta
+la stessa tessera con il fulmine vettoriale dell'applicazione.
+
+**Il ripiego offline sostituiva un documento con un altro.** Il gestore
+`fetch` del service worker, quando la rete non risponde e la richiesta non è in
+cache, restituiva `index.html`. Per qualunque richiesta. Aprendo
+`demo/demo.html` con il server locale spento **compariva l'applicazione al
+posto della demo**: stesso indirizzo nella barra, titolo diverso, nessun
+errore. È lo stesso difetto trovato per l'applicazione installata, dallo stesso
+meccanismo, e stavolta è stato osservato dal vivo perché il server era caduto
+durante una verifica.
+
+Peggio ancora per i file non-documento: un `.js` che falliva riceveva HTML, e
+il browser tentava di eseguirlo — da cui una fila di
+`SyntaxError: Unexpected token '<'`, che è un modo particolarmente opaco di
+dire «il server non risponde».
+
+Il ripiego vale ora **solo per le navigazioni**, e sceglie il documento
+dell'area richiesta: `/demo/` ripiega sulla demo, tutto il resto
+sull'applicazione. Le altre richieste ricevono `Response.error()`, cioè un
+errore vero, che si diagnostica in dieci secondi invece che in mezz'ora. I tre
+file della demo sono stati aggiunti al guscio in cache: fanno parte della
+consegna, e senza copia di riserva la demo offline sarebbe una pagina bianca.
+
+Verificato nella condizione che lo aveva rivelato: **server spento**,
+`demo/demo.html` apre la demo dalla cache e non l'applicazione.
+
+### 5.127 Nascondere i comandi senza restare senza comandi
+
+La barra dei comandi della demo si poteva nascondere con `✕` o con `H`: serve a
+chi registra, perché nel video la barra non serve.
+
+Il difetto era che **l'unico modo di riaverla era il tasto `H`, scritto nella
+barra appena sparita**. Chi lo premeva per sbaglio si trovava una demo senza
+avanti, senza indietro, senza indice e senza alcuna indicazione su come
+recuperarli. Un comando che cancella il proprio modo di essere annullato non è
+una scorciatoia, è una trappola.
+
+La prima correzione è stata togliere del tutto la possibilità di nascondere.
+Sbagliata: risolveva il problema eliminando una funzione utile a chi deve
+registrare, che è il motivo per cui la demo esiste.
+
+La soluzione tiene entrambe le cose. Mentre i comandi sono nascosti esiste una
+maniglia «⌃ comandi» che:
+
+- resta **trasparente e non cliccabile** finché il mouse è fermo, quindi chi
+  registra senza toccare il mouse non se la ritrova nel video;
+- **compare al primo movimento** del mouse e torna trasparente dopo 2,6 secondi
+  di immobilità.
+
+Quando i comandi sono visibili la maniglia è `display:none`, non solo
+trasparente: un pulsante invisibile ma presente, nella stessa posizione della
+barra, ne avrebbe intercettato i clic.
+
+Il riquadro dei comandi sta a `z-index` 95, sopra la schermata di attesa: è
+raggiungibile dal primo istante.
+
+Verificato: con i comandi visibili la maniglia non esiste nel documento; una
+volta nascosti compare, resta cliccabile, torna trasparente da sola dopo
+l'attesa e riappare al movimento del mouse. La barra torna al suo posto e la
+maniglia sparisce.
+
+### 5.128 Le transizioni dell'accesso
+
+Segnalazione: entrando, la transizione è lenta e per qualche istante resta
+visibile il contenuto precedente, con la voce di menu di prima ancora
+evidenziata. Sotto c'erano quattro cose diverse.
+
+**L'ordine era sbagliato.** `completeLogin()` toglieva il velo e *poi*
+chiamava `go()` per disegnare la pagina. Fra le due cose il browser dipingeva
+quello che stava dietro: la pagina disegnata all'avvio, con i dati e la voce di
+menu di prima. Ora si disegna prima e si scopre dopo — quando il velo si
+dissolve, sotto c'è già il contenuto giusto. Misurato: dall'inizio dell'accesso
+al contenuto pronto passano **circa 30 millisecondi**, quindi non era mai stata
+una questione di lentezza del disegno.
+
+**L'uscita era un taglio secco.** La schermata entrava con una dissolvenza e
+spariva di colpo: l'asimmetria si legge come uno scatto. Ora esce come è
+entrata, in 0,28 secondi.
+
+**Uscire ricaricava la pagina.** `logout()` faceva `location.reload()`, cioè
+rifaceva da zero l'inizializzazione di SQLite — qualche secondo di schermata
+vuota per tornare a una schermata che era già lì. La schermata di accesso non
+viene più rimossa dal documento ma nascosta, e l'uscita la riporta: **da
+secondi a un millisecondo**. Chi rientra passa comunque da `applicaUtente()`,
+che ricarica i contenuti dell'utente scelto, quindi nessun dato dell'uno resta
+in mano all'altro.
+
+**Due residui della dissolvenza rinascondevano la schermata.** Emersi provando
+l'uscita subito dopo l'accesso. Il primo è il temporizzatore di sicurezza: se
+scatta dopo che l'uscita ha già riportato la schermata, la nasconde di nuovo.
+Il secondo è più insidioso — l'ascoltatore `transitionend`, registrato con
+`once` ma **mai consumato** quando la transizione non arriva in fondo, resta
+appeso e si aggancia alla transizione *successiva*, che è proprio quella di
+riapparizione, spegnendola sul nascere. Sintomo di entrambi: si preme «Esci» e
+sembra che non succeda niente. `fermaDissolvenza()` annulla ora l'uno e l'altro
+prima di ogni cambio di stato.
+
+**Il cambio pagina** passa da 0,35 a 0,22 secondi, con uno scorrimento di 4px
+invece di 8: la durata di prima si notava come attesa.
+
+**Chi ha ridotto le animazioni a livello di sistema** ora le ha ridotte anche
+qui: una regola `prefers-reduced-motion` spegne le animazioni di pagina, velo,
+finestre e sfondi animati. Per alcune persone non è una preferenza estetica.
+
+Una nota di metodo. Le misure di opacità prese durante le transizioni, in
+questo ambiente di prova, restituiscono valori fermi al primo fotogramma:
+quando il riquadro non dipinge, le animazioni non avanzano. Le schermate
+catturate restano attendibili, i valori calcolati no — ed è lo stesso inganno
+che in questo progetto ha già prodotto misurazioni false sulle dimensioni.
+La verifica finale è stata fatta guardando le schermate.
+
+### 5.129 L'evidenziazione della demo non seguiva lo scorrimento
+
+Segnalazione: scorrendo a mano durante la demo, c'è un ritardo fra quello che
+si sta guardando e il riquadro che evidenzia la sezione. Tre cause sovrapposte.
+
+**Il faretto veniva posizionato una volta e restava lì.** `illumina()`
+calcolava il rettangolo del bersaglio e scriveva le coordinate; poi nessuno le
+ricalcolava più. Scorrendo dentro l'applicazione il contenuto si muoveva e
+l'evidenziazione no: dopo mezzo schermo di scorrimento indicava tutt'altro.
+
+**La transizione lavorava contro.** Il faretto aveva `transition:all .4s`, il
+riquadro della narrazione `transition:left .4s, top .4s`. Una transizione di
+quattro decimi significa, per definizione, arrivare quattro decimi dopo il
+contenuto: è precisamente il ritardo percepito. Ora la transizione resta per il
+**salto da un bersaglio all'altro**, dove serve a far seguire il movimento con
+l'occhio, e viene disattivata (classe `.segue`) mentre si insegue lo
+scorrimento, dove serve solo aderire.
+
+**Il ciclo a fotogrammi da solo non basta.** La prima versione dell'inseguimento
+usava `requestAnimationFrame`: corretto finché la finestra dipinge, inerte
+quando non lo fa. Lo scorrimento va **ascoltato**, non solo campionato. I
+gestori sono registrati in **cattura** sul documento dell'applicazione, perché a
+scorrere non è la finestra ma i contenitori interni (`.page`, i pannelli del
+Builder, il registro di esecuzione) e i loro eventi non risalgono. Il ciclo a
+fotogrammi resta accanto agli eventi: copre i casi in cui la posizione cambia
+senza uno scorrimento, come una pagina che finisce di disegnarsi.
+
+Faretto e riquadro della narrazione si spostano insieme: il calcolo della
+posizione del riquadro è stato estratto in `posizionaNarrazione()`, che ora
+serve sia la narrazione sia l'inseguimento. Senza, i due si sarebbero separati
+al primo scorrimento.
+
+**Un difetto trovato per strada.** `disponiFaretto()` spegne il faretto quando
+il bersaglio è grande quasi quanto lo schermo — illuminarlo tutto non
+indicherebbe niente. Il confronto era `r.height > window.innerHeight*0.92`
+senza guardia: quando la misura della finestra vale zero, perché la pagina non
+è ancora dipinta, **ogni** elemento risulta più grande dello schermo e il
+faretto si spegne sempre. Ora la regola si applica solo a finestra misurabile.
+
+Verificato: bersaglio agganciato e faretto acceso su cinque passi di capitoli
+diversi; scorrendo di 300px il faretto si sposta esattamente di 300px, con la
+classe `.segue` attiva e quindi senza transizione.
+
+### 5.130 Il disallineamento al cambio pagina
+
+Dopo aver agganciato l'evidenziazione allo scorrimento manuale (§5.129),
+restava un disallineamento **al cambio di passo**. Misurandolo si è visto che
+non era lo stesso difetto: 200 millisecondi dopo l'inizio di un passo il
+faretto era 114px fuori posto, e da mezzo secondo in poi tornava esatto.
+
+**Il faretto restava acceso sul bersaglio precedente.** `vaiA()` cambiava
+pagina, eseguiva l'azione e solo dopo riposizionava. Nel frattempo
+l'evidenziazione — mai spenta — continuava a indicare le coordinate del passo
+prima, che sulla schermata nuova sono un punto qualunque. Ora si spegne
+**subito**, come prima riga del passo. Un istante senza evidenziazione si legge
+come «sto passando ad altro»; un'evidenziazione sbagliata si legge come un
+errore.
+
+**Ci si agganciava dopo lo scorrimento, non prima.** `portaInVista()` usa uno
+scorrimento morbido, che dura qualche decimo; il faretto veniva posizionato
+520ms dopo, cioè spesso a scorrimento non finito, e restava lì fino al
+ricontrollo. Ora ci si aggancia **prima** di scorrere: l'inseguimento
+accompagna lo scorrimento fino in fondo, invece di fotografarne un fotogramma
+intermedio.
+
+**Ogni passo pagava un quarto di secondo che non serviva.**
+`attendiFineEsecuzione()` controllava a intervalli di 250ms *se* un'esecuzione
+fosse in corso — anche nei moltissimi passi che non eseguono niente, dove la
+risposta era «no» già alla partenza. Ora la prima verifica è immediata e si
+entra nel ciclo solo se c'è davvero qualcosa da attendere; l'intervallo scende
+a 120ms.
+
+**Un bersaglio staccato dal documento** — perché la schermata è stata
+ridisegnata — restituisce un rettangolo tutto a zero. Seguirlo porterebbe il
+faretto nell'angolo in alto a sinistra: ora l'inseguimento lo ignora e resta
+dov'era, lasciando che sia il ricontrollo del passo a riagganciare.
+
+Misurato prima e dopo, sullo stesso passo:
+
+| Istante | Prima | Dopo |
+|---|---|---|
+| 60 ms | evidenziazione del passo precedente | spenta |
+| 200-260 ms | 114px fuori posto | 0px |
+| 660 ms | 0px | 0px |
+
+Scarto nullo anche a regime su cinque passi di capitoli diversi.
+
+### 5.131 I nodi generati dalla chat non erano quelli della palette
+
+Segnalazione, con due schermate a confronto: un «Approvazione Umana» generato
+dalla chat e un «Approvazione umana» trascinato dalla palette. Stesso nome a
+occhio, prodotti diversi. Il primo aveva l'icona ✅, la descrizione scritta dal
+modello e **nessun campo di configurazione**; il secondo l'icona ✋, la
+descrizione canonica e il blocco completo — chi deve approvare, messaggio
+all'approvatore, scadenza attesa.
+
+**Perché succedeva.** `nodoConfigIniziale(type,name)` riconosce controlli,
+connettori e trigger **dal nome**, confrontandolo con le definizioni in
+`guardrails.js`, `CONNECTOR_CONFIGS` e simili. Il confronto è esatto. Il piano
+proposto dal modello portava nome, icona e descrizione a modo suo: bastava una
+maiuscola di differenza perché il nodo non venisse riconosciuto e nascesse
+senza i propri campi.
+
+Questo è il caso peggiore di tutta la famiglia: non un errore visibile, ma un
+nodo che **sembra** un presidio e non lo è. Un flusso con dentro
+un'approvazione finta supera l'ispezione a occhio e non ferma niente.
+
+**Come è stato chiuso.** `ccAllineaPiano()` riconduce ogni nodo proposto alla
+voce di palette che gli corrisponde, prima che l'anteprima venga mostrata —
+così quello che si conferma è esattamente quello che si ottiene. Il
+riconoscimento procede in due passi: prima il nome normalizzato (minuscole,
+accenti e punteggiatura tolti), poi, **solo fra i nodi dello stesso tipo**, una
+corrispondenza per contenimento, accettata unicamente se identifica una sola
+voce. Un nome inventato resta com'è: il modello può proporre un nodo generico,
+e forzarlo dentro una voce a caso sarebbe peggio.
+
+Da quel momento il nodo prende tipo, nome, icona e descrizione dalla palette.
+**La configurazione proposta dal modello non viene toccata**: è lì che sta la
+specificità del caso — chi approva, quale soglia — ed è l'unico posto in cui ha
+senso.
+
+**Un secondo difetto nello stesso punto.** `ccApplyCreate()` scriveva
+`node.config = Object.assign({model:'auto',temperature:0.7}, n.config)`:
+**sostituiva** la configurazione iniziale del nodo partendo dai valori di un
+nodo AI, qualunque fosse il tipo. Un controllo perdeva così i propri campi e ne
+guadagnava due che non gli appartengono. Ora la configurazione proposta si
+somma a quella iniziale invece di rimpiazzarla.
+
+Verificato a confronto diretto: creato lo stesso controllo dalla palette e
+dalla chat con nome storpiato e icona sbagliata, i due nodi risultano identici
+in nome, icona, descrizione e campi di configurazione, e il valore proposto dal
+modello per «chi approva» viene conservato.
+
+La demo ha un passo in più che mostra la cosa dal vivo: seleziona un controllo
+appena generato e ne apre i campi.
+
+### 5.132 Vale per tutti i nodi, e il buco che restava sotto
+
+Domanda legittima dopo §5.131: l'allineamento vale solo per i controlli o per
+tutta la palette? Verificato per costruzione, non per impressione: per ognuna
+delle **81 voci di palette** il nome è stato storpiato (maiuscole, accenti
+tolti) e fatto passare dal riconoscimento, poi il nodo risultante è stato
+confrontato con quello creato direttamente dalla voce di palette.
+
+| Tipo | Voci | Riconosciute | Nodi identici |
+|---|---|---|---|
+| Trigger | 7 | 7 | 7 |
+| AI | 9 | 9 | 9 |
+| Azioni | 39 | 39 | 39 |
+| Condizioni | 8 | 8 | 8 |
+| Output | 8 | 8 | 8 |
+| Controlli | 9 | 9 | 9 |
+| Sotto-agente | 1 | 1 | 1 |
+
+Il confronto riguarda tipo, nome, icona, descrizione e **chiavi della
+configurazione**: nessuna differenza su nessuna delle 81.
+
+**Il buco sotto.** Provando cosa succede a un nodo il cui nome NON corrisponde
+a niente — il caso che l'allineamento lascia passare di proposito, perché il
+modello può proporre un blocco generico — è emerso che la convalida del flusso
+lo accettava **senza dire niente**. La ragione è meccanica: la convalida
+controlla i campi obbligatori *della definizione*, e un nome sconosciuto non ha
+definizione, quindi non ha campi obbligatori, quindi non ha errori. Un'azione
+inventata passava il controllo, si pubblicava, e all'esecuzione non faceva
+quello che il nome prometteva.
+
+La convalida ora segnala i nodi il cui nome non corrisponde a nessuna voce di
+palette, limitatamente ai tipi la cui **identità sta nel nome**: azioni,
+trigger e controlli. È da quel nome che l'applicazione risale ai loro
+parametri.
+
+**Condizioni e nodi AI restano fuori, ed è deliberato.** Il nome di una
+condizione è l'etichetta del test — «Punteggio >= 70?», «Convalida ok?» — e va
+scritta da chi costruisce; quello di un nodo AI descrive il compito. Per
+entrambi il comportamento sta nella configurazione, non nell'etichetta.
+Includerli avrebbe segnalato come errore la cosa giusta: i cinque flussi di
+riferimento, che rinominano tutte le proprie condizioni, risultavano
+improvvisamente tutti difettosi. Se ne è accorta la prova di regressione, non
+il ragionamento.
+
+Verificato dopo la correzione: cinque flussi di riferimento su cinque senza
+segnalazioni spurie; un'azione inventata e un controllo inventato segnalati;
+una condizione rinominata non segnalata.
+
+### 5.133 Segnalare tre volte lo stesso problema
+
+La convalida introdotta in §5.132 ha prodotto subito il proprio difetto di
+presentazione: con tre azioni non riconosciute, il riquadro mostrava tre punti
+elenco con dentro la **stessa frase di due righe**, ripetuta identica. L'unica
+cosa che cambiava — il nome del blocco — era la prima parola di un paragrafo
+che il lettore, alla seconda ripetizione, smetteva di leggere.
+
+I nodi vanno elencati tutti, perché sono tutti da sistemare. È la
+**spiegazione** che va detta una volta.
+
+Il messaggio dell'errore è stato accorciato a ciò che cambia davvero —
+*«Crea Denuncia» non corrisponde a un'azione della palette* — e la parte comune
+si è spostata dove appartiene, insieme a un campo `kind` che dichiara la
+famiglia dell'errore. Da lì le due schermate che mostrano gli errori la
+compongono ciascuna a modo proprio:
+
+- il **riquadro della chat** raccoglie gli errori della stessa famiglia sotto
+  un'intestazione che li conta, trasforma i nomi in pastiglie **cliccabili che
+  portano al nodo**, e scrive il perché una volta sola in fondo al gruppo;
+- la **finestra di convalida** tiene l'elenco riga per riga — lì serve la
+  precisione — e aggiunge un riquadro con la spiegazione condivisa sotto
+  l'elenco.
+
+`kind` è un'aggiunta piccola con una conseguenza utile: raggruppare non
+richiede di riconoscere le famiglie leggendo il testo dei messaggi, che è il
+genere di espediente che si rompe alla prima riformulazione.
+
+Verificato: tre azioni non riconosciute producono un gruppo, tre pastiglie con
+i tre nomi e **una** spiegazione; cliccando una pastiglia si viene portati sul
+nodo giusto.
+
+### 5.134 Blocchi inventati: dirlo prima, non dopo
+
+Segnalazione: la chat genera nodi come «Allega file mail» che poi mandano il
+flusso in errore. È il rovescio della convalida di §5.132 — ora il difetto si
+vede, ma si vede **tardi**, dopo aver applicato.
+
+Il caso è istruttivo. «Allega file mail» non è una richiesta assurda: allegare
+un file a una email è una cosa che si vuole fare. Sbagliato è il modo — nella
+palette non è un blocco, è un **campo** del blocco «Invia email». Il modello
+non trovando un blocco con quel nome se lo inventa, ed è il comportamento che
+ci si deve aspettare da un generatore quando l'elenco non gli basta.
+
+Tre difese, in ordine di quanto sono affidabili.
+
+**Nel prompt** — la meno affidabile, ma gratuita. Alle istruzioni è stata
+aggiunta una regola esplicita sul caso osservato: se una capacità non ha un
+blocco dedicato — un allegato, una copia, un formato — non se ne crea uno
+nuovo, si usa il blocco esistente più vicino e la si mette nella sua
+configurazione. Un modello che segue le istruzioni non sbaglia più; su questo
+non si può però costruire una garanzia.
+
+**Nell'anteprima** — dove la garanzia sta davvero. Un nodo di tipo azione,
+trigger o controllo che non corrisponde a nessuna voce viene marcato
+`fuoriPalette`, e l'anteprima lo dichiara **prima** dei pulsanti Applica e
+Annulla: quanti sono, quali sono, perché il flusso non partirà, e il consiglio
+di annullare e richiedere usando il nome del blocco.
+
+Non vengono scartati d'ufficio. Scartare significherebbe decidere al posto di
+chi guarda, e quel nodo rappresenta comunque un'intenzione: chi vuole applicare
+lo stesso — magari per sistemare a mano — deve poterlo fare. Ciò che non deve
+succedere è **applicare senza saperlo**.
+
+**Nella convalida** — l'ultima rete, già descritta in §5.132, per i casi che
+arrivano da un'altra strada (un flusso importato, un nodo rinominato a mano).
+
+Verificato con un piano che contiene «Allega file mail» accanto a nodi validi:
+i nodi riconoscibili vengono allineati alla palette («Approvazione Umana» →
+«Approvazione umana» ✋), il solo blocco inventato compare nell'avviso, e
+l'avviso sta sopra i pulsanti di conferma.
+
+### 5.135 Salvare non è eseguire
+
+La convalida sbarrava cinque strade allo stesso modo: esecuzione, salvataggio,
+export JSON, export Python e pubblicazione. Trattare il salvataggio come
+l'esecuzione ha una conseguenza pratica sgradevole: **il lavoro a metà non si
+può mettere via**. Chi costruisce un flusso in due sedute deve o finirlo o
+perderlo, e finisce per costruire tutto in una volta sola per paura di non
+poter salvare — che è l'opposto di quello che serve a uno strumento di
+composizione.
+
+Ora le cinque strade sono divise per **cosa producono**:
+
+| Azione | Con problemi aperti | Perché |
+|---|---|---|
+| Salva | **passa**, dicendo quanti punti restano | mette via lavoro proprio |
+| Esporta JSON | **passa**, dicendo quanti punti restano | idem, su file |
+| Esporta Python | **passa** | idem: uno script incompleto è ciò che serve a chi continua altrove |
+| Esegui | **sbarrato** | un flusso rotto non produce un risultato, produce un errore |
+| Pubblica | **sbarrato** | è l'unica azione rivolta ad altri |
+
+I nodi con problemi restano **segnati sulla tela** anche dopo il salvataggio:
+`markInvalidNodes()` viene chiamata comunque, e solo un flusso pulito azzera le
+marcature. Il messaggio di conferma dichiara il numero dei punti aperti — un
+salvataggio silenzioso su un flusso rotto farebbe credere che sia pronto.
+
+La finestra di convalida non dice più *«risolvi prima di eseguire, salvare,
+esportare o pubblicare»*: dice che il flusso si salva e si esporta comunque, e
+che i punti vanno risolti prima di eseguirlo o pubblicarlo. Un messaggio che
+elenca divieti inesistenti insegna a non fidarsi degli altri che elenca.
+
+**Sulla pubblicazione la scelta è deliberata.** È l'unica delle cinque che porta
+il flusso davanti ad altre persone, e l'intero impianto descritto nel capitolo —
+sette controlli automatici, poi un revisore — poggia sul fatto che ciò che entra
+nel catalogo sia stato verificato. Toglierle lo sbarramento avrebbe reso falsa
+quella descrizione.
+
+Verificato su un flusso con un blocco non riconosciuto: salvataggio riuscito
+(agente scritto nel database, avviso «1 punto da sistemare»), export JSON
+riuscito con lo stesso avviso, export Python riuscito, esecuzione sbarrata,
+pubblicazione sbarrata.
+
+### 5.136 Allegati veri sul nodo email
+
+Il nodo «Invia email» sapeva allegare soltanto i file **prodotti dal flusso**
+durante l'esecuzione (`attach: Sì`, che raccoglie `LAST_RUN_FILES`). Utile per
+un report generato al momento, inutile per un listino, un modulo o delle
+condizioni contrattuali: documenti sempre uguali, che si scelgono una volta e
+partono a ogni invio.
+
+Si aggiungono ora **allegati fissi**, da due sorgenti:
+
+- **dal computer**, con una vera selezione di file: il contenuto viene letto e
+  conservato in base64 dentro la configurazione del nodo;
+- **dalla Knowledge Base**, scegliendo un documento già caricato: è già nel
+  database, non passa dal disco.
+
+Le due sorgenti convivono con i file del flusso: al momento dell'invio il nodo
+concatena le due liste, e i fissi partono anche quando l'esecuzione non ha
+generato niente.
+
+**Il prezzo, e perché lo si paga.** I file vivono dentro la configurazione del
+nodo, quindi dentro l'agente salvato. È l'unico posto possibile in un prodotto
+interamente client-side — non c'è un server dove depositarli — ma un agente che
+si porta dietro dieci megabyte rallenta salvataggio, esportazione e
+importazione. Da qui il tetto di **2 MB complessivi**, dichiarato nel pannello
+insieme al motivo, e il peso mostrato accanto a ogni allegato.
+
+Sulla coerenza con la chat: il campo `attach` è già nel catalogo che il modello
+riceve, quindi una richiesta come «allega il file» si traduce in una proprietà
+del nodo email esistente invece che in un blocco inventato — che era
+esattamente il caso «Allega file mail» di §5.134.
+
+### 5.137 Tre flussi di esempio, e cosa dimostrano
+
+In `esempi/` ci sono tre flussi completi da importare, più articolati dei
+cinque precaricati. Non sono illustrazioni: sono stati **importati, convalidati
+ed eseguiti** prima di essere consegnati.
+
+| Flusso | Nodi | Meccanismi |
+|---|---|---|
+| Onboarding fornitore | 10 | webhook con campi dichiarati, mascheramento, diramazione su soglia, approvazione umana, generazione PDF, email con allegati |
+| Rassegna settimanale | 10 | ciclo su un elenco prodotto dal modello, verifica di fondatezza, salvataggio in Knowledge Base, doppia distribuzione |
+| Ticket di assistenza | 12 | difesa da istruzioni ostili, mascheramento, classificazione, instradamento su due rami che si ricongiungono |
+
+Convalida: **tutti e tre senza errori**. Esecuzione senza chiave API: la
+rassegna completa in 24 passi, il ticket in 10, l'onboarding **si ferma sulla
+convalida dell'output** — e va bene così.
+
+La differenza fra i due comportamenti non è tecnica ma di processo, ed è
+dichiarata nel nodo: l'onboarding ha «Convalida output» su *Blocca il flusso*,
+perché un dossier costruito su dati illeggibili non deve uscire; il ticket l'ha
+su *Segnala e prosegui*, perché una richiesta di assistenza non si butta via
+perché il classificatore era incerto. Lo stesso controllo, due decisioni
+diverse, entrambe scritte dove si vedono.
+
+### 5.138 Gli altri nodi: verificati, nessuna modifica
+
+Rastrellamento su tutte le 81 voci per trovarne altre nella condizione del nodo
+email — una capacità mancante che porta a inventare blocchi. Per ciascuna si è
+verificato che esista una definizione di configurazione con almeno un campo.
+
+Cinque risultavano senza campi: `Condition`, `Fine`, `Esito positivo`,
+`Esito negativo`, `Chiamata agente`. Aprendole nel pannello, tre sono
+**terminali** e non hanno niente da configurare per costruzione, mentre
+`Condition` e `Chiamata agente` hanno un pannello **dedicato** — il campo della
+condizione la prima, il selettore dell'agente da invocare la seconda — che non
+passa dal meccanismo generico dei campi.
+
+Nessun nodo richiede modifiche. È il tipo di verifica che vale soprattutto
+quando non trova niente: senza, «gli altri nodi vanno bene» sarebbe stata
+un'impressione.
+
+### 5.139 «Allega i file generati dal flusso»: quali, esattamente
+
+Attivare l'opzione non basta: qualcuno, a monte, deve produrre quei file. Se
+non c'è, l'email parte senza allegati e nessuno lo dice — chi la riceve trova
+un messaggio che ne annuncia uno.
+
+La prima correzione è stata un errore di convalida che sbarrava l'esecuzione.
+Sbagliata, e per una ragione precisa: **la richiesta è legittima**. Chi attiva
+quell'opzione sta dicendo «voglio allegare qualcosa», e la risposta giusta a una
+richiesta legittima non è un divieto, è permettere di completarla.
+
+Il pannello del nodo email mostra ora, sotto l'opzione:
+
+- **se a monte ci sono blocchi che producono file**, l'elenco di ciò che verrà
+  allegato, con il nome del file che ciascuno genererà. Le pastiglie portano al
+  nodo che lo produce, perché è lì che si cambia il nome;
+- **se non ce n'è nessuno**, un menu dei formati (PDF, Markdown, CSV, JSON,
+  HTML, Testo) e un pulsante che inserisce un «Esporta file» **subito prima**
+  dell'invio, lo configura con un nome derivato dall'oggetto dell'email e lo
+  ricollega intercettando gli archi entranti.
+
+Il flusso resta valido a ogni passaggio: il nodo nuovo si inserisce sull'arco,
+non accanto. Verificato: da `Webhook → LLM Prompt → Invia email → Fine` si
+ottiene `Webhook → LLM Prompt → Esporta file → Invia email → Fine`, con
+l'export configurato su PDF e nome `allegato-riassunto-riunione`, convalida
+senza errori, e il pannello che passa da «Nessun file da allegare» a
+«Verranno allegati · 1».
+
+Sul confine, per onestà: la chat può **attivare** l'opzione e **aggiungere** un
+«Esporta file», perché sono entrambe cose che vivono nel flusso. Non può
+allegare un file dal tuo disco: quella resta un'azione umana, e il pannello è
+l'unico posto in cui si fa.
+
+### 5.140 La fila di Esegui e Interrompi
+
+I due pulsanti stavano in una riga flessibile: Esegui elastico, Interrompi
+fisso a 116px. Larghezze diverse fra loro e diverse da tutte le file sotto, che
+sono griglie a due colonne uguali. Ora la fila usa la stessa griglia, quindi i
+due pulsanti hanno la stessa larghezza e si allineano con quelli che seguono.
+Restano alti 36px invece di 32: sono le due azioni che si premono davvero.
+
+### 5.141 Allegati multipli sui post, e schede che si allineano
+
+**Fino a cinque allegati per post.** Un post ne portava uno. Ma chi racconta un
+flusso porta il JSON dell'agente, un CSV di prova e uno schema: tre cose che si
+spiegano insieme e che, una alla volta, costringevano a tre post o a una scelta.
+
+Il modello nuovo è `p.allegati`, un elenco. I campi `attach_name/mime/data`
+**restano allineati al primo**: sono letti in una decina di punti — la scheda,
+il dettaglio, il visore delle immagini, l'esportazione della Knowledge Base — e
+riscriverli tutti per un cambiamento di forma sarebbe stato il modo più costoso
+di introdurre un difetto. Chi legge il campo singolo continua a funzionare; chi
+vuole l'elenco chiama `allegatiDiPost()`, che ricostruisce la lista anche dai
+post vecchi.
+
+La persistenza aggiunge una colonna `allegati_json`; al ricaricamento, se manca,
+l'elenco si ricostruisce dal campo singolo. Nessun post scritto prima perde il
+proprio file.
+
+Scheda e dettaglio disegnano gli allegati con **la stessa funzione**
+(`allegatiHTMLPost`): erano due blocchi quasi uguali, ed erano già divergenti su
+un dettaglio — `object-fit` diverso fra i due. Una funzione sola non può
+divergere da sé stessa.
+
+Il visore raccoglie ora **tutte le immagini di tutti i post**, non una per post:
+un racconto con tre schemi li ha tutti e tre, e si scorrono in fila.
+
+**Le schede degli agenti installati.** La fila di comandi era elastica sul
+contenuto: «Apri nel Builder» andava a capo su alcune schede e no su altre, le
+larghezze non tornavano fra loro e le schede avevano altezze diverse. Ora la
+fila è una griglia `1fr 1fr auto`, le etichette non vanno a capo, la scheda è
+una colonna flex con la descrizione elastica: quattro schede affiancate
+misurano tutte 162px di altezza e 129/129/34 di larghezza dei pulsanti.
+
+**Le date erano di due formati.** `relTimeIt()` passava alla data assoluta dopo
+trenta giorni: in una fila si leggeva «29 giorni fa» accanto a «06/08/2026».
+Ora la scala relativa arriva a mesi e anni, e la fila si legge come una fila.
+
+### 5.142 L'etichetta sulla freccia si può finalmente scrivere
+
+Domanda arrivata guardando una tela: perché quella freccia ha scritto
+«allegato», e si può metterne una altrove?
+
+La ricognizione ha trovato che l'etichetta compariva in **tre soli casi**, tutti
+imposti dal codice:
+
+1. i due rami di una condizione, etichettati `Sì` e `No` alla creazione;
+2. l'arco che collega l'«Esporta file» inserito automaticamente al nodo email,
+   etichettato `allegato` (§5.139);
+3. quello che dichiara un JSON importato o un piano proposto dalla chat.
+
+Il campo `label` era quindi **nel modello, disegnato sulla tela, esportato e
+reimportato — e non scrivibile**. Selezionando una connessione il pannello
+offriva «Da», «A» ed «Elimina»: si poteva vedere un'etichetta e non toccarla,
+che è il modo peggiore di avere un campo.
+
+Ora il pannello della connessione ha il campo **Etichetta sulla freccia**, con
+un limite di 24 caratteri. Serve a dire *perché* si prende quella strada — o
+semplicemente a lasciarsi un promemoria su una tela grande, che è la ragione
+per cui è stato chiesto.
+
+Un dettaglio di comportamento: la scrittura aggiorna la tela ma **non ridisegna
+il pannello**. Ridisegnarlo a ogni tasto farebbe perdere il fuoco dopo la prima
+lettera — difetto piccolo e infuriante, del tipo che si nota solo provando a
+scrivere davvero.
+
+Verificato: etichetta scritta, comparsa sulla freccia, sopravvissuta a
+esportazione e reimportazione.
+
+### 5.143 Il flusso tornava senza nome
+
+Segnalazione: un flusso salvato, chiudendo e riaprendo l'applicazione, torna
+sulla tela con tutti i suoi nodi ma si chiama «Workflow Builder» e dichiara
+«non ancora salvato». Come ricominciare da zero, tranne che il lavoro c'è.
+
+Due difetti sovrapposti, entrambi nella copia di lavoro tenuta in
+`localStorage`.
+
+**La copia conteneva solo la geometria.** Veniva scritta come
+`{nodes, edges, nextId}`: al ritorno i nodi c'erano, il **nome** e il legame
+con la riga del database no. `currentAgentName` ripartiva dal suo valore
+iniziale e `B.dbAgentId` restava nullo — da cui «non ancora salvato», e da cui
+`B.effimero=true`, che marca la tela come non-lavoro. Il flusso salvato era nel
+database, intatto, ma niente sulla tela lo diceva.
+
+**La copia si scriveva in un punto solo: dopo un'esecuzione.** Chi costruiva
+senza mai premere Esegui, riaprendo, trovava una tela vecchia o vuota. Ora la
+scrittura è agganciata al salvataggio automatico, quindi segue le modifiche;
+la funzione è una sola (`salvaCopiaDiLavoro`) e vive accanto all'autosalvataggio
+che la tiene aggiornata.
+
+**Il legame con la riga si verifica prima di accettarlo.** `localStorage` è per
+**origine**, non per utente: la copia scritta da uno resta lì quando entra un
+altro. Senza controllo, il Builder di Giulia avrebbe puntato alla riga di
+Mario, e il primo salvataggio automatico gliel'avrebbe sovrascritta — un difetto
+silenzioso e distruttivo. Il legame si accetta solo se la riga **esiste ancora**
+ed è **di chi sta usando l'applicazione adesso**; altrimenti i nodi restano
+sulla tela come bozza, con il loro nome, ma senza legame da sovrascrivere.
+
+Verificato: salvato «Riassunto riunioni e invio mail», ricaricata la pagina —
+titolo, nodi e stato «salvato» tornano, `dbAgentId` è quello giusto. Entrando
+come un'altra persona con la stessa copia di lavoro, i nodi restano ma il
+legame è nullo e la riga altrui non viene toccata.
+
+### 5.144 La tela appartiene a chi la sta usando
+
+Seguito di §5.143. Conservare nome e legame nella copia di lavoro non bastava:
+la copia era **una sola per browser**. Uscendo come Mario ed entrando come
+Giulia, sulla tela restavano i nodi di Mario — non solo disordine, ma il lavoro
+di una persona mostrato a un'altra, nello stesso posto in cui si preme Salva.
+
+La chiave è ora **per utente** (`relaition_builder__<nome>`): chi entra ritrova
+la propria tela dove l'aveva lasciata, e chi entra per la prima volta parte
+pulito. Il controllo di proprietà sulla riga del database resta, come seconda
+rete.
+
+**Il cambio di utente non passa da `initBuilder()`**, che gira una volta sola
+per sessione: senza un intervento esplicito il canvas restava quello di prima
+anche con la chiave giusta. `ricaricaTelaPerUtente()`, chiamata da
+`applicaUtente()`, azzera lo stato e ricarica la copia dell'utente entrante.
+
+**Un secondo travaso, trovato controllando.** `challengeRegistered` è una mappa
+in memoria delle iscrizioni alle sfide. `loadPersistedContent()` la ripopolava
+per l'utente entrante **senza svuotarla prima**: chi entrava dopo Mario
+ereditava le sue sei iscrizioni. Il resto della pagina legge dal database e non
+se ne accorgeva — ma un difetto che dipende da quale schermata si guarda è
+peggio di uno visibile sempre.
+
+Verificato passando fra i quattro profili: lezioni completate, quiz superati,
+esperienza, iscrizioni alle sfide, candidature, badge e livello sono **tutti
+diversi per utente**, e la tela segue chi entra.
+
+| | Mario | Giulia | Marco | Sara |
+|---|---|---|---|---|
+| Lezioni | 15 | 0 | 0 | 0 |
+| Quiz | 11 | 0 | 0 | 0 |
+| XP | 735 | 300 | 75 | 260 |
+| Iscrizioni a sfide | 6 | 0 | 0 | 0 |
+| Candidature | 1 | 3 | 2 | 2 |
+| Badge ottenuti | 8 | 4 | 3 | 3 |
+
+Ciclo completo: Mario costruisce due nodi → entra Giulia, tela **vuota** e zero
+iscrizioni in memoria → torna Mario, **ritrova i suoi due nodi** con il nome.
+
+### 5.145 Il registro non taglia più il testo alla fonte
+
+Nel registro di esecuzione le voci lunghe finivano con «…»: l'output di un
+nodo AI si leggeva per i primi ottanta caratteri e basta. La segnalazione
+dell'utente chiedeva di poter espandere la singola riga.
+
+Guardando dove avveniva il taglio, il problema non era grafico. In
+`js/agent-runtime.js` cinque punti scrivevano `String(x).substring(0,80)+'…'`
+**prima** di consegnare il messaggio: il testo intero non arrivava nemmeno al
+registro, quindi non c'era niente da espandere — e non si recuperava nemmeno
+esportando il log. L'accorciamento è una scelta di presentazione, e stava nel
+motore.
+
+Il taglio è stato spostato dove appartiene:
+
+- nel motore resta solo un tetto di sicurezza, `REGISTRO_TETTO = 4000`
+  caratteri applicato da `rtTesto()`, perché una pipeline da centomila
+  caratteri dentro il DOM rallenta il pannello. Quando interviene lo dichiara
+  nel testo stesso (`[…troncato a 4000 caratteri]`), invece di far sparire il
+  resto in silenzio;
+- nel Builder, `addExecEntry()` mette il messaggio in `.exec-msg`, che sta su
+  una riga sola con ellissi. Se il testo senza tag supera gli ~85 caratteri o
+  contiene un a capo, accanto compare una freccia: `apriRigaRegistro()`
+  aggiunge `.aperta` alla voce e il testo si mostra intero, a capo compresi, in
+  un riquadro a larghezza fissa.
+
+Due dettagli non scontati. La freccia si decide sulla lunghezza del testo, non
+misurando `scrollWidth`: quando la voce arriva il pannello del registro può
+essere chiuso, e una misura fatta a larghezza zero direbbe sempre «non serve».
+E il clic sulla freccia chiama `event.stopPropagation()`, perché la riga ha già
+un suo clic — `vaiAlNodoDalRegistro()` — e lo stesso gesto non può significare
+due cose diverse.
+
+Verifica in browser: riga lunga alta 25 px da chiusa, freccia presente; aperta
+mostra tutti i 703 caratteri del messaggio; riga corta senza freccia. Cache
+`relaition-v88`.
+
+### 5.146 Il capitolo delle Sfide raccontava la vetrina, non i gesti
+
+La dimostrazione dedicava a Sfide ed Eventi tre passi: l'elenco, l'apertura di
+una sfida, i criteri di valutazione. Tutto vero, ma tutto *da guardare*. Le
+cose che il capitolo 4.3 chiede — iscriversi, candidare un proprio agente,
+essere misurati sulle esecuzioni reali, votare, portare una domanda a un AMA —
+restavano descritte a parole e mai compiute. Chi guardava la registrazione
+vedeva una bacheca ben fatta.
+
+Sei passi nuovi, tutti che *fanno* qualcosa:
+
+| Passo | Cosa compie davvero |
+|---|---|
+| Tre formati | distingue hackathon, sfide misurate ed eventi (Workshop, AMA, Demo Day) contando le schede, non elencandole a memoria |
+| Le fasi | mostra `sfBloccoFasi` e il fatto che le date sono relative al giorno in cui si guarda |
+| Mi iscrivo | clicca «Iscriviti»: il conteggio dei posti sale di uno e il nome compare fra gli iscritti |
+| Candido un agente | apre la finestra di candidatura, sceglie l'agente e scrive la nota per la giuria |
+| Il punteggio | conferma la candidatura e mostra la classifica con il punteggio calcolato accanto al voto della community |
+| Le domande | pubblica una domanda su un AMA, dove l'ordinamento è per voti |
+
+Tre dettagli che rendono i passi affidabili invece che decorativi:
+
+- la sfida su cui si candida non è scelta a mano ma da `sfidaDaCandidare()`, che
+  prende la prima sfida **misurata dove chi presenta non si è ancora
+  candidato**: così il pulsante dice «Candida» e non «Modifica la candidatura».
+  La scelta è memorizzata, perché due passi che parlassero di due sfide diverse
+  racconterebbero una storia sconnessa;
+- i testi si calcolano dopo l'azione — «i posti occupati sono 48 su 80», «la mia
+  candidatura è entrata con 74 punti» — quindi la narrazione dice quello che è
+  successo, non quello che ci si aspettava;
+- nulla resta appiccicato: la fotografia dello stato fatta all'avvio (§5.99)
+  copre `challenges_registered`, `challenge_submissions`, `challenge_questions`
+  e `xp_log`, quindi iscrizione, candidatura e domanda spariscono alla fine e la
+  demo successiva riparte identica.
+
+Verificato passo per passo nel browser: iscrizione 47 → 48 posti, candidatura
+salvata su «finanza senza errori» con Mario primo in classifica a 74 punti,
+domande dell'AMA da 4 a 5, e ripristino che riporta tutto com'era.
+
+Nel farlo è saltato fuori un difetto vero della piattaforma, non della demo: il
+dettaglio del punteggio scriveva «1 controlli» e «1 esecuzioni». Ora passa da
+`sfPlur()`. È il genere di sciatteria che fa dubitare anche del numero che ha
+accanto. Cache `relaition-v89`.

@@ -114,6 +114,10 @@ function sfStato(s){
 // esecuzioni riuscite valgono il massimo, quattro controlli valgono il massimo —
 // perche' senza tetto il primo che esegue cento volte rende la classifica
 // insensibile a tutto il resto.
+// «1 controlli» e «1 esecuzioni» si leggono in classifica accanto al punteggio:
+// e' il genere di sciatteria che fa dubitare anche del numero che ha accanto.
+function sfPlur(n,uno,tanti){ return n+' '+(n===1?uno:tanti) }
+
 function sfPunteggio(metrica,agentName,autore){
   var e=dbGetOne("SELECT COUNT(*) tot, SUM(CASE WHEN status='ok' THEN 1 ELSE 0 END) ok FROM exec_log WHERE agent=? AND user=?",[agentName,autore])||{tot:0,ok:0};
   var tot=e.tot||0, ok=e.ok||0, ko=tot-ok;
@@ -132,12 +136,12 @@ function sfPunteggio(metrica,agentName,autore){
     // 50% tasso di successo, 25% numero di esecuzioni, 25% controlli attivi.
     var tasso=tot?Math.round(ok*100/tot):0;
     return {v:Math.round(tasso*0.5 + tetto(tot,10)*0.25 + tetto(controlli,4)*0.25), ok:ok,
-            d:tasso+'% su '+tot+' esecuzioni · '+controlli+' controlli'};
+            d:tasso+'% su '+sfPlur(tot,'esecuzione','esecuzioni')+' · '+sfPlur(controlli,'controllo','controlli')};
   }
   if(metrica==='presidio'){
     // 60% controlli configurati, 40% esecuzioni con presidio attivo.
     return {v:Math.round(tetto(controlli,4)*0.6 + tetto(ok,10)*0.4), ok:ok,
-            d:controlli+' controlli · '+ok+' esecuzioni riuscite'};
+            d:sfPlur(controlli,'controllo','controlli')+' · '+ok+(ok===1?' esecuzione riuscita':' esecuzioni riuscite')};
   }
   return {v:0,ok:0,d:'—'};
 }

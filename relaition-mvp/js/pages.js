@@ -710,32 +710,10 @@ function renderCommunity(){
       // contenuto visivo e' una riga «📎 schema.svg — Scarica» somiglia a un
       // archivio, non a un posto dove si guarda qualcosa. Gli altri formati
       // restano una riga con il pulsante, che per un CSV o un JSON e' giusto.
-      (p.attach_name && /^image\//.test(p.attach_mime||'')
-        ? '<div style="margin:9px 0;border-radius:10px;overflow:hidden;border:1px solid var(--bo);background:var(--bg2)">'+
-          // L'anteprima e' ritagliata per non far diventare ogni scheda alta
-          // una schermata; l'immagine intera si apre al clic. Uno schema di
-          // flusso o un grafico, ridotti a una striscia, non si leggono — ed
-          // erano proprio il tipo di contenuto per cui le immagini servivano.
-          '<img src="'+p.attach_data+'" alt="'+escHtml(p.attach_name)+'" '+
-            'onclick="event.stopPropagation();apriImmaginePost('+p.id+')" '+
-            'title="Apri a schermo intero" '+
-            'style="display:block;width:100%;max-height:260px;object-fit:cover;cursor:zoom-in" loading="lazy">'+
-          '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px">'+
-            '<span style="flex:1;min-width:0;font-size:10.5px;color:var(--tx4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.attach_name)+'</span>'+
-            '<button class="tb-btn" style="height:24px;font-size:10px" onclick="event.stopPropagation();apriImmaginePost('+p.id+')" title="Apri a schermo intero">🔍</button>'+
-            '<button class="tb-btn" style="height:24px;font-size:10px" onclick="event.stopPropagation();scaricaAllegatoPost('+p.id+')" title="Scarica">⬇️</button>'+
-          '</div></div>'
-        : '')+
-      (p.attach_name && !/^image\//.test(p.attach_mime||'')
-        ? '<div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--bo);border-radius:8px;padding:7px 10px;margin:8px 0">'+
-          '<span style="font-size:14px">📎</span>'+
-          '<span style="flex:1;min-width:0;font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.attach_name)+'</span>'+
-          '<button class="tb-btn" style="height:26px;font-size:10.5px" onclick="event.stopPropagation();scaricaAllegatoPost('+p.id+')">⬇️ Scarica</button>'+
-          (/\.json$/i.test(p.attach_name)
-            ? '<button class="tb-btn primary" style="height:26px;font-size:10.5px" onclick="event.stopPropagation();importaFlussoDalPost('+p.id+')" title="Apre il workflow nel Builder">📥 Apri nel Builder</button>'
-            : '')+
-          '</div>'
-        : '')+
+      // Gli allegati: uno o piu' (fino a cinque). Il disegno sta in
+      // community.js perche' e' la stessa fila che serve nella scheda e nel
+      // dettaglio, e duplicarla avrebbe garantito che le due divergessero.
+      (typeof allegatiHTMLPost==='function'?allegatiHTMLPost(p):'')+
       '<div class="post-actions">'+
         '<span class="post-action'+(fmHoMessoLike(p.id)?' attiva':'')+'" onclick="event.stopPropagation();fmAlternaLike('+p.id+')" '+
           'title="'+(fmHoMessoLike(p.id)?'Togli il mi piace':'Mi piace')+'" '+
@@ -786,11 +764,13 @@ function likePost(id){
 }
 
 // Allegato in composizione: tenuto qui finché il post non viene pubblicato.
+// Sostituito da POST_ALLEGATI (elenco) in community.js: resta dichiarato
+// perche' il seme dei post lo referenzia in lettura.
 var POST_ALLEGATO=null;
 
 function openNewPost(idEsistente){
   var p=idEsistente?POSTS.filter(function(x){return x.id===idEsistente})[0]:null;
-  POST_ALLEGATO=p&&p.attach_name?{nome:p.attach_name,mime:p.attach_mime,dati:p.attach_data}:null;
+  if(typeof postAllegatiInit==='function')postAllegatiInit(p);
   var tipi=['Soluzione','Domanda','Showcase','Tutorial','Discussione'];
   openModal(
     '<div style="display:flex;justify-content:space-between;align-items:center"><h2>'+(p?'Modifica post':'Nuovo post')+'</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
@@ -801,36 +781,14 @@ function openNewPost(idEsistente){
     '<div class="prop-group"><div class="prop-label">Contenuto</div><textarea class="prop-input" id="newPostBody" rows="5" placeholder="Scrivi il tuo post...">'+escHtml(p?p.body:'')+'</textarea></div>'+
     // Allegare il workflow di cui si parla è ciò che rende un post utile agli
     // altri: senza, resta un racconto che nessuno può provare.
-    '<div class="prop-group"><div class="prop-label">📎 Allegato (facoltativo)</div>'+
-      '<input type="file" id="postFileInput" accept=".json,.csv,.txt,.md,.pdf,.docx,.xlsx" style="display:none" onchange="caricaAllegatoPost(this)">'+
-      '<button class="tb-btn" style="width:100%" onclick="document.getElementById(\'postFileInput\').click()">Scegli un file…</button>'+
-      '<div id="postAllegatoInfo" style="font-size:11px;color:var(--tx4);margin-top:6px">'+
-        (POST_ALLEGATO?'📄 '+escHtml(POST_ALLEGATO.nome):'Workflow esportato, CSV di esempio, checklist… max 500 KB')+'</div>'+
+    '<div class="prop-group"><div class="prop-label">📎 Allegati (facoltativi, fino a 5)</div>'+
+      '<input type="file" id="postFileInput" multiple accept=".json,.csv,.txt,.md,.pdf,.docx,.xlsx,.png,.jpg,.jpeg,.svg,.gif,.webp" style="display:none" onchange="caricaAllegatoPost(this)">'+
+      '<div id="postAllegatoInfo">'+(typeof postAllegatiRiquadro==='function'?postAllegatiRiquadro():'')+'</div>'+
     '</div>'+
     '<button class="tb-btn primary mt-16" onclick="submitPost('+(p?p.id:'')+')">'+(p?'💾 Salva modifiche':'📤 Pubblica')+'</button>'
   );
 }
 
-function caricaAllegatoPost(input){
-  if(!input.files||!input.files[0])return;
-  var f=input.files[0];
-  if(f.size>500*1024){showToast('⚠️ Allegato troppo grande (max 500 KB)');return}
-  var r=new FileReader();
-  r.onload=function(e){
-    POST_ALLEGATO={nome:f.name,mime:f.type||'application/octet-stream',dati:e.target.result};
-    var info=document.getElementById('postAllegatoInfo');
-    if(info)info.innerHTML='📄 '+escHtml(f.name)+' · '+Math.round(f.size/1024)+' KB: <a href="#" onclick="rimuoviAllegatoPost();return false" style="color:#EF4444">rimuovi</a>';
-  };
-  // Si legge come data URL: conserva anche i formati binari, che vanno
-  // riscaricati identici a come sono stati caricati.
-  r.readAsDataURL(f);
-}
-
-function rimuoviAllegatoPost(){
-  POST_ALLEGATO=null;
-  var info=document.getElementById('postAllegatoInfo');
-  if(info)info.textContent='Nessun allegato';
-}
 
 function submitPost(idEsistente){
   var title=document.getElementById('newPostTitle').value.trim();
@@ -839,9 +797,13 @@ function submitPost(idEsistente){
   var tag=document.getElementById('newPostTag').value.trim()||'General';
   if(!title||!body){showToast('⚠️ Titolo e contenuto sono obbligatori');return}
 
-  var allegato=POST_ALLEGATO
-    ? {attach_name:POST_ALLEGATO.nome,attach_mime:POST_ALLEGATO.mime,attach_data:POST_ALLEGATO.dati}
-    : {attach_name:null,attach_mime:null,attach_data:null};
+  // L'elenco e' il dato vero; i campi singoli restano allineati al primo
+  // allegato per tutto il codice scritto quando ne esisteva uno solo.
+  var lista=(typeof POST_ALLEGATI!=='undefined')?POST_ALLEGATI.slice(0,POST_ALLEGATI_MAX):[];
+  var allegato={allegati:lista,
+    attach_name: lista.length?lista[0].nome:null,
+    attach_mime: lista.length?lista[0].mime:null,
+    attach_data: lista.length?lista[0].dati:null};
 
   if(idEsistente){
     var p=POSTS.filter(function(x){return x.id===idEsistente})[0];
@@ -857,7 +819,7 @@ function submitPost(idEsistente){
     addXP(20,'Pubblicato post: '+title);
     showToast('✅ Post pubblicato');
   }
-  POST_ALLEGATO=null;
+  if(typeof POST_ALLEGATI!=='undefined')POST_ALLEGATI=[];
   saveForumState();closeModal();renderCommunity();
 }
 
@@ -878,16 +840,18 @@ function eliminaPost(id){
 // stesso applicaImport() del pulsante di importazione: nessuna scorciatoia che
 // salti i controlli di formato, e come una qualsiasi importazione NON salva
 // nulla finche' non si preme Salva.
-function importaFlussoDalPost(id){
+function importaFlussoDalPost(id, idx){
   var p=POSTS.filter(function(x){return x.id===id})[0];
-  if(!p||!p.attach_data){showToast('⚠️ Allegato non disponibile');return}
+  var lista=(typeof allegatiDiPost==='function')?allegatiDiPost(p):[];
+  var a=lista[idx||0];
+  if(!a||!a.dati){showToast('⚠️ Allegato non disponibile');return}
   var dati;
   try{
-    var b64=String(p.attach_data).split(',')[1]||'';
+    var b64=String(a.dati).split(',')[1]||'';
     dati=JSON.parse(decodeURIComponent(escape(atob(b64))));
   }catch(e){ showToast('⚠️ L\u2019allegato non è un JSON leggibile'); return }
   if(typeof applicaImport!=='function'){showToast('⚠️ Importazione non disponibile');return}
-  if(applicaImport(dati))addAct('Importato dalla Community: '+(dati.name||p.attach_name));
+  if(applicaImport(dati))addAct('Importato dalla Community: '+(dati.name||a.nome));
 }
 
 // Rispondere costringeva ad aprire il post in una finestra sovrapposta e a
@@ -941,14 +905,6 @@ function inviaRispostaRapida(id){
   renderCommunity();
 }
 
-function scaricaAllegatoPost(id){
-  var p=POSTS.filter(function(x){return x.id===id})[0];
-  if(!p||!p.attach_data){showToast('⚠️ Allegato non disponibile');return}
-  var a=document.createElement('a');
-  a.href=p.attach_data;a.download=p.attach_name||'allegato';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  showToast('⬇️ '+(p.attach_name||'allegato'));
-}
 
 // ── PROFILE ──
 
@@ -1533,24 +1489,9 @@ function openPostDetail(id){
     (p.edited_at?'<div style="font-size:10.5px;color:var(--tx4);font-style:italic;margin-bottom:12px">✏️ Modificato il '+new Date(p.edited_at).toLocaleString('it-IT')+'</div>':'')+
     // Anche qui l'immagine si vede, non si annuncia: aprire un post per
     // trovarci scritto «📎 schema.png» e' un passaggio in piu' verso niente.
-    (p.attach_name && /^image\//.test(p.attach_mime||'')
-      ? '<div style="margin-bottom:16px;border-radius:12px;overflow:hidden;border:1px solid var(--bo);background:var(--bg2)">'+
-        '<img src="'+p.attach_data+'" alt="'+escHtml(p.attach_name)+'" '+
-          'onclick="apriImmaginePost('+p.id+')" title="Apri a schermo intero" '+
-          'style="display:block;width:100%;max-height:340px;object-fit:contain;background:#fff;cursor:zoom-in">'+
-        '<div style="display:flex;align-items:center;gap:8px;padding:7px 11px">'+
-          '<span style="flex:1;min-width:0;font-size:11px;color:var(--tx4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.attach_name)+'</span>'+
-          '<button class="tb-btn" style="height:26px;font-size:10.5px" onclick="apriImmaginePost('+p.id+')">🔍 Ingrandisci</button>'+
-          '<button class="tb-btn" style="height:26px;font-size:10.5px" onclick="scaricaAllegatoPost('+p.id+')">⬇️</button>'+
-        '</div></div>'
-      : '')+
-    (p.attach_name && !/^image\//.test(p.attach_mime||'')
-      ? '<div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--bo);border-radius:10px;padding:10px 12px;margin-bottom:18px">'+
-        '<span style="font-size:20px">📎</span>'+
-        '<div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:600">'+escHtml(p.attach_name)+'</div>'+
-        '<div style="font-size:10.5px;color:var(--tx4)">Allegato al post</div></div>'+
-        '<button class="tb-btn" onclick="scaricaAllegatoPost('+p.id+')">⬇️ Scarica</button></div>'
-      : '<div style="margin-bottom:8px"></div>')+
+    // Nel dettaglio gli allegati sono gli stessi della scheda: una funzione
+    // sola, così le due viste non possono divergere.
+    (typeof allegatiHTMLPost==='function'?allegatiHTMLPost(p):'')+
     // Solo l'autore può intervenire sul proprio post.
     (p.user===profileData.name
       ? '<div style="display:flex;gap:8px;margin-bottom:16px">'+
@@ -1620,9 +1561,10 @@ function saveLearnProgress(){
 function saveForumState(){
   dbRun('DELETE FROM forum_posts');dbRun('DELETE FROM forum_comments');
   POSTS.forEach(function(p){
-    dbRun('INSERT INTO forum_posts (id,user,ava,color,title,body,type,tag,likes,comments,views,time,created_at,attach_name,attach_mime,attach_data,edited_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    dbRun('INSERT INTO forum_posts (id,user,ava,color,title,body,type,tag,likes,comments,views,time,created_at,attach_name,attach_mime,attach_data,edited_at,allegati_json) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
       [p.id,p.user,p.ava,p.color,p.title,p.body,p.type,p.tag,p.likes||0,p.comments||0,p.views||0,p.time,new Date().toISOString(),
-       p.attach_name||null,p.attach_mime||null,p.attach_data||null,p.edited_at||null]);
+       p.attach_name||null,p.attach_mime||null,p.attach_data||null,p.edited_at||null,
+       (p.allegati&&p.allegati.length)?JSON.stringify(p.allegati):null]);
   });
   Object.keys(COMMENTS).forEach(function(postId){
     (COMMENTS[postId]||[]).forEach(function(c){
@@ -1646,12 +1588,25 @@ function loadPersistedContent(){
   });
   var dbPosts=dbAll('SELECT * FROM forum_posts ORDER BY id DESC');
   if(dbPosts.length){
-    POSTS.length=0;dbPosts.forEach(function(p){POSTS.push(p)});
+    POSTS.length=0;
+    dbPosts.forEach(function(p){
+      // L'elenco degli allegati torna dal JSON; se manca si ricostruisce dal
+      // campo singolo, cosi' i post scritti prima non perdono il loro file.
+      if(p.allegati_json){ try{ p.allegati=JSON.parse(p.allegati_json) }catch(e){} }
+      if(!p.allegati && p.attach_name)p.allegati=[{nome:p.attach_name,mime:p.attach_mime,dati:p.attach_data}];
+      POSTS.push(p);
+    });
     Object.keys(COMMENTS).forEach(function(k){delete COMMENTS[k]});
     dbAll('SELECT * FROM forum_comments ORDER BY id').forEach(function(c){
       (COMMENTS[c.post_id]=COMMENTS[c.post_id]||[]).push({user:c.user,ava:c.ava,color:c.color,text:c.text,time:c.time});
     });
   }
+  // Le iscrizioni alle sfide vanno AZZERATE prima di ricaricarle: la mappa
+  // vive in memoria e sopravvive al cambio di utente, quindi senza questa riga
+  // chi entrava dopo Mario ereditava le sue sei iscrizioni. Il resto della
+  // pagina legge dal database e non se ne accorgeva, ma un difetto che dipende
+  // da quale schermata guardi è peggio di uno visibile sempre.
+  Object.keys(challengeRegistered).forEach(function(k){delete challengeRegistered[k]});
   dbAll('SELECT challenge_id FROM challenges_registered WHERE user=?',[utenteCorrente()]).forEach(function(r){challengeRegistered[r.challenge_id]=true});
 }
 
@@ -1788,13 +1743,23 @@ function saveProfileData(){
 
 // Notifications
 
+// Tempo relativo, sempre. Prima si passava alla data assoluta dopo trenta
+// giorni: in una fila di schede si leggeva «29 giorni fa» accanto a
+// «06/08/2026», due formati diversi per la stessa informazione. Il mese e
+// l'anno tengono la scala relativa fin dove serve, e la data esatta resta
+// disponibile nel suggerimento.
 function relTimeIt(ts){
   var diff=(Date.now()-ts)/1000;
   if(diff<60)return 'poco fa';
   if(diff<3600)return Math.floor(diff/60)+' min fa';
   if(diff<86400)return Math.floor(diff/3600)+' ore fa';
   if(diff<86400*30)return Math.floor(diff/86400)+' giorni fa';
-  return new Date(ts).toLocaleDateString('it-IT');
+  if(diff<86400*365){
+    var m=Math.round(diff/86400/30);
+    return m<=1?'un mese fa':m+' mesi fa';
+  }
+  var a=Math.round(diff/86400/365);
+  return a<=1?'un anno fa':a+' anni fa';
 }
 
 function scheduleSummary(row){
@@ -1851,8 +1816,8 @@ function renderMyAgents(){
         '</div>'+
         '<div class="agent-bottom">'+
           '<button class="tb-btn" onclick="loadSavedAgent(\''+safeName+'\');event.stopPropagation()" style="font-size:11px;height:28px">✏️ Modifica</button>'+
-          '<button class="tb-btn primary" onclick="quickRunAgent(\''+safeName+'\');event.stopPropagation()" style="font-size:11px;height:28px">▶️ Esegui</button>'+
-          '<button class="tb-btn" onclick="deleteMyAgent(\''+safeName+'\');event.stopPropagation()" style="font-size:11px;height:28px;color:#EF4444;border-color:#FEE2E2">🗑️</button>'+
+          '<button class="tb-btn primary" onclick="quickRunAgent(\''+safeName+'\');event.stopPropagation()" title="Esegui adesso">▶️ Esegui</button>'+
+          '<button class="tb-btn solo-icona" onclick="deleteMyAgent(\''+safeName+'\');event.stopPropagation()" title="Disinstalla">🗑️</button>'+
         '</div></div>';
     });
     html+='</div>';
@@ -1866,7 +1831,7 @@ function renderMyAgents(){
       if(!a)return;
       installedCount++;
       var runs=etichettaEsecuzioni(a.name);
-      installedCards+='<div class="agent-card"><div class="agent-top"><div class="agent-icon" style="background:'+a.color+'15;color:'+a.color+'">'+a.icon+'</div><div class="agent-info"><div class="agent-name">'+a.name+'</div><div class="agent-author">'+a.author+' · installato '+relTimeIt(new Date(m.installed_at).getTime())+'</div></div><span class="badge badge-b">Installato</span></div><div class="agent-desc"><div style="display:flex;gap:12px;font-size:11px;color:var(--tx4)"><span>▶️ '+runs+'</span><span>⭐ '+a.rating+'</span></div></div><div class="agent-bottom"><button class="tb-btn" onclick="installAgent('+a.id+');event.stopPropagation()" style="font-size:11px;height:28px">✏️ Apri nel Builder</button><button class="tb-btn primary" onclick="quickRunMktAgent('+a.id+');event.stopPropagation()" style="font-size:11px;height:28px">▶️ Esegui</button><button class="tb-btn" onclick="uninstallAgent('+a.id+');event.stopPropagation()" style="font-size:11px;height:28px;color:#EF4444;border-color:#FEE2E2">🗑️</button></div></div>';
+      installedCards+='<div class="agent-card"><div class="agent-top"><div class="agent-icon" style="background:'+a.color+'15;color:'+a.color+'">'+a.icon+'</div><div class="agent-info"><div class="agent-name">'+a.name+'</div><div class="agent-author">'+a.author+' · installato '+relTimeIt(new Date(m.installed_at).getTime())+'</div></div><span class="badge badge-b">Installato</span></div><div class="agent-desc"><div style="display:flex;gap:12px;font-size:11px;color:var(--tx4)"><span>▶️ '+runs+'</span><span>⭐ '+a.rating+'</span></div></div><div class="agent-bottom"><button class="tb-btn" onclick="installAgent('+a.id+');event.stopPropagation()" title="Apri il flusso nel Builder">✏️ Apri</button><button class="tb-btn primary" onclick="quickRunMktAgent('+a.id+');event.stopPropagation()" title="Esegui adesso">▶️ Esegui</button><button class="tb-btn solo-icona" onclick="uninstallAgent('+a.id+');event.stopPropagation()" title="Disinstalla">🗑️</button></div></div>';
     });
     if(installedCount){
       html+='<div style="font-size:11px;font-weight:700;color:var(--tx4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">🏪 Installati dal Marketplace ('+installedCount+')</div><div class="mkt-grid">'+installedCards+'</div>';
@@ -2333,15 +2298,13 @@ function scaricaAttestato(livello){
 // per i moduli, e un'immagine larga ci starebbe dentro rimpicciolita.
 var IMG_APERTA={indice:-1, zoom:1, elenco:[]};
 
-function immaginiDeiPost(){
-  return (typeof POSTS!=='undefined'?POSTS:[]).filter(function(p){
-    return p.attach_data && /^image\//.test(p.attach_mime||'');
-  });
-}
-
-function apriImmaginePost(postId){
+function apriImmaginePost(postId, idx){
+  // L'elenco raccoglie ora TUTTE le immagini di tutti i post, non una per
+  // post: un racconto con tre schemi li ha tutti e tre, e si scorrono in fila.
   IMG_APERTA.elenco=immaginiDeiPost();
-  IMG_APERTA.indice=IMG_APERTA.elenco.map(function(p){return p.id}).indexOf(postId);
+  IMG_APERTA.indice=IMG_APERTA.elenco.findIndex(function(v){
+    return v.post && v.post.id===postId && (idx===undefined||v.idx===idx);
+  });
   if(IMG_APERTA.indice<0)IMG_APERTA.indice=0;
   if(!IMG_APERTA.elenco.length)return;
   IMG_APERTA.zoom=1;
@@ -2382,20 +2345,20 @@ function disegnaVisore(){
       '<div style="flex:1;min-width:0">'+
         '<div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(p.title||'')+'</div>'+
         '<div style="font-size:11px;color:#94A3B8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+
-          escHtml(p.attach_name||'')+' · '+escHtml(p.user||'')+
+          escHtml(p.nome||'')+' · '+escHtml(p.user||'')+
           (piu?(' · '+(IMG_APERTA.indice+1)+' di '+IMG_APERTA.elenco.length):'')+'</div>'+
       '</div>'+
       '<button class="tb-btn" style="height:30px;font-size:11px" onclick="zoomImmaginePost(-0.25)" title="Riduci">−</button>'+
       '<span style="font-size:11px;color:#94A3B8;min-width:44px;text-align:center">'+Math.round(IMG_APERTA.zoom*100)+'%</span>'+
       '<button class="tb-btn" style="height:30px;font-size:11px" onclick="zoomImmaginePost(0.25)" title="Ingrandisci">+</button>'+
-      '<button class="tb-btn" style="height:30px;font-size:11px" onclick="scaricaAllegatoPost('+p.id+')" title="Scarica">⬇️</button>'+
+      '<button class="tb-btn" style="height:30px;font-size:11px" onclick="scaricaAllegatoPost('+p.post.id+','+p.idx+')" title="Scarica">⬇️</button>'+
       '<button class="tb-btn" style="height:30px;font-size:11px" onclick="chiudiImmaginePost()" title="Chiudi (Esc)">✕</button>'+
     '</div>'+
     '<div style="flex:1;min-height:0;width:100%;max-width:1100px;display:flex;align-items:center;gap:10px">'+
       (piu?'<button class="tb-btn" style="height:44px;flex:0 0 40px;justify-content:center" onclick="scorriImmaginePost(-1)" title="Precedente (←)">‹</button>':'')+
       '<div style="flex:1;min-width:0;height:100%;overflow:auto;display:flex;align-items:center;justify-content:center;'+
         'background:#FFFFFF;border-radius:12px">'+
-        '<img src="'+p.attach_data+'" alt="'+escHtml(p.attach_name||'')+'" '+
+        '<img src="'+p.dati+'" alt="'+escHtml(p.nome||'')+'" '+
           'style="max-width:none;width:'+(IMG_APERTA.zoom*100)+'%;height:auto;display:block">'+
       '</div>'+
       (piu?'<button class="tb-btn" style="height:44px;flex:0 0 40px;justify-content:center" onclick="scorriImmaginePost(1)" title="Successiva (→)">›</button>':'')+

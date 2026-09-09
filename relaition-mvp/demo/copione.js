@@ -39,6 +39,29 @@ function perTesto(sel,testo){
   return QQ(sel).filter(function(e){ return (e.textContent||'').toLowerCase().indexOf(t)>=0 })[0];
 }
 
+// Su quale sfida si mostra la candidatura. Si sceglie la prima sfida MISURATA
+// dove chi presenta non si e' ancora candidato: cosi' il gesto raccontato e'
+// una candidatura vera, con il pulsante che dice «Candida». Se fossero tutte
+// gia' occupate si ripiega sulla prima misurata — il passo diventa una
+// modifica della candidatura, che e' comunque una cosa che esiste. La scelta
+// resta la stessa per tutti i passi che la usano: due passi che parlano di due
+// sfide diverse racconterebbero una storia sconnessa.
+var _sfidaScelta=null;
+function sfidaDaCandidare(){
+  var w=W(); if(!w||!w.SFIDE)return null;
+  if(_sfidaScelta){ var g=w.sfidaById(_sfidaScelta); if(g)return g }
+  var misurate=w.SFIDE.filter(function(x){return !!x.metrica});
+  var libere=misurate.filter(function(x){ try{ return !w.sfCandidatura(x.id) }catch(e){ return false } });
+  var s=libere[0]||misurate[0]||null;
+  if(s)_sfidaScelta=s.id;
+  return s;
+}
+
+// I titoli delle sfide finiscono dentro il testo della narrazione, che e' HTML.
+function escapaTitolo(t){
+  return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 // Ricaricamento controllato dell'app: serve per tornare alla schermata di
 // accesso. Non si usa `logout()` dell'applicazione perche' apre un `confirm()`
 // che bloccherebbe la dimostrazione in attesa di un clic che nessuno dara'.
@@ -660,7 +683,7 @@ var COPIONE=[
     if(!e)return 'Controllo il flusso prima di lanciarlo.';
     return e.n===0
       ? '<strong>Nessun problema</strong>: struttura corretta, parametri compilati, modello collegato. Il flusso è eseguibile.'
-      : 'La verifica segnala <strong>'+e.n+'</strong>: <em>'+e.primo+'</em>. Non è un avviso da ignorare — la piattaforma <strong>si rifiuta di eseguire</strong>, ed è lo stesso controllo che blocca anche la pubblicazione.';
+      : 'La verifica segnala <strong>'+e.n+'</strong>: <em>'+e.primo+'</em>. La piattaforma <strong>si rifiuta di eseguire</strong> e di pubblicare, ma il flusso <strong>si salva e si esporta lo stesso</strong>: il lavoro a metà è comunque lavoro, e perderlo perché non è finito sarebbe il modo peggiore di segnalare un problema.';
   },
   pagina:'builder',
   azione:function(fine){
@@ -734,6 +757,38 @@ var COPIONE=[
   pos:'bottom', durata:11000
 },
 {
+  capitolo:5, titolo:'Gli stessi nodi della palette, non nodi che le somigliano',
+  testo:function(){
+    var w=W(), quanti=0, nomi=[];
+    try{
+      (w.B&&w.B.nodes||[]).forEach(function(n){
+        var v=(typeof w.ccVoceDiPalette==='function')?w.ccVoceDiPalette(n.name,n.type):null;
+        if(v && v.name===n.name && v.icon===n.icon){ quanti++; if(nomi.length<3)nomi.push(n.name) }
+      });
+    }catch(e){}
+    return 'Un nodo scritto dal modello e uno trascinato dalla palette devono essere <strong>lo stesso nodo</strong>: '+
+      'stesso nome, stessa icona, stessi campi da compilare. '+
+      (quanti?('Qui '+quanti+' dei nodi appena creati corrispondono esattamente a una voce di palette'+
+               (nomi.length?(' — '+nomi.join(', ')):'')+'.'):'')+
+      ' Non è un dettaglio estetico: i campi di un controllo — <em>chi approva</em>, <em>quale messaggio</em>, '+
+      '<em>entro quando</em> — vengono riconosciuti <strong>dal nome</strong>. Un «Approvazione Umana» con la U '+
+      'maiuscola sembrerebbe il controllo giusto e non avrebbe nessuno di quei campi: un presidio finto, '+
+      'che è peggio di un presidio assente.';
+  },
+  pagina:'builder',
+  azione:function(fine){
+    var w=W();
+    // Si seleziona un controllo fra quelli appena generati: il pannello mostra
+    // i suoi campi, che è la prova visibile di cui parla il testo.
+    try{
+      var g=(w.B&&w.B.nodes||[]).filter(function(n){return n.type==='gr'})[0];
+      if(g)selezionaNodo(w,g.id);
+    }catch(e){}
+    setTimeout(fine,1400);
+  },
+  sel:'#propsBody', pos:'left', durata:12000
+},
+{
   capitolo:5, titolo:'E poi si chiede una modifica',
   testo:'La chat non serve solo a partire da zero: <strong>a tela piena capisce cosa c\'è già</strong>. Chiedo di aggiungere la gestione degli errori, e i suggerimenti qui sotto cambiano di conseguenza — sono completamenti letti dal grafo, non esempi fissi.',
   pagina:'builder',
@@ -774,6 +829,20 @@ var COPIONE=[
       '. La modalità scelta <strong>compare sulla scheda dell\'agente</strong> e nel Log Esecuzioni, che separa le esecuzioni manuali da quelle pianificate: quando qualcosa va storto alle tre di notte, la prima domanda è <em>«è partito da solo o l\'ha lanciato qualcuno?»</em>';
   },
   pagina:'builder', sel:'#modalContent', pos:'left', durata:11000
+},
+{
+  capitolo:5, titolo:'Allegare un documento vero alla mail',
+  testo:'Il nodo email non manda solo testo. <strong>«Allega i file generati dal flusso»</strong> spedisce ciò che l\'esecuzione ha appena prodotto — un rapporto, un CSV, un PDF — e se a monte non c\'è ancora niente che li produca, il pannello <strong>non dà un errore</strong>: propone i formati e inserisce il blocco che li genera, al posto giusto. Accanto ci sono gli <em>allegati fissi</em>: un listino, un modulo, delle condizioni contrattuali presi dal computer o dalla Knowledge Base, che partono a ogni invio.',
+  pagina:'builder',
+  azione:function(fine){
+    var w=W();
+    try{
+      var mail=(w.B&&w.B.nodes||[]).filter(function(n){return n.name==='Invia email'})[0];
+      if(mail)selezionaNodo(w,mail.id);
+    }catch(e){}
+    setTimeout(fine,1400);
+  },
+  sel:'#propsBody', pos:'left', durata:12000
 },
 {
   capitolo:5, titolo:'Chiudo e passo a eseguire',
@@ -1077,6 +1146,28 @@ var COPIONE=[
   sel:'#challenges-content', pos:'bottom', durata:8000
 },
 {
+  capitolo:8, titolo:'Tre formati, non sette copie della stessa scheda',
+  testo:function(){
+    var s=W().SFIDE||[];
+    var n=function(t){ return s.filter(function(x){return x.tipo===t}).length };
+    var conMetrica=s.filter(function(x){return !!x.metrica}).length;
+    return 'Un <strong>hackathon</strong> a cadenza quadrimestrale, con binari tematici e mentori di reparto. '+
+      n('sfida')+' <strong>sfide</strong> a classifica, '+
+      (conMetrica===n('sfida')?'tutte misurate':('di cui '+conMetrica+' misurate'))+' sulle esecuzioni reali degli agenti candidati. '+
+      'E '+n('evento')+' <strong>eventi</strong>: il <em>Workshop</em> in presenza, l\'<em>AMA</em> con le domande raccolte prima, il <em>Demo Day</em> al termine di ogni hackathon. '+
+      'La differenza non è di colore: dove c\'è una <strong>metrica</strong> si candida un agente e si viene misurati, dove non c\'è si occupa un posto e basta.';
+  },
+  pagina:'challenges',
+  azione:function(fine){
+    // Si porta in vista la scheda dell'AMA: e' quella che rende evidente che
+    // non sono tutte gare — un evento non ha classifica, ha una prenotazione.
+    var el=perTesto('#challenges-content .card','AMA');
+    if(el)el.scrollIntoView({block:'center'});
+    setTimeout(fine,900);
+  },
+  sel:'#challenges-content', pos:'bottom', durata:9000
+},
+{
   capitolo:8, titolo:'Entro in una sfida',
   testo:'Ogni sfida è una <em>pagina</em>, non una finestrella: regolamento, scadenze, domande e risposte, candidature con il voto della community. Il voto e il punteggio calcolato restano <strong>due colonne separate</strong>: uno dice cosa piace, l\'altro cosa fanno le esecuzioni.',
   azione:function(fine){
@@ -1085,6 +1176,34 @@ var COPIONE=[
     setTimeout(fine,1400);
   },
   sel:'#challenges-detail', pos:'left', durata:9500
+},
+{
+  capitolo:8, titolo:'Le fasi, con date che non invecchiano',
+  testo:function(){
+    var w=W(), s=(w.SFIDE||[])[0]||{}, n=0, oggi='';
+    try{
+      var c=w.SFIDA_CONTENUTI[s.id];
+      if(c&&c.fasi){
+        n=c.fasi.length;
+        var f=c.fasi.filter(function(x){return w.sfStatoFase(s,x.q)==='oggi'})[0];
+        if(f)oggi=' In questo momento siamo a «<strong>'+f.t+'</strong>».';
+      }
+    }catch(e){}
+    return 'Un hackathon si svolge in fasi'+(n?(': qui sono '+n+', da «iscrizioni aperte» alla premiazione'):'')+
+      '. Le date sono <strong>relative al giorno in cui si guarda</strong>, non scritte a mano: prima erano fisse, e una dimostrazione fatta sei settimane dopo mostrava un evento «in corso» che si era già svolto.'+oggi;
+  },
+  azione:function(fine){
+    var w=W();
+    try{
+      var d=w.document.querySelector('#challenges-detail');
+      if((!d||!d.innerText.trim())&&w.SFIDE&&w.SFIDE[0])w.sfApriPagina(w.SFIDE[0].id);
+    }catch(e){}
+    setTimeout(function(){
+      try{ w.scrollTo(0,0) }catch(e){}
+      fine();
+    },1000);
+  },
+  pagina:'challenges', sel:'#challenges-detail', pos:'left', durata:9000
 },
 {
   capitolo:8, titolo:'Come si vince, dichiarato prima',
@@ -1109,6 +1228,113 @@ var COPIONE=[
     },1200);
   },
   pagina:'challenges', sel:'#challenges-detail', pos:'left', durata:9000
+},
+{
+  capitolo:8, titolo:'Mi iscrivo, e il posto viene contato',
+  testo:function(){
+    var w=W(), s=(w.SFIDE||[])[0]||{}, q='';
+    try{ q=' Ora i posti occupati sono <strong>'+w.sfConteggio(s)+' su '+s.posti+'</strong>, e la barra della partecipazione si è mossa di conseguenza.' }catch(e){}
+    return 'Un clic, e l\'iscrizione è <strong>registrata davvero</strong>: compare il contrassegno «sei iscritto», arrivano 50 punti esperienza e il conteggio sale.'+q+
+      ' Il gesto si può <em>disfare</em>: l\'iscrizione era a senso unico, e un contatore che sale e basta non è una misura della partecipazione.';
+  },
+  azione:function(fine){
+    var w=W();
+    try{
+      var d=w.document.querySelector('#challenges-detail');
+      if((!d||!d.innerText.trim())&&w.SFIDE&&w.SFIDE[0])w.sfApriPagina(w.SFIDE[0].id);
+    }catch(e){}
+    setTimeout(function(){
+      // Se il presentatore ha gia' fatto girare la demo, l'iscrizione puo'
+      // esserci gia': in quel caso il pulsante non c'e' e non si finge un clic.
+      var b=perTesto('#challenges-detail .tb-btn','Iscriviti');
+      if(b)clicca(b);
+      setTimeout(fine,1500);
+    },900);
+  },
+  pagina:'challenges', sel:'#challenges-detail', pos:'left', durata:9000
+},
+{
+  capitolo:8, titolo:'Candido un mio agente',
+  testo:function(){
+    var s=sfidaDaCandidare()||{};
+    return 'È il gesto che distingue una sfida da una bacheca: su «'+escapaTitolo(s.titolo)+'» si sceglie <strong>uno dei propri agenti</strong>, si lascia una nota per la giuria, e da quel momento il flusso viene misurato sulle sue esecuzioni reali'+
+      (s.metrica?(' — qui su <em>'+escapaTitolo(s.metrica.l).toLowerCase()+'</em>'):'')+
+      '. Candidare implica partecipare: l\'iscrizione si registra da sola, perché chiedere due gesti per la stessa intenzione fa solo dimenticare il secondo.';
+  },
+  azione:function(fine){
+    var w=W();
+    // Si passa a una sfida CON metrica: sull'hackathon non c'e' niente da
+    // candidare, e mostrare il pulsante dove non esiste sarebbe una bugia.
+    try{
+      var s=sfidaDaCandidare();
+      if(s)w.sfApriPagina(s.id);
+    }catch(e){}
+    setTimeout(function(){
+      var b=perTesto('#challenges-detail .tb-btn','Candida');
+      if(b)clicca(b);
+      setTimeout(function(){
+        scrivi('#sfNota','Gira ogni mattina sui contatti della notte, con il mascheramento prima del nodo AI.',function(){
+          setTimeout(fine,700);
+        });
+      },1400);
+    },1000);
+  },
+  pagina:'challenges', sel:'#modalContent', pos:'left', durata:9500
+},
+{
+  capitolo:8, titolo:'Il punteggio lo fanno le esecuzioni, non le promesse',
+  testo:function(){
+    var w=W(), s=sfidaDaCandidare()||{}, mio='';
+    try{
+      var c=w.sfClassifica(s), r=c.filter(function(x){return x.io})[0];
+      if(r)mio=' La mia candidatura è entrata in classifica con <strong>'+r.punti+' punti</strong>: '+r.det+'. Non l\'ho dichiarato io, è la lettura delle sue esecuzioni.';
+    }catch(e){}
+    return 'La formula è quella scritta nei criteri, applicata alle righe del registro esecuzioni.'+mio+
+      ' Accanto, il <strong>👍 della community</strong> resta una colonna a parte: uno dice cosa piace alle persone, l\'altro cosa fanno le esecuzioni — sommarli in un numero solo nasconderebbe quale dei due sta parlando. E la propria candidatura non si vota, altrimenti il voto misurerebbe quanti partecipanti ci sono.';
+  },
+  azione:function(fine){
+    var w=W();
+    // La candidatura si CONFERMA qui: il passo precedente ha compilato la
+    // finestra, e chiuderla senza salvare avrebbe raccontato un gesto che non
+    // e' avvenuto — la classifica non conterrebbe niente di mio.
+    var salva=perTesto('#modalContent .tb-btn','Candida');
+    if(salva)clicca(salva);
+    setTimeout(function(){
+      try{
+        if(typeof w.closeModal==='function')w.closeModal();
+        var s=sfidaDaCandidare();
+        var d=w.document.querySelector('#challenges-detail');
+        if(s&&(!d||!d.innerText.trim()))w.sfApriPagina(s.id);
+      }catch(e){}
+      setTimeout(function(){
+        var el=perTesto('#challenges-detail .card','Classifica');
+        if(el)el.scrollIntoView({block:'center'});
+        setTimeout(fine,900);
+      },900);
+    },1200);
+  },
+  pagina:'challenges', sel:'#challenges-detail', pos:'left', durata:10000
+},
+{
+  capitolo:8, titolo:'Le domande si raccolgono prima dell\'incontro',
+  testo:function(){
+    var w=W(), n=0;
+    try{ n=w.sfDomande('ama1').length }catch(e){}
+    return 'L\'AMA promette che «le domande più votate aprono la sessione»: qui quella promessa ha un posto dove avverarsi. '+
+      (n?('Ce ne sono <strong>'+n+'</strong>, '):'Le domande sono ')+'ordinate <strong>per voti</strong> e non per data — che è il criterio dichiarato nel regolamento, quindi va rispettato anche nell\'elenco, non solo a parole. Chiunque può votarne una, e ritirare il proprio voto.';
+  },
+  azione:function(fine){
+    var w=W();
+    try{ w.sfApriPagina('ama1') }catch(e){}
+    setTimeout(function(){
+      scrivi('#sfDomandaTesto','Quanto costa davvero tenere in esercizio un agente che gira ogni ora?',function(){
+        var b=perTesto('#challenges-detail .tb-btn','Pubblica');
+        if(b)clicca(b);
+        setTimeout(fine,1500);
+      });
+    },1200);
+  },
+  pagina:'challenges', sel:'#challenges-detail', pos:'left', durata:9500
 },
 {
   capitolo:8, titolo:'Community',
@@ -1139,6 +1365,28 @@ var COPIONE=[
     setTimeout(fine,1200);
   },
   sel:'#posts-list', pos:'right', durata:8500
+},
+{
+  capitolo:8, titolo:'Più file nello stesso racconto',
+  testo:function(){
+    var w=W(), n=0;
+    try{ (w.POSTS||[]).forEach(function(p){ n=Math.max(n,(w.allegatiDiPost?w.allegatiDiPost(p).length:0)) }) }catch(e){}
+    return 'Un post porta fino a <strong>cinque allegati</strong>, non uno. Chi racconta un flusso porta il '+
+      '<em>JSON dell\'agente</em>, un <em>CSV di prova</em> e uno <em>schema</em>: tre cose che si spiegano insieme, e che '+
+      'una alla volta costringevano a tre post o a una scelta. Le immagini si aprono a schermo intero e si scorrono in fila; '+
+      'un JSON allegato ha il pulsante che lo apre nel Builder.';
+  },
+  pagina:'community',
+  azione:function(fine){
+    var w=W();
+    try{
+      var p=(w.POSTS||[]).filter(function(x){return x.attach_name&&/\.json$/i.test(x.attach_name)})[0];
+      var el=p?perTesto('.post-card',p.title.substring(0,20)):null;
+      if(el)el.scrollIntoView({block:'center'});
+    }catch(e){}
+    setTimeout(fine,1200);
+  },
+  sel:'#posts-list', pos:'right', durata:10000
 },
 {
   capitolo:8, titolo:'I riconoscimenti si vedono da fuori',

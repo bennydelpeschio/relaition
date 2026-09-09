@@ -188,3 +188,225 @@ function mailProvaInvio(){
     }
   });
 }
+
+// ══════════════════════════════════════════════════════════════
+// ALLEGATI FISSI DEL NODO EMAIL
+// ══════════════════════════════════════════════════════════════
+// Il nodo sapeva allegare solo i file PRODOTTI dal flusso: utile per un
+// report, inutile per un listino, un modulo o delle condizioni contrattuali,
+// che sono sempre gli stessi e vanno scelti una volta. Qui si allega un file
+// vero, preso dal computer o dalla Knowledge Base, e resta sul nodo.
+//
+// I file vivono dentro la configurazione del nodo, quindi dentro l'agente
+// salvato: è coerente con un prodotto interamente client-side (non c'è un
+// server dove depositarli) ma ha un prezzo, il peso. Da qui il tetto.
+var ALLEGATI_TETTO_BYTE = 2*1024*1024;   // 2 MB in tutto, non per file
+
+function mailAllegatiFissi(cfg){
+  return (cfg && cfg.allegatiFissi) ? cfg.allegatiFissi : [];
+}
+
+function mailPesoAllegati(lista){
+  return (lista||[]).reduce(function(t,a){ return t+(a.byte||0) },0);
+}
+
+function mailFormattaByte(b){
+  if(b<1024)return b+' B';
+  if(b<1024*1024)return (b/1024).toFixed(0)+' KB';
+  return (b/1024/1024).toFixed(1)+' MB';
+}
+
+// Pannello mostrato nel builder sotto i campi del nodo email.
+function mailPannelloAllegati(nid){
+  var n=(typeof B!=='undefined')?B.nodes.filter(function(x){return x.id===nid})[0]:null;
+  if(!n)return '';
+  var lista=mailAllegatiFissi(n.config);
+  var peso=mailPesoAllegati(lista);
+  var doc=[];
+  try{ doc=dbAll('SELECT id,name,size FROM kb_docs ORDER BY name') }catch(e){}
+
+  var chip=lista.map(function(a,i){
+    return '<span class="allegato-chip" title="'+escHtml(a.nome)+' · '+mailFormattaByte(a.byte||0)+'">'+
+      '<span class="allegato-nome">'+escHtml(a.nome)+'</span>'+
+      '<span class="allegato-peso">'+mailFormattaByte(a.byte||0)+'</span>'+
+      '<span class="allegato-x" title="Togli" onclick="mailTogliAllegato('+nid+','+i+')">✕</span></span>';
+  }).join('');
+
+  return '<div class="allegati-box">'+
+    '<div class="allegati-testa">📎 Allegati fissi'+
+      (lista.length?'<span class="allegati-conteggio">'+lista.length+' · '+mailFormattaByte(peso)+'</span>':'')+
+    '</div>'+
+    (lista.length?'<div class="allegati-lista">'+chip+'</div>':
+      '<div class="allegati-vuoto">Nessuno. Vanno con ogni invio, in aggiunta ai file generati dal flusso.</div>')+
+    '<div class="allegati-azioni">'+
+      '<button class="tb-btn" onclick="mailScegliFile('+nid+')">📄 Dal computer</button>'+
+      (doc.length?'<select class="prop-select allegati-sel" id="allegKb'+nid+'">'+
+        '<option value="">— documento dalla Knowledge Base —</option>'+
+        doc.map(function(d){ return '<option value="'+escHtml(d.id)+'">'+escHtml(d.name)+'</option>' }).join('')+
+       '</select><button class="tb-btn" onclick="mailAllegaDaKB('+nid+')">Aggiungi</button>':'')+
+    '</div>'+
+    '<div class="allegati-nota">Il totale non può superare '+mailFormattaByte(ALLEGATI_TETTO_BYTE)+
+      ': i file restano dentro l\u2019agente salvato, e un agente pesante rallenta tutto il resto.</div>'+
+  '</div>';
+}
+
+function mailTogliAllegato(nid,i){
+  var n=B.nodes.filter(function(x){return x.id===nid})[0];
+  if(!n||!n.config||!n.config.allegatiFissi)return;
+  var via=n.config.allegatiFissi.splice(i,1)[0];
+  pushUndo&&pushUndo('allegato rimosso');
+  renderProps(nid);
+  showToast('📎 Tolto: '+(via?via.nome:'allegato'));
+}
+
+// Lettura vera del file scelto: nome, tipo e contenuto in base64, cioè quello
+// che il servizio di invio si aspetta di ricevere.
+function mailScegliFile(nid){
+  var inp=document.createElement('input');
+  inp.type='file'; inp.multiple=true;
+  inp.onchange=function(){
+    var files=Array.prototype.slice.call(inp.files||[]);
+    if(!files.length)return;
+    var n=B.nodes.filter(function(x){return x.id===nid})[0];
+    if(!n)return;
+    n.config=n.config||{}; n.config.allegatiFissi=n.config.allegatiFissi||[];
+    var letti=0, scartati=[];
+    files.forEach(function(f){
+      var fr=new FileReader();
+      fr.onload=function(){
+        var peso=mailPesoAllegati(n.config.allegatiFissi);
+        if(peso+f.size>ALLEGATI_TETTO_BYTE){
+          scartati.push(f.name);
+        }else{
+          n.config.allegatiFissi.push({nome:f.name, mime:f.type||'application/octet-stream',
+                                       dati:String(fr.result), byte:f.size});
+        }
+        if(++letti===files.length){
+          renderProps(nid);
+          if(scartati.length)showToast('⚠️ Oltre il tetto, non allegat'+(scartati.length===1?'o':'i')+': '+scartati.join(', '));
+          else showToast('📎 '+files.length+' allegat'+(files.length===1?'o':'i')+' aggiunt'+(files.length===1?'o':'i'));
+        }
+      };
+      fr.onerror=function(){ if(++letti===files.length)renderProps(nid) };
+      fr.readAsDataURL(f);
+    });
+  };
+  inp.click();
+}
+
+// Dalla Knowledge Base: il documento è già nel database, si trasforma in
+// allegato senza passare dal disco.
+function mailAllegaDaKB(nid){
+  var sel=document.getElementById('allegKb'+nid);
+  if(!sel||!sel.value){ showToast('⚠️ Scegli prima un documento'); return }
+  var d=dbGetOne('SELECT name,content FROM kb_docs WHERE id=?',[sel.value]);
+  if(!d){ showToast('⚠️ Documento non trovato'); return }
+  var n=B.nodes.filter(function(x){return x.id===nid})[0];
+  if(!n)return;
+  n.config=n.config||{}; n.config.allegatiFissi=n.config.allegatiFissi||[];
+  var testo=String(d.content||'');
+  var byte=new Blob([testo]).size;
+  if(mailPesoAllegati(n.config.allegatiFissi)+byte>ALLEGATI_TETTO_BYTE){
+    showToast('⚠️ "'+d.name+'" supera il tetto degli allegati'); return;
+  }
+  var b64;
+  try{ b64=btoa(unescape(encodeURIComponent(testo))) }
+  catch(e){ b64=btoa(testo.replace(/[^\x00-\x7F]/g,'?')) }
+  var nome=/\.[a-z0-9]{2,5}$/i.test(d.name)?d.name:(d.name+'.txt');
+  n.config.allegatiFissi.push({nome:nome, mime:'text/plain', dati:'data:text/plain;base64,'+b64, byte:byte});
+  renderProps(nid);
+  showToast('📎 Allegato dalla Knowledge Base: '+nome);
+}
+
+// ══════════════════════════════════════════════════════════════
+// «ALLEGA I FILE GENERATI DAL FLUSSO»: QUALI, ESATTAMENTE
+// ══════════════════════════════════════════════════════════════
+// Attivare l'opzione non basta: qualcuno, a monte, deve produrre quei file.
+// Se non c'è, l'email parte senza allegati e nessuno lo dice — chi la riceve
+// trova un messaggio che ne annuncia uno.
+//
+// La risposta giusta NON è un errore che sbarra: è mostrare cosa verrà
+// allegato, e quando non c'è niente, permettere di sceglierlo lì per lì.
+var MAIL_NODI_CHE_PRODUCONO = {'Esporta file':1,'Salva su cloud':1,'Google Drive':1,'SharePoint':1};
+
+// Risale il grafo dal nodo email e raccoglie i blocchi che scrivono file.
+function mailProduttoriAMonte(nid){
+  var visti={}, coda=[nid], trovati=[];
+  while(coda.length){
+    var id=coda.shift();
+    B.edges.forEach(function(e){
+      if(e.to!==id||visti[e.from])return;
+      visti[e.from]=1;
+      var m=B.nodes.filter(function(x){return x.id===e.from})[0];
+      if(m&&MAIL_NODI_CHE_PRODUCONO[m.name])trovati.push(m);
+      coda.push(e.from);
+    });
+  }
+  return trovati;
+}
+
+function mailPannelloFileDelFlusso(nid){
+  var n=B.nodes.filter(function(x){return x.id===nid})[0];
+  if(!n||!n.config||n.config.attach!=='Sì')return '';
+  var prod=mailProduttoriAMonte(nid);
+
+  if(prod.length){
+    return '<div class="allegati-box">'+
+      '<div class="allegati-testa">📄 Verranno allegati'+
+        '<span class="allegati-conteggio">'+prod.length+'</span></div>'+
+      '<div class="allegati-lista">'+prod.map(function(m){
+        var c=m.config||{};
+        var nome=(c.filename||'file')+'.'+String(c.format||'CSV').toLowerCase()
+          .replace('testo','txt').replace('markdown','md');
+        return '<span class="allegato-chip" onclick="jumpToNode('+m.id+')" style="cursor:pointer" '+
+          'title="Prodotto da «'+escHtml(m.name)+'» · clicca per aprirlo">'+
+          '<span class="allegato-nome">'+escHtml(nome)+'</span>'+
+          '<span class="allegato-peso">'+escHtml(m.name)+'</span></span>';
+      }).join('')+'</div>'+
+      '<div class="allegati-nota">I nomi vengono dai blocchi che li generano: cambiandoli lì cambia l\u2019allegato.</div>'+
+    '</div>';
+  }
+
+  // Nessun produttore: si offre di crearne uno, scegliendo il formato. È la
+  // differenza fra dire «manca qualcosa» e permettere di aggiungerlo.
+  return '<div class="allegati-box allegati-manca">'+
+    '<div class="allegati-testa">📄 Nessun file da allegare</div>'+
+    '<div class="allegati-vuoto">A monte non c\u2019è un blocco che produce file. '+
+      'Scegli cosa generare: viene inserito un «Esporta file» subito prima dell\u2019invio.</div>'+
+    '<div class="allegati-azioni">'+
+      '<select class="prop-select allegati-sel" id="genFmt'+nid+'">'+
+        ['PDF','Markdown','CSV','JSON','HTML','Testo'].map(function(f){
+          return '<option value="'+f+'">'+f+'</option>' }).join('')+
+      '</select>'+
+      '<button class="tb-btn primary" onclick="mailCreaEsportaFile('+nid+')">➕ Genera e allega</button>'+
+    '</div>'+
+  '</div>';
+}
+
+// Inserisce un «Esporta file» fra il nodo email e ciò che lo precede, e lo
+// collega: il flusso resta valido e l'allegato esiste davvero.
+function mailCreaEsportaFile(nid){
+  var n=B.nodes.filter(function(x){return x.id===nid})[0];
+  if(!n)return;
+  var fmt=(document.getElementById('genFmt'+nid)||{}).value||'PDF';
+  pushUndo&&pushUndo('esporta file per allegato');
+
+  var entranti=B.edges.filter(function(e){return e.to===nid});
+  if(typeof ccMakeRoom==='function')ccMakeRoom(n.x, n.y, 135);
+  var id=b_addNode('ou','💾','Esporta file','Allegato per l\u2019email', n.x, n.y);
+  var nuovo=B.nodes.filter(function(x){return x.id===id})[0];
+  nuovo.config=Object.assign(nuovo.config||{},{
+    filename:'allegato-'+String(n.config.subject||'email').toLowerCase()
+      .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').substring(0,28)||'allegato',
+    format:fmt, title:(n.config.subject||'Allegato'),
+    destination:'Solo genera (link nel registro)'
+  });
+  n.y += 135;
+
+  // Si intercettano gli archi che entravano nell'email: passano dal nuovo nodo.
+  entranti.forEach(function(e){ e.to=id });
+  b_addEdge(id,'out',nid,'in','allegato');
+
+  b_render(); renderProps(nid);
+  showToast('📄 Aggiunto «Esporta file» ('+fmt+'): l\u2019email lo allegherà');
+}

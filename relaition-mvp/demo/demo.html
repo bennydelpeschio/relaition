@@ -9,7 +9,7 @@
      intatta. Questi stili valgono solo per il palco che le sta intorno. */
   :root{
     --sfondo:#0B1220; --carta:#FFFFFF; --testo:#0F172A; --testo2:#475569;
-    --testo3:#64748B; --bordo:#E2E8F0; --acc:#10B981; --acc-l:#ECFDF5; --viola:#6366F1;
+    --testo3:#64748B; --bordo:#E2E8F0; --acc:#2563EB; --acc-l:#EFF6FF; --viola:#7C3AED;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--sfondo);
@@ -25,6 +25,11 @@
   #narrazione{position:fixed;z-index:50;width:370px;max-width:calc(100vw - 24px);
     background:var(--carta);border-radius:14px;padding:15px 17px;display:none;
     box-shadow:0 18px 50px rgba(2,8,23,.35);transition:left .4s cubic-bezier(.4,0,.2,1),top .4s cubic-bezier(.4,0,.2,1)}
+  /* Mentre inseguono lo scorrimento, faretto e riquadro si muovono senza
+     transizione: una transizione di 0,4s significa arrivare 0,4s dopo il
+     contenuto, che e' esattamente il ritardo che si vedeva. La transizione
+     resta per il salto da un bersaglio all'altro, dove serve. */
+  #faretto.segue,#narrazione.segue{transition:none}
   #nCapitolo{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--acc)}
   #nTitolo{font-size:15px;font-weight:800;color:var(--testo);margin:3px 0 6px;line-height:1.3}
   #nTesto{font-size:12.5px;color:var(--testo2);line-height:1.65}
@@ -36,22 +41,30 @@
 
   /* Puntatore finto: senza, nel video le cose accadrebbero senza causa visibile. */
   #cursore{position:fixed;z-index:60;width:20px;height:20px;margin:-10px 0 0 -10px;
-    border-radius:50%;background:rgba(16,185,129,.28);border:2px solid var(--acc);
+    border-radius:50%;background:rgba(37,99,235,.28);border:2px solid var(--acc);
     pointer-events:none;opacity:0;transition:transform .45s cubic-bezier(.4,0,.2,1),opacity .3s}
   .onda{position:fixed;z-index:59;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;
     border:2px solid var(--acc);pointer-events:none;animation:onda .7s ease-out forwards}
   @keyframes onda{to{width:64px;height:64px;margin:-32px 0 0 -32px;opacity:0}}
 
-  #comandi{position:fixed;z-index:70;bottom:16px;left:50%;transform:translateX(-50%);
+  #comandi{position:fixed;z-index:95;bottom:16px;left:50%;transform:translateX(-50%);
     display:flex;gap:6px;align-items:center;background:rgba(15,23,42,.92);
     padding:7px 9px;border-radius:12px;box-shadow:0 10px 30px rgba(2,8,23,.4)}
+  /* Maniglia di ritorno: esiste solo mentre i comandi sono nascosti, resta
+     trasparente finché il mouse è fermo e compare al primo movimento. */
+  #riapri{position:fixed;z-index:95;bottom:16px;left:50%;transform:translateX(-50%);
+    display:none;background:rgba(15,23,42,.82);color:#CBD5E1;border:1px solid rgba(255,255,255,.14);
+    border-radius:10px;padding:6px 12px;font-size:11px;font-family:inherit;cursor:pointer;
+    backdrop-filter:blur(6px);opacity:0;transition:opacity .25s;pointer-events:none}
+  #riapri.visibile{opacity:.9;pointer-events:auto}
+  #riapri:hover{opacity:1;background:rgba(15,23,42,.95)}
   #comandi button{background:rgba(255,255,255,.1);color:#fff;border:0;border-radius:8px;
     min-width:34px;height:32px;padding:0 10px;font-size:13px;cursor:pointer;font-weight:600}
   #comandi button:hover{background:rgba(255,255,255,.22)}
   #comandi .sep{width:1px;height:20px;background:rgba(255,255,255,.18)}
   #comandi .aiuto{color:#94A3B8;font-size:10.5px;padding:0 6px;line-height:1.35}
 
-  #pannelloIndice{position:fixed;z-index:70;left:16px;bottom:64px;width:250px;
+  #pannelloIndice{position:fixed;z-index:95;left:16px;bottom:64px;width:250px;
     background:rgba(15,23,42,.95);border-radius:12px;padding:9px;display:none;
     box-shadow:0 14px 40px rgba(2,8,23,.45);max-height:60vh;overflow:auto}
   #pannelloIndice h4{color:#fff;font-size:11px;margin:4px 6px 8px;font-weight:800;
@@ -59,11 +72,14 @@
   .voce{display:flex;gap:8px;align-items:center;color:#CBD5E1;font-size:11.5px;
     padding:6px 8px;border-radius:7px;cursor:pointer}
   .voce:hover{background:rgba(255,255,255,.1);color:#fff}
-  .voce.attiva{background:var(--acc);color:#062E22;font-weight:700}
+  .voce.attiva{background:var(--acc);color:#FFFFFF;font-weight:700}
   .voce .num{font-size:10px;opacity:.75;min-width:16px}
 
   #avvio{position:fixed;inset:0;z-index:90;background:var(--sfondo);
     display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:#fff}
+  #avvio .marchio{display:flex;align-items:center;gap:12px}
+  #avvio .tessera{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
+    background:linear-gradient(135deg,#2563EB,#7C3AED);box-shadow:0 4px 14px rgba(37,99,235,.35)}
   #avvio .logo{font-size:26px;font-weight:800;letter-spacing:-.02em}
   #avvio .sub{color:#94A3B8;font-size:13px;max-width:440px;text-align:center;line-height:1.6}
   .puntini{display:flex;gap:5px;margin-top:6px}
@@ -93,6 +109,12 @@
   <div id="indice"></div>
 </div>
 
+<!-- Maniglia di ritorno. Esiste solo mentre i comandi sono nascosti, resta
+     invisibile finché il mouse è fermo e compare al primo movimento: chi
+     registra non se la ritrova nel video, chi ha premuto ✕ per sbaglio la
+     trova subito. Nascondere qualcosa senza lasciare la strada del ritorno
+     e' l'unico modo sbagliato di farlo. -->
+<button id="riapri" onclick="alternaComandi()" title="Rimostra i comandi (H)">⌃ comandi</button>
 <div id="comandi">
   <button onclick="alternaIndice()" title="Indice dei capitoli (I)">☰</button>
   <div class="sep"></div>
@@ -102,12 +124,15 @@
   <div class="sep"></div>
   <button id="bVel" onclick="cambiaVelocita()" title="Velocità">1×</button>
   <button onclick="ricomincia()" title="Ricomincia da capo">⟲</button>
-  <button onclick="alternaComandi()" title="Nascondi i comandi (H)">✕</button>
+  <button onclick="alternaComandi()" title="Nascondi i comandi (H) — riappaiono muovendo il mouse">✕</button>
   <div class="aiuto">→ avanti · P riproduci<br>H nascondi · I capitoli</div>
 </div>
 
 <div id="avvio">
-  <div class="logo">RelAItion</div>
+  <div class="marchio">
+    <div class="tessera"><svg viewBox="0 0 512 512" width="26" height="26" aria-hidden="true"><path d="M292 96 L168 288 h74 l-22 128 124 -192 h-74 z" fill="#fff"/></svg></div>
+    <div class="logo">RelAItion</div>
+  </div>
   <div class="sub">Sto preparando la dimostrazione e fotografando lo stato della piattaforma,
     per poterlo rimettere identico alla fine.</div>
   <div class="puntini"><span></span><span></span><span></span></div>

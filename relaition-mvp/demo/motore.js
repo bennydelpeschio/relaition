@@ -202,23 +202,111 @@ function risolviSel(s){
   try{ return (typeof s==='function')?s():s }catch(e){ return null }
 }
 
-function illumina(sel){
+// ── INSEGUIMENTO DEL BERSAGLIO ──────────────────────────────────
+// Il faretto veniva posizionato una volta e restava lì. Scorrendo a mano
+// dentro l'applicazione, il contenuto si muoveva e l'evidenziazione no: da qui
+// il ritardo fra quello che si guarda e quello che il riquadro indica.
+// Ora la posizione si ricalcola a ogni fotogramma e si aggiorna solo quando è
+// davvero cambiata — muovere il DOM 60 volte al secondo senza motivo costa
+// senza rendere.
+var _inseguoId=null, _inseguoSel=null, _ultimoR=null, _posNarrazione='bottom', _ascolto=null;
+
+// Aggiorna subito la posizione del bersaglio, se è cambiata.
+function aggiornaPosizioneBersaglio(){
+  if(!_inseguoSel)return;
   var spot=document.getElementById('faretto');
-  var r=sel?rettangolo(sel):null;
-  if(!r){ spot.style.display='none'; return null }
+  if(!spot||spot.style.display==='none')return;
+  var r=rettangolo(_inseguoSel);
+  // Un elemento staccato dal documento — perche' la schermata e' stata
+  // ridisegnata — restituisce un rettangolo tutto a zero: seguirlo porterebbe
+  // il faretto nell'angolo in alto a sinistra. Meglio restare dov'era e
+  // lasciare che sia il ricontrollo del passo a riagganciare.
+  if(!r || (!r.width && !r.height) || stessoRettangolo(r,_ultimoR))return;
+  _ultimoR=r;
+  sel_ultimo=r;
+  disponiFaretto(r,true);
+  posizionaNarrazione(r,_posNarrazione,true);
+}
+
+// Lo scorrimento va ASCOLTATO, non solo campionato: il ciclo a fotogrammi si
+// ferma quando la finestra non dipinge (scheda in secondo piano, riquadro
+// nascosto), mentre gli eventi di scorrimento arrivano comunque. In cattura,
+// perché nell'applicazione a scorrere non è la finestra ma i contenitori
+// interni, e i loro eventi non risalgono.
+function agganciaAscolto(){
+  staccaAscolto();
+  var d=doc(), w=app();
+  var man=function(){ aggiornaPosizioneBersaglio() };
+  _ascolto={man:man, d:d, w:w};
+  try{
+    if(d)d.addEventListener('scroll',man,{capture:true,passive:true});
+    if(w)w.addEventListener('resize',man);
+  }catch(e){}
+  window.addEventListener('resize',man);
+  window.addEventListener('scroll',man,{capture:true,passive:true});
+}
+
+function staccaAscolto(){
+  if(!_ascolto)return;
+  try{
+    if(_ascolto.d)_ascolto.d.removeEventListener('scroll',_ascolto.man,{capture:true});
+    if(_ascolto.w)_ascolto.w.removeEventListener('resize',_ascolto.man);
+  }catch(e){}
+  window.removeEventListener('resize',_ascolto.man);
+  window.removeEventListener('scroll',_ascolto.man,{capture:true});
+  _ascolto=null;
+}
+
+function fermaInseguimento(){
+  if(_inseguoId)cancelAnimationFrame(_inseguoId);
+  _inseguoId=null; _inseguoSel=null; _ultimoR=null;
+  staccaAscolto();
+}
+
+function stessoRettangolo(a,b){
+  if(!a||!b)return false;
+  return Math.abs(a.top-b.top)<0.5 && Math.abs(a.left-b.left)<0.5 &&
+         Math.abs(a.width-b.width)<0.5 && Math.abs(a.height-b.height)<0.5;
+}
+
+function disponiFaretto(r,segue){
+  var spot=document.getElementById('faretto');
+  if(!spot)return;
   // Un elemento alto quanto tutta la finestra, o piu', non si illumina: il
-  // faretto coprirebbe l'intera schermata e non indicherebbe niente. Meglio
-  // spegnerlo e lasciare parlare la narrazione.
-  if(r.height>window.innerHeight*0.92 && r.width>window.innerWidth*0.92){
+  // faretto coprirebbe l'intera schermata e non indicherebbe niente.
+  // La misura della finestra puo' valere zero quando la pagina non e' ancora
+  // dipinta: senza questa guardia ogni elemento risulterebbe «piu' grande dello
+  // schermo» e il faretto si spegnerebbe sempre.
+  var vh=window.innerHeight||0, vw=window.innerWidth||0;
+  if(vh && vw && r.height>vh*0.92 && r.width>vw*0.92){
     spot.style.display='none';
-    return r;
+    return;
   }
   var p=8;
+  spot.classList.toggle('segue',!!segue);
   spot.style.display='block';
   spot.style.top=(r.top-p)+'px';
   spot.style.left=(r.left-p)+'px';
   spot.style.width=(r.width+p*2)+'px';
   spot.style.height=(r.height+p*2)+'px';
+}
+
+function inseguiBersaglio(){
+  _inseguoId=requestAnimationFrame(inseguiBersaglio);
+  aggiornaPosizioneBersaglio();
+}
+
+function illumina(sel){
+  var spot=document.getElementById('faretto');
+  var r=sel?rettangolo(sel):null;
+  fermaInseguimento();
+  if(!r){ spot.style.display='none'; return null }
+  // Il salto da un bersaglio all'altro conserva la transizione: è un movimento
+  // che si deve poter seguire con l'occhio.
+  disponiFaretto(r,false);
+  _inseguoSel=sel; _ultimoR=r;
+  agganciaAscolto();
+  if(!_inseguoId)inseguiBersaglio();
   return r;
 }
 
@@ -232,10 +320,14 @@ function esecuzioneInCorso(){
 }
 
 function attendiFineEsecuzione(fine,limite){
+  // Se non c'e' niente da attendere non si aspetta: il controllo a intervalli
+  // regolari faceva pagare un quarto di secondo a OGNI passo, compresi i
+  // moltissimi che non eseguono nulla.
+  if(!esecuzioneInCorso()){ fine(); return }
   var t0=Date.now(), max=limite||12000;
   var t=setInterval(function(){
     if(!esecuzioneInCorso()||Date.now()-t0>max){ clearInterval(t); fine() }
-  },250);
+  },120);
 }
 
 function narra(s,i){
@@ -249,26 +341,8 @@ function narra(s,i){
   document.getElementById('nProgresso').style.width=Math.round((i+1)/COPIONE.length*100)+'%';
   document.getElementById('nContatore').textContent=(i+1)+' / '+COPIONE.length;
 
-  // Il riquadro insegue l'elemento illuminato ma non lo copre e non esce dallo
-  // schermo: se dal lato indicato non ci sta, si ribalta.
-  var r=sel_ultimo;
-  var bw=box.offsetWidth||360, bh=box.offsetHeight||180, m=16;
-  var top,left;
-  if(!r){ left=(window.innerWidth-bw)/2; top=window.innerHeight-bh-90; }
-  else{
-    var pos=s.pos||'bottom';
-    if(pos==='right'){ left=r.right+m; top=r.top }
-    else if(pos==='left'){ left=r.left-bw-m; top=r.top }
-    else if(pos==='top'){ left=r.left+r.width/2-bw/2; top=r.top-bh-m }
-    else { left=r.left+r.width/2-bw/2; top=r.bottom+m }
-    if(left+bw>window.innerWidth-12)left=window.innerWidth-bw-12;
-    if(left<12)left=12;
-    if(top+bh>window.innerHeight-80)top=r.top-bh-m;
-    if(top<12)top=12;
-  }
-  box.style.left=Math.round(left)+'px';
-  box.style.top=Math.round(top)+'px';
-  box.style.display='block';
+  _posNarrazione=s.pos||'bottom';
+  posizionaNarrazione(sel_ultimo,_posNarrazione,false);
 }
 
 var sel_ultimo=null;
@@ -282,6 +356,13 @@ function vaiA(i){
   if(i<0)i=0;
   if(i>=COPIONE.length){ concludi(); return }
   D.passo=i;
+  // L'evidenziazione del passo precedente si spegne SUBITO. Lasciarla accesa
+  // mentre la pagina cambia significa indicare, per qualche decimo di secondo,
+  // un punto della schermata nuova che non c'entra niente: è il
+  // disallineamento che si vedeva al cambio pagina. Un istante senza
+  // evidenziazione si legge come «sto passando ad altro»; un'evidenziazione
+  // sbagliata si legge come un errore.
+  illumina(null);
   var s=COPIONE[i];
   var w=app(); if(!w)return;
 
@@ -299,29 +380,30 @@ function vaiA(i){
       //  1. se un'esecuzione e' in corso si aspetta che finisca — illuminare
       //     mentre i nodi si accendono significa indicare una posizione che
       //     fra mezzo secondo sara' diversa;
-      //  2. si porta il bersaglio dentro la parte visibile — il pulsante in
-      //     fondo a una finestra scorrevole veniva annunciato mentre restava
-      //     sotto il bordo;
-      //  3. si illumina, e si ricalcola una seconda volta poco dopo, perche'
-      //     alcune schermate finiscono di disegnarsi dopo che l'azione e'
-      //     tornata.
+      //  2. ci si aggancia al bersaglio e POI lo si porta in vista: lo
+      //     scorrimento e' morbido, dura qualche decimo, e agganciarsi dopo
+      //     significava fotografare una posizione a meta' strada. Da lì il
+      //     disallineamento evidente al cambio pagina: il faretto restava dove
+      //     l'elemento si trovava a scorrimento non finito. Agganciandosi
+      //     prima, l'inseguimento accompagna lo scorrimento fino in fondo.
+      //  3. si ricalcola una seconda volta poco dopo, perche' alcune schermate
+      //     finiscono di disegnarsi dopo che l'azione e' tornata.
       attendiFineEsecuzione(function(){
         if(D.passo!==i)return;
         var mira=risolviSel(s.sel);
+        sel_ultimo=illumina(mira);
+        narra(s,i);
+        aggiornaIndice();
         var spostato=portaInVista(mira);
         setTimeout(function(){
           if(D.passo!==i)return;
-          sel_ultimo=illumina(mira);
+          // Ricontrollo: il bersaglio puo' essere stato ridisegnato — e in quel
+          // caso l'elemento agganciato prima non e' piu' nel documento.
+          var m2=risolviSel(s.sel);
+          sel_ultimo=illumina(m2);
           narra(s,i);
-          aggiornaIndice();
-          setTimeout(function(){
-            if(D.passo!==i)return;
-            var m2=risolviSel(s.sel);
-            sel_ultimo=illumina(m2);
-            narra(s,i);
-          }, 750/D.velocita);
           if(D.riproduce)programmaProssimo(s);
-        }, (spostato?520:(s.dopo||150))/D.velocita);
+        }, (spostato?620:(s.dopo||200))/D.velocita);
       }, 14000);
     };
     if(s.azione){
@@ -364,12 +446,35 @@ function cambiaVelocita(){
   document.getElementById('bVel').textContent=D.velocita+'×';
 }
 
-// Nascondere i comandi serve alla registrazione: la barra è utile a chi guida,
-// inutile a chi guarda il video.
+// Nascondere i comandi serve a chi registra: nel video la barra non serve.
+// Ma la prima versione era una trappola — l'unico modo di riaverli era il tasto
+// H, scritto nella barra appena sparita. Ora, mentre sono nascosti, esiste una
+// maniglia che resta invisibile finché il mouse è fermo e compare al primo
+// movimento: chi registra e non tocca il mouse non se la ritrova nel video,
+// chi ha premuto ✕ per sbaglio la vede subito.
+var _timerManiglia=null;
+
 function alternaComandi(){
   var b=document.getElementById('comandi');
-  b.style.display=(b.style.display==='none')?'flex':'none';
+  var r=document.getElementById('riapri');
+  var nascosti=(b.style.display!=='none');
+  b.style.display=nascosti?'none':'flex';
+  if(r){
+    r.style.display=nascosti?'block':'none';
+    r.classList.remove('visibile');
+    if(nascosti)mostraManiglia();
+  }
 }
+
+// Comparsa al movimento, poi torna invisibile da sola.
+function mostraManiglia(){
+  var r=document.getElementById('riapri');
+  if(!r||r.style.display==='none')return;
+  r.classList.add('visibile');
+  clearTimeout(_timerManiglia);
+  _timerManiglia=setTimeout(function(){ r.classList.remove('visibile') },2600);
+}
+document.addEventListener('mousemove',mostraManiglia);
 
 function concludi(){
   clearTimeout(D.timer);
@@ -474,6 +579,31 @@ window.addEventListener('keydown',function(e){
   if(e.key==='ArrowRight'||e.key===' '){ e.preventDefault(); avanti() }
   else if(e.key==='ArrowLeft'){ e.preventDefault(); indietro() }
   else if(e.key.toLowerCase()==='p'){ riproduci() }
-  else if(e.key.toLowerCase()==='h'){ alternaComandi() }
   else if(e.key.toLowerCase()==='i'){ alternaIndice() }
+  else if(e.key.toLowerCase()==='h'){ alternaComandi() }
 });
+// Il riquadro insegue l'elemento illuminato ma non lo copre e non esce dallo
+// schermo: se dal lato indicato non ci sta, si ribalta. Estratta dalla
+// narrazione perché la usa anche l'inseguimento, a ogni fotogramma.
+function posizionaNarrazione(r,pos,segue){
+  var box=document.getElementById('narrazione');
+  if(!box)return;
+  var bw=box.offsetWidth||360, bh=box.offsetHeight||180, m=16;
+  var top,left;
+  if(!r){ left=(window.innerWidth-bw)/2; top=window.innerHeight-bh-90; }
+  else{
+    pos=pos||'bottom';
+    if(pos==='right'){ left=r.right+m; top=r.top }
+    else if(pos==='left'){ left=r.left-bw-m; top=r.top }
+    else if(pos==='top'){ left=r.left+r.width/2-bw/2; top=r.top-bh-m }
+    else { left=r.left+r.width/2-bw/2; top=r.bottom+m }
+    if(left+bw>window.innerWidth-12)left=window.innerWidth-bw-12;
+    if(left<12)left=12;
+    if(top+bh>window.innerHeight-80)top=r.top-bh-m;
+    if(top<12)top=12;
+  }
+  box.classList.toggle('segue',!!segue);
+  box.style.left=Math.round(left)+'px';
+  box.style.top=Math.round(top)+'px';
+  box.style.display='block';
+}

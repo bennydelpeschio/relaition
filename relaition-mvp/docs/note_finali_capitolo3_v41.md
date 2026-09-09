@@ -434,3 +434,79 @@ indipendenza dal fornitore, verifica automatica di pubblicazione, ambiti di
 diffusione, cruscotto di monitoraggio e portabilità **non sono stati toccati**
 in questo giro. I paragrafi §3.3, §3.6, §3.7 e §3.8.1-3.8.2 restano corretti
 come sono.
+
+---
+
+## L. Ultimissimo giro — coerenza dei nodi, colore, impaginazione
+
+Interventi successivi alla sezione §I. Documentazione tecnica in
+`ARCHITECTURE.md` §5.122 → §5.132.
+
+### L.1 Numeri aggiornati
+
+| Cosa | Valore alla consegna | Nella §I diceva |
+|---|---|---|
+| Moduli JavaScript caricati | **40** | 38 |
+| Tabelle nel database | **29** | 28 |
+| Cache del service worker | **`relaition-v67`** | `relaition-v18` |
+| Voci di palette | **81** | invariato |
+| Passi della dimostrazione guidata | **78**, in 9 capitoli | non citata |
+
+### L.2 Una proprietà nuova, e va detta
+
+**I nodi generati dalla chat sono gli stessi della palette.** Fino a questo
+giro il modello proponeva nome, icona e descrizione a modo suo. I parametri di
+azioni, trigger e controlli vengono però riconosciuti **dal nome**, con un
+confronto esatto: bastava una maiuscola di differenza — «Approvazione Umana»
+invece di «Approvazione umana» — perché il nodo nascesse **senza i propri
+campi**. Nessun «chi deve approvare», nessuna scadenza.
+
+Perché riguarda il capitolo e non solo il codice: il §4.2 fonda la governance
+sull'**human-in-the-loop**, e l'approvazione umana è il blocco che lo realizza.
+Un nodo che sembra quel controllo e non lo è rende la garanzia dichiarata
+falsa in modo invisibile — supera l'ispezione a occhio e non ferma niente. È il
+difetto più grave corretto in tutta la lavorazione.
+
+Ora ogni nodo proposto viene ricondotto alla voce di palette corrispondente
+**prima dell'anteprima**, quindi ciò che si conferma è ciò che si ottiene.
+Verificato su tutte le 81 voci: tipo, nome, icona, descrizione e campi di
+configurazione coincidono con il nodo trascinato dalla palette.
+
+**Se il capitolo descrive il builder conversazionale**, questa è la frase da
+aggiungere: *ciò che la chat produce è indistinguibile da ciò che si otterrebbe
+trascinando i blocchi, e la configurazione specifica proposta dal modello viene
+conservata.* Senza, il capitolo descrive due strade per costruire senza dire
+che portano allo stesso posto — che è esattamente la garanzia.
+
+**Conseguenza sulla convalida.** Un nodo con un nome che non corrisponde a
+nessuna voce di palette veniva accettato in silenzio: la convalida controlla i
+campi obbligatori della definizione, e un nome sconosciuto non ha definizione.
+Ora azioni, trigger e controlli con nome non riconosciuto vengono segnalati.
+Condizioni e nodi AI restano liberi: il loro nome è un'etichetta scritta da chi
+costruisce, non un identificatore.
+
+### L.3 Limite da aggiungere alla §C
+
+**Strumento da scrivania.** Il progetto non contiene **nessuna** regola
+`@media`: la larghezza dello schermo non è mai stata una variabile di progetto.
+Sotto i 900px il menu si comprime da solo e le griglie di schede si incolonnano,
+quindi le pagine restano leggibili, ma **non c'è un'impaginazione per telefono**
+e il Builder in particolare resta impraticabile. Dichiarato in `ARCHITECTURE.md`
+§5.0.
+
+### L.4 Se il capitolo contiene schermate
+
+Vanno **rifatte tutte**. Oltre al cambio di tavolozza già segnalato, in questo
+giro sono cambiati la schermata di accesso, l'icona dell'applicazione, il colore
+della barra del browser, la voce di menu attiva, l'intestazione del Marketplace
+e quella del Learning Hub. Una schermata della v41 mostra un prodotto di un
+altro colore.
+
+### L.5 Cosa NON cambia nel capitolo
+
+Il resto di questo giro è correzione di difetti e di comportamento
+dell'interfaccia — colori rimasti indietro, transizioni dell'accesso, uscita
+senza ricaricamento, evidenziazione della demo che non seguiva lo scorrimento,
+ripiego offline che sostituiva un documento con un altro. **Nessuno di questi
+va citato**: sono la manutenzione che un prototipo riceve, non scelte
+architetturali. Se il capitolo non li nomina oggi, non deve nominarli domani.

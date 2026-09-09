@@ -10,7 +10,28 @@
 var _autosaveTimer=null;
 function scheduleAutosave(){
   clearTimeout(_autosaveTimer);
-  _autosaveTimer=setTimeout(autosaveAgentToDB,1200);
+  _autosaveTimer=setTimeout(function(){
+    autosaveAgentToDB();
+    // La copia di lavoro va aggiornata insieme alla riga, non solo a fine
+    // esecuzione: era scritta in un punto solo — dopo un Run — quindi chi
+    // costruiva senza mai eseguire, riaprendo, trovava una tela vecchia o
+    // vuota. Ed e' la stessa copia che conserva nome e riga di appartenenza.
+    if(typeof salvaCopiaDiLavoro==='function')salvaCopiaDiLavoro();
+  },1200);
+}
+
+// Copia di lavoro del canvas: nodi, archi, nome e riga a cui appartiene.
+// Serve a ritrovare la tela com'era riaprendo l'applicazione.
+function salvaCopiaDiLavoro(){
+  if(typeof B==='undefined')return;
+  if(typeof SANDBOX!=='undefined'&&SANDBOX&&SANDBOX.attiva)return;
+  try{
+    localStorage.setItem(chiaveCopiaDiLavoro(),JSON.stringify({
+      nodes:B.nodes, edges:B.edges, nextId:B.nextId,
+      nome:(typeof currentAgentName!=='undefined')?currentAgentName:'',
+      dbAgentId:B.dbAgentId||null
+    }));
+  }catch(e){}
 }
 
 // Il nome identifica l'agente in "I miei agenti" e loadSavedAgent lo cerca per
@@ -56,9 +77,14 @@ function autosaveAgentToDB(){
 }
 
 function saveAgent(){
+  // Salvare NON è eseguire. Un flusso incompleto è comunque lavoro fatto, e
+  // perderlo perché non è ancora finito è il modo peggiore di segnalare un
+  // problema: si finisce per costruire tutto in una volta sola per paura di
+  // non poter mettere via. I problemi si dicono e restano segnati sui nodi,
+  // il salvataggio va avanti. A restare sbarrati sono esecuzione e
+  // pubblicazione, dove un flusso rotto produrrebbe danni veri.
   var _errs=validateWorkflow();
-  if(_errs.length){showValidationErrors(_errs);return}
-  clearInvalidNodes();
+  if(_errs.length)markInvalidNodes(_errs); else clearInvalidNodes();
   var name=prompt('Nome agente:',currentAgentName&&currentAgentName!=='Workflow Builder'?currentAgentName:'Mio agente');if(!name)return;
   name=name.trim();
   if(!name){showToast('⚠️ Il nome non può essere vuoto');return}
@@ -96,8 +122,17 @@ function saveAgent(){
     if(typeof addXP==='function')addXP(60,'Creato un agente: '+name);
   }
   currentAgentName=name;
-  showToast('💾 Agente "'+name+'" salvato nel database!');
-  addAct('Salvato agente: '+name);
+  // Il salvataggio è avvenuto: si dice, e si dice anche cosa resta da
+  // sistemare, con il numero. Un salvataggio silenzioso su un flusso rotto
+  // farebbe credere che sia pronto.
+  if(_errs.length){
+    showToast('💾 "'+name+'" salvato · '+_errs.length+' punt'+(_errs.length===1?'o':'i')+
+      ' da sistemare prima di eseguirlo');
+    addAct('Salvato agente (incompleto): '+name);
+  }else{
+    showToast('💾 Agente "'+name+'" salvato nel database!');
+    addAct('Salvato agente: '+name);
+  }
 }
 
 // Ogni agente salvato ha ora la propria riga con nodi/archi completi (era
@@ -123,9 +158,10 @@ function loadSavedAgent(name){
 }
 
 function exportAgent(){
+  // Come il salvataggio: esportare è mettere via il proprio lavoro in un file,
+  // non metterlo in produzione. Si esporta anche incompleto, dicendolo.
   var _errs=validateWorkflow();
-  if(_errs.length){showValidationErrors(_errs);return}
-  clearInvalidNodes();
+  if(_errs.length)markInvalidNodes(_errs); else clearInvalidNodes();
   var data=JSON.stringify({name:currentAgentName,exported:new Date().toISOString(),nodes:B.nodes,edges:B.edges,nextId:B.nextId,context:B.context||''},null,2);
   var blob=new Blob([data],{type:'application/json'});
   var url=URL.createObjectURL(blob);
@@ -133,7 +169,12 @@ function exportAgent(){
   a.download='relaition_'+(currentAgentName||'agent').toLowerCase().replace(/[^a-z0-9]+/g,'_')+'.json';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url)},1000);
-  showToast('📄 Agente esportato come JSON');
+  if(_errs.length){
+    showToast('📄 Esportato · '+_errs.length+' punt'+(_errs.length===1?'o':'i')+
+      ' da sistemare prima di eseguirlo');
+  }else{
+    showToast('📄 Agente esportato come JSON');
+  }
 }
 // ── AI INTEGRATION ──
 
@@ -974,4 +1015,56 @@ function prossimoPrivilegio(){
   var xp=getXP();
   for(var i=0;i<PRIVILEGI.length;i++) if(xp<PRIVILEGI[i].xp) return {p:PRIVILEGI[i], manca:PRIVILEGI[i].xp-xp};
   return null;
+}
+
+// La copia di lavoro del canvas è PER UTENTE.
+//
+// `localStorage` è per origine: una chiave sola significava che uscendo come
+// Mario ed entrando come Giulia, sulla tela restavano i nodi di Mario. Non è
+// solo disordine — è lavoro di una persona mostrato a un'altra, nello stesso
+// posto in cui si preme Salva.
+//
+// Con una chiave per utente ciascuno ritrova la propria tela dove l'aveva
+// lasciata, e chi entra per la prima volta parte pulito.
+function chiaveCopiaDiLavoro(utente){
+  var chi=utente||((typeof utenteCorrente==='function')?utenteCorrente():'');
+  return 'relaition_builder__'+String(chi||'ospite').toLowerCase().replace(/[^a-z0-9]+/g,'_');
+}
+
+// Cambio di utente: la tela passa a quella di chi entra.
+//
+// `initBuilder()` gira una volta sola per sessione, quindi senza questo il
+// canvas restava quello di prima: uscendo come Mario ed entrando come Giulia,
+// lei si trovava davanti il lavoro di lui, nello stesso posto in cui si preme
+// Salva. Qui si ricarica la copia dell'utente entrante — o si riparte puliti,
+// se non ne ha una.
+function ricaricaTelaPerUtente(){
+  if(typeof B==='undefined')return;
+  clearTimeout(_autosaveTimer);          // niente scritture con l'identità di mezzo
+  B.nodes=[]; B.edges=[]; B.nextId=1;
+  B.selId=-1; B.selIds=[]; B.selEdgeIdx=-1;
+  B.dbAgentId=null; B.context='';
+  B.effimero=true;                       // finché non la si tocca non è lavoro
+  currentAgentName='Workflow Builder';
+
+  var d=null;
+  try{ d=JSON.parse(localStorage.getItem(chiaveCopiaDiLavoro())||'null') }catch(e){}
+  if(d && d.nodes && d.nodes.length){
+    B.nodes=d.nodes; B.edges=d.edges||[]; B.nextId=d.nextId||1;
+    var riga=null;
+    if(d.dbAgentId){ try{ riga=dbGetOne('SELECT id,name,author,context FROM agents WHERE id=?',[d.dbAgentId]) }catch(e){} }
+    // Stesso controllo dell'avvio: il legame vale solo se la riga è di chi sta
+    // usando l'applicazione adesso.
+    if(riga && riga.author===utenteCorrente()){
+      B.dbAgentId=riga.id; currentAgentName=riga.name||d.nome||currentAgentName;
+      B.context=riga.context||''; B.effimero=false;
+    }else if(d.nome){
+      currentAgentName=d.nome;
+    }
+  }
+
+  if(typeof b_render==='function')b_render();
+  if(typeof renderProps==='function')renderProps(-1);
+  if(typeof aggiornaTitoloBuilder==='function')aggiornaTitoloBuilder();
+  if(typeof clearInvalidNodes==='function')clearInvalidNodes();
 }

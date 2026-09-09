@@ -57,8 +57,8 @@
 .notif-item.unread{background:var(--ac-ul)}
 
 /* ═══ VISUAL POLISH v8 ═══ */
-@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.page.active{animation:pageIn .35s cubic-bezier(.4,0,.2,1)}
+@keyframes pageIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page.active{animation:pageIn .22s cubic-bezier(.4,0,.2,1)}
 @keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 .mkt-hero,.learn-hero{background-size:200% 200%;animation:gradShift 12s ease infinite}
 .logo-mark{animation:logoPulse 4s ease-in-out infinite}
@@ -190,3 +190,19 @@
    due elenchi distinti, e l'intestazione deve reggere lo scorrimento. */
 .execlog-testa{padding:12px 20px;border-bottom:1px solid var(--bo);font-size:12.5px;
   font-weight:700;background:var(--bg2);position:sticky;top:0;z-index:1}
+
+/* ── Transizioni ────────────────────────────────────────────────
+   La schermata di accesso entrava con una dissolvenza e usciva di colpo:
+   l'asimmetria si legge come uno scatto. Qui esce come è entrata, e sotto
+   di lei il contenuto giusto è già stato disegnato. */
+#loginScreen{transition:opacity .28s cubic-bezier(.4,0,.2,1)}
+#loginScreen.uscita{opacity:0;pointer-events:none}
+
+/* Chi ha chiesto al sistema operativo meno animazioni le deve avere meno
+   anche qui: non è una preferenza estetica, per alcune persone è una
+   necessità. */
+@media (prefers-reduced-motion: reduce){
+  .page.active,#loginScreen,#bootOverlay,#loginScreen>div,.modal,.logo-mark{animation:none!important}
+  #loginScreen{transition:none}
+  .mkt-hero,.learn-hero{animation:none!important}
+}

@@ -1,0 +1,41 @@
+{
+  "name": "Rassegna settimanale con ciclo sulle fonti",
+  "context": "Ogni lunedì mattina il flusso raccoglie le fonti da monitorare, le analizza una per una con un ciclo, verifica che la sintesi sia fondata sui documenti, produce il rapporto e lo distribuisce.",
+  "nextId": 11,
+  "nodes": [
+    {"id":1,"type":"tr","icon":"⏰","name":"Scheduler","detail":"Lunedì 07:00","x":420,"y":40,
+     "config":{"cron":"0 7 * * 1","timezone":"Europe/Rome","onmiss":"Esegui al riavvio"}},
+    {"id":2,"type":"ai","icon":"🗂️","name":"Elenca fonti","detail":"Array di fonti","x":420,"y":170,
+     "config":{"model":"auto","temperature":0.2,"outformat":"json",
+       "prompt":"Restituisci un oggetto JSON con una sola chiave \"fonti\": un array di 5 oggetti, ciascuno con nome, area e priorita (alta|media|bassa). Sono le fonti di settore da monitorare questa settimana. Solo JSON."}},
+    {"id":3,"type":"cd","icon":"🔄","name":"Loop","detail":"Una fonte per volta","x":420,"y":300,
+     "config":{"field":"fonti","maxiter":"10","onitemerror":"Salta e continua"}},
+    {"id":4,"type":"ai","icon":"📰","name":"Sintesi fonte","detail":"Tre righe per fonte","x":420,"y":430,
+     "config":{"model":"auto","temperature":0.5,"outformat":"markdown",
+       "prompt":"Per la fonte ricevuta scrivi al massimo tre righe: cosa è cambiato, perché ci riguarda, quale azione suggerisci. Se non hai elementi sufficienti scrivilo, non riempire con genericità."}},
+    {"id":5,"type":"gr","icon":"🔎","name":"Verifica di fondatezza","detail":"Contro la Knowledge Base","x":420,"y":560,
+     "config":{"threshold":"0.7","action":"Segnala e prosegui"}},
+    {"id":6,"type":"ai","icon":"📋","name":"Rapporto finale","detail":"Sintesi delle sintesi","x":420,"y":690,
+     "config":{"model":"auto","temperature":0.4,"outformat":"markdown",
+       "prompt":"Componi la rassegna settimanale in Markdown: un titolo, un riassunto di cinque righe in apertura, poi una sezione per fonte. Chiudi con «Da decidere questa settimana»: al massimo tre punti, ciascuno con il responsabile suggerito."}},
+    {"id":7,"type":"ou","icon":"💾","name":"Esporta file","detail":"Markdown in Knowledge Base","x":420,"y":820,
+     "config":{"filename":"rassegna-settimanale","format":"Markdown","title":"Rassegna settimanale","destination":"Salva nella Knowledge Base"}},
+    {"id":8,"type":"ac","icon":"📧","name":"Invia email","detail":"Alla direzione","x":420,"y":950,
+     "config":{"to":"direzione@azienda.it","cc":"","subject":"Rassegna settimanale","body":"In allegato la rassegna completa.\n\n{{result}}","bodytype":"HTML","attach":"Sì"}},
+    {"id":9,"type":"ac","icon":"💬","name":"Slack","detail":"Canale direzione","x":420,"y":1080,
+     "config":{"channel":"#direzione","message":"📋 Rassegna settimanale pubblicata"}},
+    {"id":10,"type":"ou","icon":"📊","name":"Output","detail":"Esito registrato","x":420,"y":1210,
+     "config":{"format":"Markdown","destination":"Log esecuzioni"}}
+  ],
+  "edges": [
+    {"from":1,"fp":"out","to":2,"tp":"in","label":""},
+    {"from":2,"fp":"out","to":3,"tp":"in","label":""},
+    {"from":3,"fp":"out","to":4,"tp":"in","label":"per ogni fonte"},
+    {"from":4,"fp":"out","to":5,"tp":"in","label":""},
+    {"from":5,"fp":"out","to":6,"tp":"in","label":""},
+    {"from":6,"fp":"out","to":7,"tp":"in","label":""},
+    {"from":7,"fp":"out","to":8,"tp":"in","label":""},
+    {"from":8,"fp":"out","to":9,"tp":"in","label":""},
+    {"from":9,"fp":"out","to":10,"tp":"in","label":""}
+  ]
+}

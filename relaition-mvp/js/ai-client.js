@@ -42,8 +42,8 @@ var AI_MODELLI_DISPONIBILI={
   claude:[
     {id:'claude-opus-5',    nome:'Claude Opus 5',    nota:'equilibrio fra capacità e costo: predefinito'},
     {id:'claude-sonnet-5',  nome:'Claude Sonnet 5',  nota:'più economico, adatto a estrazione e classificazione'},
-    {id:'claude-haiku-4-5', nome:'Claude Haiku 4.5', nota:'il più rapido ed economico, per compiti semplici'},
-    {id:'claude-fable-5',   nome:'Claude Fable 5',   nota:'il più capace, per ragionamento e compiti lunghi'}
+    {id:'claude-haiku-4-5-20251001', nome:'Claude Haiku 4.5', nota:'il più rapido ed economico, per compiti semplici'},
+    {id:'claude-fable-5-1', nome:'Claude Fable 5.1', nota:'il più capace, per ragionamento e compiti lunghi'}
   ],
   openai:[
     {id:'gpt-4o-mini',   nome:'GPT-4o mini',   nota:'economico, adatto a estrazione e classificazione'},

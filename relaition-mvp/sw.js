@@ -4,7 +4,7 @@
 // che l'app si apra anche senza connessione — il che è coerente con il fatto
 // che i dati vivono nel browser e non su un server.
 
-var CACHE = 'relaition-v45';
+var CACHE = 'relaition-v89';
 // L'elenco e' generato dai <script> e <link> di index.html: quando era
 // scritto a mano restava indietro a ogni modulo aggiunto, e nell'app
 // installata i moduli mancanti non avevano copia di riserva — bastava una
@@ -59,6 +59,11 @@ var GUSCIO = [
   './js/lessons-fondamenti.js',
   './js/modals.js',
   './js/main.js',
+  // La demo fa parte della consegna: senza questi file, aperta senza rete,
+  // non avrebbe copia di riserva e resterebbe una pagina bianca.
+  './demo/demo.html',
+  './demo/motore.js',
+  './demo/copione.js',
 ];
 
 self.addEventListener('install', function(e){
@@ -99,7 +104,18 @@ self.addEventListener('fetch', function(e){
       return r;
     }).catch(function(){
       return caches.match(req).then(function(c){
-        return c || caches.match('./index.html');
+        if(c) return c;
+        // Ripiego SOLO per le navigazioni, e solo verso il documento della
+        // stessa area. Prima si restituiva `index.html` per qualunque
+        // richiesta fallita: aprendo la demo con il server spento compariva
+        // l'applicazione al posto della demo, senza un errore e senza una
+        // spiegazione. Un ripiego che sostituisce un documento con un altro
+        // e' peggio di un ripiego che non c'e'.
+        if(req.mode === 'navigate'){
+          return caches.match(url.pathname.indexOf('/demo/') >= 0
+            ? './demo/demo.html' : './index.html');
+        }
+        return Response.error();
       });
     })
   );

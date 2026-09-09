@@ -5,9 +5,12 @@ l'elemento di cui parla, compie le azioni e racconta cosa sta facendo, passo per
 passo. Serve per registrare un video da mostrare a una commissione o a un
 investitore senza dover guidare il mouse a mano.
 
-**71 passi in 9 capitoli, circa 15 minuti** in riproduzione automatica. Il peso
-sta sul Builder: costruzione a mano, costruzione conversazionale, dettaglio dei
-nodi, esecuzione e pianificazione occupano da soli quattro capitoli su nove.
+**86 passi in 9 capitoli.** La sola narrazione somma 13 minuti; in riproduzione
+automatica le azioni — esecuzioni, scrittura a macchina, attese — si aggiungono,
+quindi conviene contare qualcosa in più. Il peso sta sul Builder: costruzione a
+mano, costruzione conversazionale, dettaglio dei nodi, esecuzione e
+pianificazione occupano da soli quattro capitoli su nove; il capitolo 8 —
+Learning Hub, Sfide, Community — è il più lungo con 16 passi.
 
 ---
 
@@ -30,7 +33,10 @@ http://localhost:8099/demo/demo.html
 ## Come si registra
 
 1. Apri la pagina della demo e aspetta che compaia il primo riquadro.
-2. Premi **H** per nascondere la barra dei comandi (nel video non serve).
+2. Se non la vuoi nel video, premi **H** per nascondere la barra dei comandi.
+   Non è un vicolo cieco: mentre è nascosta, muovendo il mouse compare in basso
+   una maniglia «⌃ comandi» che la riporta (o ripremi H). Se durante la
+   registrazione non tocchi il mouse, la maniglia non si vede.
 3. Avvia il registratore. Su Windows 11: **Win + Alt + R** (Xbox Game Bar),
    che registra la finestra attiva in MP4 e, se vuoi, anche il microfono.
 4. Premi **P**: la demo parte e va avanti da sola fino alla fine.
@@ -47,7 +53,7 @@ finito di parlare su un passaggio.
 | **←** | passo precedente |
 | **P** | avvia o mette in pausa la riproduzione automatica |
 | **I** | apre l'indice dei capitoli, per saltare dove serve |
-| **H** | nasconde o rimostra la barra dei comandi |
+| **H** | nasconde la barra dei comandi; per riaverla muovi il mouse e clicca «⌃ comandi», oppure ripremi H |
 
 Nella barra ci sono anche la **velocità** (1× → 1,5× → 2× → 0,75×) e il tasto
 **⟲** che ricomincia da capo ripristinando lo stato.
@@ -120,7 +126,7 @@ nessun pulsante aggiunto, nessuna riga di logica toccata. Cancellando la cartell
 |---|---|
 | `demo.html` | il palco: riquadro, faretto, riquadro di narrazione, comandi |
 | `motore.js` | fotografia e ripristino, avanzamento, puntatore, posizionamento |
-| `copione.js` | i 61 passi: cosa fa ognuno, cosa illumina, cosa racconta |
+| `copione.js` | gli 86 passi: cosa fa ognuno, cosa illumina, cosa racconta |
 
 Funziona perché pagina e applicazione condividono l'origine: da lì si chiamano
 `go()`, `dbAll()` e le altre funzioni esattamente come farebbe il codice

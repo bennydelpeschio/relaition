@@ -248,7 +248,7 @@ function rtTriggerData(node){
   if(cfg.filedata) return { text:'[FILE: '+(cfg.filename||'file')+']\n'+cfg.filedata,
                             msg:'📄 File reale letto: '+(cfg.filename||'file')+' ('+cfg.filedata.length+' caratteri)' };
   if(cfg.sample && cfg.sample.trim()) return { text: cfg.sample.trim(),
-                            msg:'🧪 Payload di test: '+cfg.sample.trim().substring(0,80)+'…' };
+                            msg:'🧪 Payload di test: '+rtTesto(cfg.sample.trim()) };
   var nl = (node.name||'').toLowerCase();
   var t = nl.indexOf('email')>=0 ? RT_SAMPLES.email
         : (nl.indexOf('fattura')>=0||nl.indexOf('upload')>=0||nl.indexOf('file')>=0) ? RT_SAMPLES.fattura
@@ -256,7 +256,7 @@ function rtTriggerData(node){
         : (nl.indexOf('contratto')>=0||nl.indexOf('documento')>=0) ? RT_SAMPLES.contratto
         : (nl.indexOf('webhook')>=0||nl.indexOf('crm')>=0) ? RT_SAMPLES.webhook
         : RT_SAMPLES.def;
-  return { text:t, msg:'📥 Dati campione: '+t.substring(0,80)+'…' };
+  return { text:t, msg:'📥 Dati campione: '+rtTesto(t) };
 }
 
 // Esegue davvero l'azione del connettore. HTTP Request è l'unica con effetto
@@ -439,8 +439,14 @@ async function rtRunConnector(ctx, node, input){
             'Controlla il nome del segnaposto o usa un indirizzo fisso.' };
     }
     if(MAIL_STATO.disponibile){
+      // Due sorgenti diverse: i file PRODOTTI da questa esecuzione e quelli
+      // FISSI scelti sul nodo. I secondi partono sempre, anche quando il flusso
+      // non ha generato niente: è il caso del listino o del modulo allegato
+      // a una notifica.
       var allegati = (cfg.attach === 'Sì' && typeof mailAllegatiDelFlusso === 'function')
         ? mailAllegatiDelFlusso() : [];
+      if(typeof mailAllegatiFissi === 'function')
+        allegati = allegati.concat(mailAllegatiFissi(cfg));
       var _oggetto = rtSostituisci(cfg.subject, input, ctx.triggerData, ctx);
       var _corpo   = rtSostituisci(cfg.body || '{{result}}', input, ctx.triggerData, ctx);
       // Un segnaposto rimasto scritto parte davvero cosi' nell'email. Non si
@@ -714,8 +720,8 @@ async function rtRunAiNode(ctx, node){
       continue;
     }
     testo = res.text;
-    if(res.demo) msgs.push('[Demo] '+String(res.text).substring(0,110).replace(/\n/g,' '));
-    else msgs.push('🧠 '+String(res.text).substring(0,110).replace(/\n/g,' ')+'…');
+    if(res.demo) msgs.push('[Demo] '+rtTesto(res.text));
+    else msgs.push('🧠 '+rtTesto(res.text));
     break;
   }
 
@@ -1323,7 +1329,7 @@ async function rtRunOutputNode(ctx, node){
       rtPush(ctx, node, '❌ Generazione file fallita: '+errF.message, 'ERR');
     }
   }else{
-    rtPush(ctx, node, '📊 Output finale ['+(cfg.format||'Testo')+']: '+String(ctx.pipeline).substring(0,100).replace(/\n/g,' ')+'…', 'OK');
+    rtPush(ctx, node, '📊 Output finale ['+(cfg.format||'Testo')+']: '+rtTesto(ctx.pipeline), 'OK');
   }
 }
 
@@ -1331,6 +1337,25 @@ function rtNow(){ return new Date().toTimeString().substring(0,8) }
 function rtTypeLabel(node){
   return ({tr:'TRIGGER',ai:'LLM AI',ac:'ACTION',cd:'LOGIC',ou:'OUTPUT',gr:'CONTROLLO',sa:'AGENTE'})[node.type] || 'OUTPUT';
 }
+// Il registro non taglia più il testo alla fonte.
+//
+// Le voci lunghe venivano accorciate qui, con un `substring(0,80)+'…'`: il
+// testo intero non arrivava nemmeno al registro, quindi non c'era modo di
+// leggerlo — nemmeno esportando. L'accorciamento è una scelta di
+// presentazione, e ora sta nella presentazione: la riga mostra una riga sola e
+// si apre al clic.
+//
+// Resta un tetto, perché una pipeline da centomila caratteri dentro il DOM
+// rallenta tutto: si taglia molto più tardi, e lo si dichiara.
+var REGISTRO_TETTO = 4000;
+
+function rtTesto(t){
+  var s = String(t==null?'':t);
+  return s.length>REGISTRO_TETTO
+    ? s.substring(0,REGISTRO_TETTO)+'\n\n[…troncato a '+REGISTRO_TETTO+' caratteri]'
+    : s;
+}
+
 function rtPush(ctx, node, msg, status){
   var step = { time: rtNow(), type: rtTypeLabel(node), msg: msg, status: status || 'OK', nodeId: node.id };
   ctx.steps.push(step);
