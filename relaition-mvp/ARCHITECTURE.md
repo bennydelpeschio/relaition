@@ -3808,3 +3808,173 @@ Nel farlo è saltato fuori un difetto vero della piattaforma, non della demo: il
 dettaglio del punteggio scriveva «1 controlli» e «1 esecuzioni». Ora passa da
 `sfPlur()`. È il genere di sciatteria che fa dubitare anche del numero che ha
 accanto. Cache `relaition-v89`.
+
+### 5.147 Il giro completo, e i sovrapposti che restavano aperti
+
+Tre cose in un colpo solo: la dimostrazione copriva le pagine ma non i **gesti**
+di Learning Hub e Community, non mostrava mai la piattaforma vista da un'altra
+persona, e — difetto segnalato guardandola — una finestra aperta da un passo
+restava sopra la schermata del passo successivo.
+
+**I sovrapposti.** La chiusura era scritta a mano dentro le azioni di alcuni
+passi: bastava saltare da indice, o aggiungere un passo dimenticandosene, e la
+finestra restava lì. È stata spostata dove il problema nasce davvero, cioè in
+due punti:
+
+- in `go()` (`js/router.js`): cambiando pagina si chiudono la finestra modale e
+  il pannello delle notifiche. Non è una toppa per la demo — vale per il menu,
+  l'indirizzo, il tasto Indietro. L'ordine usato ovunque nel codice è già
+  `go()` prima di `openModal()`, quindi nessun percorso legittimo si rompe;
+- nel motore della demo: `chiudiFinestre()` all'inizio di **ogni** passo, con
+  due eccezioni che il passo dichiara da sé — chi illumina `#modalContent` sta
+  parlando proprio della finestra, e chi dichiara `tieniAperto` ci lavora
+  dentro (compila un modulo aperto prima, preme Invia, poi chiude).
+
+**La sincronia.** Il faretto veniva riagganciato 620 millisecondi dopo uno
+scorrimento, misura scelta a occhio: se lo scorrimento finiva prima restava
+indietro. Ora si aspetta `scrollend`, con la scadenza come rete di sicurezza per
+i browser che non lo emettono. E quando il bersaglio era stato trovato come
+elemento — «il pulsante che contiene Installa» — un ridisegno dell'applicazione
+lo staccava dal documento e il faretto restava acceso sul posto sbagliato: ora
+si prova a ritrovarlo con la stessa regola del passo, e solo se non si trova si
+resta fermi. La transizione del salto scende da 0,4 a 0,26 secondi.
+
+**Il giro completo.** Undici passi nuovi: nel Learning Hub si **risponde al
+quiz** (la risposta giusta si ricava dal contenuto della lezione, non da un
+indice scritto nel copione: se il quiz cambia, la demo continua a rispondere
+bene) e si mostra l'esercizio pratico; in Community si **scrive e pubblica** un
+post, si mette «mi piace» al post di un altro e si risponde in una discussione.
+
+**Il capitolo 10** esce e rientra come Giulia: dashboard, profilo, badge, sfide
+e formazione con i suoi numeri. Perché reggesse serviva una cosa in più —
+`assicuraAccesso()` rientrava sempre con il primo account, quindi un capitolo
+che parla di Giulia si sarebbe riaperto come Mario: ora c'è un utente atteso,
+che quel capitolo imposta.
+
+Verificato in browser: quiz corretto con esperienza da 675 a 700, post da 25 a
+26, iscrizione 47 → 48 posti, candidatura salvata, accesso come Giulia con 4
+agenti, 15 esecuzioni, 300 XP e 4 badge su 12, finestra chiusa al cambio
+pagina, capitolo 7 ancora funzionante grazie a `tieniAperto`.
+
+Nel farlo è emerso un difetto dei dati, non della demo: le candidature di
+Giulia, Marco e Sara esistevano senza la relativa iscrizione, perché la
+migrazione che ha introdotto la separazione per utente aveva attribuito tutte le
+iscrizioni preesistenti a Mario. In classifica comparivano quindi persone che
+risultavano non iscritte. Si ricostruiscono da ciò che hanno candidato — che è
+un fatto, e la regola che la piattaforma applica già quando si candida — con una
+migrazione in più in `js/db.js`. Cache `relaition-v90`.
+
+### 5.148 Sandbox davvero didattica, aiuto alla scrittura, pulizia tipografica
+
+Quattro interventi dell'ultimo giro, in ordine di peso.
+
+**La sandbox non lasciava salvare: falso.** Prometteva «nulla viene salvato»,
+ma la promessa era mantenuta solo dall'autosalvataggio. I pulsanti Salva,
+Pubblica e Pianifica funzionavano come sempre, e un flusso di prova poteva
+finire in «I miei agenti» o in coda di revisione. Un banco di prova dove si può
+pubblicare non è un banco di prova. Ora le tre azioni passano da
+`sandboxBlocca()` (`js/tour.js`), che spiega e rifiuta; i pulsanti si vedono
+spenti mentre la sandbox è attiva, così il limite si scopre prima del clic.
+Esporta e Python restano liberi: producono un file per chi impara e non
+toccano niente. E se cambia la persona con la sandbox aperta, `applicaUtente()`
+la chiude prima: altrimenti la chiusura successiva rimetteva sulla tela il
+canvas di chi c'era prima e l'autosalvataggio lo scriveva sopra la copia di
+lavoro di chi c'è adesso.
+
+**Aiuto alla scrittura** (`js/aiuto-testo.js`). Sotto il prompt di un nodo AI,
+sotto il contesto del flusso e sotto ogni area di testo dei nodi (il corpo di
+un'email, un messaggio) c'è «Aiutami a scriverlo»: si dice a parole cosa si
+vuole ottenere, e il modello collegato scrive il testo o migliora quello che
+c'è. Il modello sa dove sta scrivendo: nome e tipo del nodo, contesto del
+flusso, campi disponibili dai nodi a monte. Il risultato entra nel campo e
+nella configurazione; il precedente si può ripristinare. Senza un modello
+collegato non si finge: si dice dove collegarlo. Verificato in browser fino a
+quel messaggio; la generazione vera richiede una chiave, che resta dell'utente.
+
+**A capo dove serve.** La chat del Builder è un'area di testo che cresce con il
+contenuto (Invio genera, Maiusc+Invio va a capo); l'etichetta di una freccia
+accetta fino a tre righe e sulla tela si disegna con un `tspan` per riga. Nel
+farlo: il prompt del nodo AI e l'etichetta finivano nell'HTML e nell'SVG senza
+`escHtml`. Ora ci passano.
+
+**Ingresso alla sandbox.** Il collegamento alla sandbox didattica nel Learning
+Hub era sottolineato in piccolo sotto il giro guidato: ora è un pulsante con il
+proprio colore, accanto alla guida. (Un pulsante «Impara» nella barra in alto,
+provato per un giro, è stato tolto: la richiesta era rendere visibile la
+sandbox, non il Learning Hub.)
+
+**Pulizia tipografica.** Nei testi visibili (lezioni, recensioni, post, sfide,
+narrazione della demo, etichette) i trattini lunghi sono stati sostituiti con
+la punteggiatura che intendevano — due punti dopo un termine in grassetto,
+virgola in un inciso — e i titoli (h2, h3, titoli di scheda e di sezione,
+riquadri «da ricordare») non iniziano più con un'emoji: le icone restano dove
+hanno un significato, cioè su palette, nodi, pulsanti e badge. I commenti nel
+codice non sono stati toccati. Cache `relaition-v91`.
+
+### 5.149 Identità visiva dal foglio di brand, e il tema scuro
+
+**Il marchio.** Il foglio di identità è arrivato come immagine: non c'era un
+file da ritagliare. Il segno («AI» dentro un triangolo arrotondato fatto di tre
+petali semitrasparenti dal blu al viola) è stato ricostruito in vettoriale
+(`brand/mark.svg`), l'icona dell'app lo mette su quadrato scuro arrotondato
+come nel foglio (`icon.svg`), e i due PNG per il manifest sono renderizzati
+dal vettoriale con Edge senza interfaccia. Il wordmark «Rel[AI]tion» e il
+claim *Learn / Build / Share / Grow* sono HTML e CSS, non immagini: il testo
+usa il font dell'applicazione e segue il tema. Compaiono nella schermata di
+accesso, in quella di avvio, nel menu laterale e nello splash della demo.
+`brand/LEGGIMI.md` spiega cosa sostituire se arriva il sorgente del designer.
+
+**Il tema scuro.** L'interfaccia leggeva già tutti i colori dalle variabili
+CSS, quindi il tema scuro è una sola regola (`html[data-theme="dark"]`) che le
+ridefinisce, più sei eccezioni puntuali per i pannelli con un gradiente
+proprio (hero del Marketplace e del Learning Hub, pannello AI, connettori,
+aiuto alla scrittura). La scelta sta in `localStorage` e viene applicata da
+uno script in testa a `index.html`, prima del primo disegno: messo dopo, la
+pagina comparirebbe chiara e diventerebbe scura un istante dopo. Il
+predefinito resta chiaro e non si segue la preferenza di sistema: gli
+screenshot e la dimostrazione devono venire uguali su ogni macchina.
+
+Due limiti dichiarati: i riquadri di avviso con colore proprio (ambra, rosso)
+restano chiari anche nel tema scuro, di proposito, perché un segnale deve
+restare riconoscibile; e i colori scritti in linea nei template JavaScript
+(circa sedici sfondi ambra, otto rossi) non passano dalle variabili, quindi
+nel tema scuro sono isole chiare leggibili ma non armonizzate. Verificato in
+browser su dashboard, Builder, Marketplace e Learning Hub. Cache
+`relaition-v92`.
+
+### 5.150 Asset ufficiali del marchio, tema scuro completato, sandbox senza tracce
+
+**Il marchio, quello vero.** Sono arrivati i tre file ufficiali (logo per sfondo
+chiaro, logo per sfondo scuro, icona dell'app), e la ricostruzione vettoriale
+del §5.149 è stata messa da parte. Due cose non ovvie, scoperte lavorandoci: il
+logo per sfondo scuro ha lo sfondo blu **dipinto dentro** (non è trasparente),
+e nel logo chiaro le lettere «AI» dentro il segno sono un **foro**, non pixel
+bianchi: su fondo chiaro si leggono, su fondo scuro sparirebbero. Il logo scuro
+usato dall'app è quindi ricavato dal chiaro con uno script (`brand/
+prepara-logo-scuro.ps1`): lettere blu notte rese bianche, foro riempito di
+bianco, alfa conservato. Il segno del menu è un ritaglio di quello. L'icona
+installabile usa l'app icon ufficiale, in due forme: così com'è (`any`) e su
+quadrato pieno con margine (`maskable`), perché Android ritaglia la forma e con
+gli angoli trasparenti avrebbe messo il suo sfondo. `brand/LEGGIMI.md` elenca
+cosa viene da cosa.
+
+**Tema scuro, seconda passata.** La prima copriva le variabili; restavano i
+riquadri con una tinta scritta a mano, nel foglio di stile o in linea: la
+finestra «Workflow non valido» aveva le voci rosa con il testo chiaro del tema
+sopra, illeggibili. Ora c'è un blocco che intercetta le tinte pastello dallo
+stile in linea (`[style*="background:#FEF3C7"]` e simili) e le porta alla
+tinta scura con il testo alzato di tono, più le classi con tinta propria
+(`warning-box`, `validation-item`, badge, stati delle connessioni, quiz). Il
+toast, scuro con testo bianco, nel tema scuro si inverte. È un rimedio
+dichiarato: la lista di quei selettori è la lista dei riquadri a cui manca una
+classe. Verifica automatica su tutte e dieci le pagine: nessun testo con
+contrasto insufficiente sul proprio sfondo, tolti i contenitori di emoji, il
+cui colore non conta.
+
+**Sandbox: confermato, con un'eccezione trovata.** Prova con conteggio delle
+tabelle prima e dopo: agenti, installazioni, Knowledge Base, pubblicazioni,
+esperienza e copia di lavoro tornano identici. L'unica riga che sfuggiva era
+l'**esecuzione**: eseguire nella sandbox scriveva nello storico, e da lì nel
+Monitoraggio. `recordExecution()` ora non scrive con la sandbox attiva; il
+registro dentro il Builder resta, perché è ciò che chi impara sta guardando.
+Cache `relaition-v96`.

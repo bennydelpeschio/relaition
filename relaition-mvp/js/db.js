@@ -216,6 +216,15 @@ var MIGRATIONS=[
   "DROP TABLE IF EXISTS challenges_registered",
   "ALTER TABLE challenges_registered_u RENAME TO challenges_registered",
 
+  // Chi ha candidato un agente a una sfida vi partecipa: è la regola che la
+  // piattaforma applica quando si candida (`sfSalvaCandidatura` registra anche
+  // l'iscrizione). Nei database nati prima della separazione per utente la
+  // riga precedente ha attribuito TUTTE le iscrizioni a Mario R., e le
+  // candidature degli altri sono rimaste senza: in classifica comparivano
+  // persone che risultavano non iscritte. Si ricostruisce da ciò che hanno
+  // candidato, che è il fatto, invece di indovinare.
+  "INSERT OR IGNORE INTO challenges_registered (user,challenge_id,ts) SELECT user,challenge_id,ts FROM challenge_submissions",
+
   // Le righe già presenti diventano di Mario R., che è l'utente con cui la
   // piattaforma è stata usata finora.
   "UPDATE my_agents SET user='Mario R.' WHERE user IS NULL",

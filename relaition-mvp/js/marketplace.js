@@ -332,12 +332,13 @@ function installAgent(id){
 // ── BUILDER ENGINE ──
 
 function openPublishModal(){
+  if(typeof sandboxBlocca==='function'&&sandboxBlocca('pubblicare'))return;
   var _errs=validateWorkflow();
   if(_errs.length){showValidationErrors(_errs);return}
   clearInvalidNodes();
   var cats=['Sales','Marketing','Finance','HR','Legal','Insurance','DevOps','Customer Service','Produttività'];
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>🚀 Pubblica nel Marketplace</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Pubblica nel Marketplace</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Il tuo agente ('+B.nodes.length+' nodi) sarà visibile nel marketplace con badge <span class="badge badge-p">Community</span>. Prima della pubblicazione passa per la pipeline di validazione.</p>'+
     '<div class="prop-group"><div class="prop-label">Nome agente *</div><input class="prop-input" id="pubName" placeholder="es. Order Processing Agent"></div>'+
     '<div class="prop-group"><div class="prop-label">Categoria *</div><select class="prop-select" id="pubCat">'+cats.map(function(c){return '<option>'+c+'</option>'}).join('')+'</select></div>'+
@@ -500,7 +501,7 @@ function unpublishAgent(id){
 
 function openReviewQueue(){
   var pending=dbAll("SELECT * FROM published_agents WHERE status IN ('in_verifica','in_revisione') ORDER BY created_at");
-  var html='<div style="display:flex;justify-content:space-between;align-items:center"><h2>🛡️ Revisione pubblicazioni</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+  var html='<div style="display:flex;justify-content:space-between;align-items:center"><h2>Revisione pubblicazioni</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Un agente resta invisibile nel Marketplace pubblico finché non viene approvato qui. Ogni richiesta porta con sé l\'esito dei controlli automatici e, per gli aggiornamenti, il confronto con la versione in uso.</p>';
   if(!pending.length){
     html+='<div style="text-align:center;padding:40px;color:var(--tx4)"><div style="font-size:32px;margin-bottom:8px">✅</div><div style="font-size:13px">Nessuna pubblicazione in attesa di revisione</div></div>';

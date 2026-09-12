@@ -467,15 +467,21 @@ function b_render(){
     svgHtml+='<path d="'+pathD+'" fill="none" stroke="transparent" stroke-width="16" style="pointer-events:stroke;cursor:pointer" onclick="selectEdge('+eIdx+')" ondblclick="deleteEdge('+eIdx+')" title="Click per selezionare · doppio click o ✕ per eliminare · trascina i pallini per ricollegare"/>';
     var mx=(x1+x2)/2, my=(y1+y2)/2;
     if(e.label){
-      var lw=e.label.length*7+14;
-      svgHtml+='<rect x="'+(mx-lw/2)+'" y="'+(my-11)+'" width="'+lw+'" height="18" rx="9" fill="white" stroke="'+color+'" stroke-width="1.2"/>';
-      svgHtml+='<text x="'+mx+'" y="'+(my+2.5)+'" text-anchor="middle" fill="'+color+'" font-size="10.5" font-weight="700" font-family="Inter,sans-serif">'+e.label+'</text>';
+      // L'etichetta puo' stare su piu' righe: si spezza sugli a capo e ogni
+      // riga diventa un tspan, con il riquadro alto quanto serve. Il testo
+      // passa da escHtml, perche' finisce dentro l'SVG cosi' com'e'.
+      var righe=String(e.label).split('\n').slice(0,3);
+      var piuLunga=righe.reduce(function(m,r){return Math.max(m,r.length)},0);
+      var lw=piuLunga*6.6+16, lh=righe.length*13+6;
+      svgHtml+='<rect x="'+(mx-lw/2)+'" y="'+(my-lh/2)+'" width="'+lw+'" height="'+lh+'" rx="9" fill="white" stroke="'+color+'" stroke-width="1.2"/>';
+      svgHtml+='<text x="'+mx+'" y="'+(my-lh/2+13)+'" text-anchor="middle" fill="'+color+'" font-size="10.5" font-weight="700" font-family="Inter,sans-serif">'+
+        righe.map(function(r,k){return '<tspan x="'+mx+'"'+(k?' dy="13"':'')+'>'+escHtml(r)+'</tspan>'}).join('')+'</text>';
     }
     // Sulla freccia selezionata compare la ✕ per eliminarla: l'affordance
     // dev'essere immediata e visibile, altrimenti "seleziona poi cancella"
     // diventa un passaggio in più senza indicazioni.
     if(isSel){
-      var dbx=mx,dby=e.label?my-26:my;
+      var dbx=mx,dby=e.label?my-14-String(e.label).split('\n').slice(0,3).length*7:my;
       svgHtml+='<g style="cursor:pointer" onclick="deleteEdge('+eIdx+')">'+
         '<circle cx="'+dbx+'" cy="'+dby+'" r="11" fill="#EF4444" stroke="white" stroke-width="2"/>'+
         '<line x1="'+(dbx-4.5)+'" y1="'+(dby-4.5)+'" x2="'+(dbx+4.5)+'" y2="'+(dby+4.5)+'" stroke="white" stroke-width="2.2" stroke-linecap="round"/>'+
@@ -586,7 +592,7 @@ function useChatSuggestion(idx){
   // Senza provider il campo è disabilitato: si scrive lo stesso il testo (così
   // resta pronto per quando la chiave ci sarà) e si indica cosa manca.
   if(typeof anyProviderReady==='function'&&!anyProviderReady()){
-    input.value=testo;
+    input.value=testo; if(typeof adattaAltezza==='function')adattaAltezza(input);
     showToast('🔌 Testo inserito, ma manca un provider AI: apri il pannello <strong>Integrazione AI</strong> a sinistra, inserisci una API key e premi Testa.');
     var panel=document.querySelector('.ai-panel');
     if(panel){
@@ -599,7 +605,7 @@ function useChatSuggestion(idx){
     }
     return;
   }
-  input.value=testo;
+  input.value=testo; if(typeof adattaAltezza==='function')adattaAltezza(input);
   input.focus();
   // Il cursore va in fondo: il testo è una bozza da poter rifinire.
   try{input.setSelectionRange(testo.length,testo.length)}catch(e){}
@@ -1040,7 +1046,10 @@ function renderProps(nid){
       // modelli che costano e rendono in modo diverso, e un'estrazione di campi
       // non ha bisogno del più capace.
       renderSceltaModello(nid,n)+
-      '<div class="prop-group"><div class="prop-label">System Prompt</div><textarea class="prop-input" onchange="updConfig('+nid+',\'prompt\',this.value)" placeholder="Sei un assistente che...">'+(n.config.prompt||'')+'</textarea></div>'+
+      // Il prompt passa da escHtml: un `</textarea>` scritto nel prompt
+      // spaccava il pannello. E sotto c'e' l'aiuto alla scrittura.
+      '<div class="prop-group"><div class="prop-label">System Prompt</div><textarea class="prop-input" id="promptNodo'+nid+'" onchange="updConfig('+nid+',\'prompt\',this.value)" placeholder="Sei un assistente che...">'+escHtml(n.config.prompt||'')+'</textarea>'+
+        (typeof aiutoTestoHTML==='function'?aiutoTestoHTML('promptNodo'+nid,'prompt',nid,'prompt'):'')+'</div>'+
       '<div class="prop-group"><div class="prop-label">Temperature ('+((n.config.temperature||0.7))+')</div><input type="range" min="0" max="1" step="0.1" value="'+(n.config.temperature||0.7)+'" onchange="updConfig('+nid+',\'temperature\',parseFloat(this.value))" style="width:100%"></div>'+
       '<div class="prop-group"><div class="prop-label">Max tokens output</div><input class="prop-input" type="number" value="'+(n.config.maxtokens||1024)+'" onchange="updConfig('+nid+',\'maxtokens\',parseInt(this.value))" min="64" max="8192"></div>'+
       '<div class="prop-group"><div class="prop-label">Formato output</div><select class="prop-select" onchange="updConfig('+nid+',\'outformat\',this.value)">'+
@@ -1266,7 +1275,7 @@ function renderOutputConstraintHint(n){
 function renderSubAgentPanel(nid,n){
   var agenti=[];
   try{ agenti=dbAll('SELECT name FROM agents ORDER BY name') }catch(e){}
-  var opts='<option value="">— seleziona un agente —</option>'+agenti.map(function(a){
+  var opts='<option value="">seleziona un agente</option>'+agenti.map(function(a){
     return '<option value="'+escHtml(a.name)+'"'+(n.config.agentName===a.name?' selected':'')+'>'+escHtml(a.name)+'</option>';
   }).join('');
   return '<div class="connector-config"><div class="connector-config-title">🤝 Delega a sotto-agente</div>'+
@@ -1809,9 +1818,10 @@ async function resolveApproval(execId,autorizzato){
 
 function openContextModal(){
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>📋 Contesto del workflow</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Contesto del workflow</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Istruzioni generali che si applicano a <strong>tutti</strong> i nodi AI di questo agente: tono di voce, terminologia aziendale, vincoli, cosa evitare. Vengono anteposte al system prompt di ogni singolo nodo AI durante l\'esecuzione, così non devi ripeterle nodo per nodo.</p>'+
     '<textarea class="prop-input" id="workflowContextInput" rows="8" placeholder="Es: Rispondi sempre in italiano, tono professionale e diretto. Non inventare mai numeri o dati che non sono nel contesto fornito. Il nome azienda è \'Acme SpA\', non usare altri nomi. Non menzionare mai i concorrenti per nome.">'+escHtml(B.context||'')+'</textarea>'+
+    (typeof aiutoTestoHTML==='function'?aiutoTestoHTML('workflowContextInput','contesto',null,''):'')+
     '<button class="tb-btn primary mt-16" onclick="saveContext()">💾 Salva contesto</button>'
   ,true);
 }
@@ -1847,12 +1857,13 @@ function fireEvent(eventKey){
 }
 
 function openDeployModal(){
+  if(typeof sandboxBlocca==='function'&&sandboxBlocca('pianificare'))return;
   if(!B.dbAgentId){showToast('⚠️ Salva prima l\'agente (💾) per poterlo mettere in produzione');return}
   var row=dbGetOne('SELECT * FROM agents WHERE id=?',[B.dbAgentId]);
   if(!row)return;
   var type=row.schedule_type||'manual';
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>🚀 Metti in produzione</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Metti in produzione</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Fai girare "'+escHtml(row.name)+'" in automatico, senza premere Esegui ogni volta.</p>'+
     '<div class="prop-group"><div class="prop-label">Quando eseguire</div><select class="prop-select" id="deployType" onchange="onDeployTypeChange()">'+
       '<option value="manual"'+(type==='manual'?' selected':'')+'>Solo manuale (comportamento attuale)</option>'+
@@ -2940,7 +2951,7 @@ var WF_TEMPLATES=[
 
 function openTemplateGallery(){
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>💡 Template Gallery</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Template Gallery</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Workflow pre-costruiti basati su pattern architetturali consolidati. Clicca per caricarli nel Builder.</p>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
     WF_TEMPLATES.map(function(t,i){
@@ -3181,7 +3192,7 @@ function generatePythonCode(){
   var code=buildPythonCode();
   var esc=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>🐍 Codice Python eseguibile</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Codice Python eseguibile</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 12px">Script generato dal workflow corrente ('+B.nodes.length+' nodi, provider: <strong>'+(aiConfig.provider||'claude')+'</strong>). I nodi AI chiamano il modello reale; le azioni hanno i parametri configurati e i punti di integrazione marcati TODO.</p>'+
     '<div style="display:flex;gap:8px;margin-bottom:12px">'+
       '<button class="tb-btn primary" onclick="downloadPythonCode()">📥 Scarica agent.py</button>'+
@@ -3237,15 +3248,19 @@ function renderEdgeProps(idx){
     // l'«allegato» inserito automaticamente) o un JSON importato: visibile e
     // intoccabile, che è il modo peggiore di avere un campo.
     '<div class="prop-group"><div class="prop-label">Etichetta sulla freccia</div>'+
-      '<input class="prop-input" id="edgeLabel'+idx+'" value="'+escHtml(e.label||'')+'" maxlength="24" '+
-        'placeholder="es. sopra soglia, approvato, scarto" '+
-        'oninput="aggiornaEtichettaArco('+idx+',this.value)">'+
+      '<textarea class="prop-input" id="edgeLabel'+idx+'" rows="1" maxlength="72" style="resize:none;max-height:72px;line-height:1.4" '+
+        'placeholder="es. sopra soglia, approvato, scarto (Invio per andare a capo, fino a 3 righe)" '+
+        'oninput="aggiornaEtichettaArco('+idx+',this.value);adattaAltezza(this)">'+escHtml(e.label||'')+'</textarea>'+
       '<div style="font-size:10px;color:var(--tx4);margin-top:5px;line-height:1.45">'+
         'Serve a dire <em>perché</em> si prende questa strada. Sui rami di una condizione è già compilata; '+
         'lasciala vuota e la freccia resta pulita.</div>'+
     '</div>'+
     '<div class="props-actions"><button class="tb-btn wide" style="color:#EF4444;border-color:#FEE2E2" onclick="deleteEdge('+idx+')">🗑️ Elimina connessione</button></div>'+
     '<div style="font-size:10px;color:var(--tx4);margin-top:10px;text-align:center">Puoi anche premere Canc, doppio click sulla freccia, o cliccare la ✕ rossa sul canvas</div>';
+  // Un'etichetta gia' su due righe deve aprirsi su due righe, non su una con
+  // la seconda nascosta.
+  var ta=document.getElementById('edgeLabel'+idx);
+  if(ta&&typeof adattaAltezza==='function')adattaAltezza(ta);
 }
 
 function deleteEdge(idx){
@@ -3372,11 +3387,12 @@ function renderConfigFields(fields,nid,config,noImplicitReq){
     var aiuto=f.aiuto?'<div style="font-size:10px;color:var(--tx4);margin-top:3px;line-height:1.45">'+escHtml(f.aiuto)+'</div>':'';
     if(opzioni){
       return '<div class="prop-group"><div class="prop-label">'+label+'</div><select class="prop-select" onchange="updConfig('+nid+',\''+f.k+'\',this.value)">'+
-        '<option value="">— '+(f.ph||'seleziona')+' —</option>'+
+        '<option value="">'+(f.ph||'seleziona')+'</option>'+
         opzioni.map(function(o){return '<option'+(val===o?' selected':'')+'>'+escHtml(o)+'</option>'}).join('')+
       '</select>'+aiuto+'</div>';
     }
-    if(f.ta)return '<div class="prop-group"><div class="prop-label">'+label+'</div><textarea class="prop-input" rows="3" placeholder="'+escHtml(f.ph||'')+'" onchange="updConfig('+nid+',\''+f.k+'\',this.value)">'+escHtml(val)+'</textarea>'+aiuto+'</div>';
+    if(f.ta)return '<div class="prop-group"><div class="prop-label">'+label+'</div><textarea class="prop-input" id="campo_'+nid+'_'+f.k+'" rows="3" placeholder="'+escHtml(f.ph||'')+'" onchange="updConfig('+nid+',\''+f.k+'\',this.value)">'+escHtml(val)+'</textarea>'+aiuto+
+      (typeof aiutoTestoHTML==='function'?aiutoTestoHTML('campo_'+nid+'_'+f.k,'testo',nid,f.k):'')+'</div>';
     return '<div class="prop-group"><div class="prop-label">'+label+'</div><input class="prop-input" value="'+escHtml(val)+'" placeholder="'+escHtml(f.ph||'')+'" onchange="updConfig('+nid+',\''+f.k+'\',this.value)">'+aiuto+'</div>';
   }).join('');
 }
@@ -4234,6 +4250,18 @@ function aggiornaBottoneEsportaRegistro(){
 function aggiornaEtichettaArco(idx,val){
   var e=B.edges[idx];
   if(!e)return;
-  e.label=String(val||'').substring(0,24);
+  // Fino a tre righe e 72 caratteri: abbastanza per un promemoria, non per
+  // un paragrafo che coprirebbe la tela.
+  e.label=String(val||'').split('\n').slice(0,3).join('\n').substring(0,72);
   b_render();
+}
+
+// Un'area di testo che cresce con quello che contiene, fino a un tetto oltre il
+// quale scorre. Serve alla chat del Builder e alle etichette degli archi: una
+// riga sola quando c'è una riga, di più quando serve, senza maniglie da tirare.
+function adattaAltezza(el){
+  if(!el)return;
+  el.style.height='auto';
+  var max=parseInt(getComputedStyle(el).maxHeight,10)||132;
+  el.style.height=Math.min(el.scrollHeight,max)+'px';
 }

@@ -504,7 +504,7 @@ function govDrill(dove, titolo){
   var righe=dbAll('SELECT id,agent,status,duration,mode,user,summary,ts FROM exec_log WHERE '+dove+' ORDER BY id DESC LIMIT 40');
   var badge={ok:['badge-g','✅ OK'],err:['badge-r','❌ Errore'],aborted:['badge-gray','⏹️ Interrotta'],waiting:['badge-p','⏸️ In attesa']};
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>🔎 '+escHtml(titolo)+'</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>'+escHtml(titolo)+'</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:8px 0 14px">'+righe.length+' esecuzioni'+(righe.length===40?' (mostrate le 40 più recenti)':'')+'. Clicca una riga per il dettaglio completo.</p>'+
     (righe.length?righe.map(function(l){
       var b=badge[l.status]||['badge-gray',l.status];
@@ -672,7 +672,7 @@ function renderMonitoraggio(){
     // all'altro sembravano una contraddizione («2» sul menu, «4 segnali» qui).
     // Dirlo qui costa una riga e toglie il dubbio.
     var attenzione=rischi.filter(function(r){return r.liv!=='basso'}).length;
-    h+='<div class="section-title" style="font-size:15px;margin:22px 0 2px">⚠️ Richiede attenzione</div>'+
+    h+='<div class="section-title" style="font-size:15px;margin:22px 0 2px">Richiede attenzione</div>'+
        '<div class="section-sub">'+rischi.length+' segnali rilevati sui dati reali'+
        (attenzione?(', di cui <strong>'+attenzione+'</strong> di livello medio o alto: sono quelli contati nel menu.'):'. Nessuno di livello medio o alto.')+'</div>'+
        rischi.map(function(r){
@@ -809,7 +809,7 @@ function renderMonitoraggio(){
   // ── Approfondimenti ──
   var ins=govInsights(s,serie);
   if(ins.length){
-    h+='<div class="section-title" style="font-size:15px;margin:24px 0 2px">💡 Cosa dicono questi numeri</div>'+
+    h+='<div class="section-title" style="font-size:15px;margin:24px 0 2px">Cosa dicono questi numeri</div>'+
        '<div class="section-sub">Osservazioni ricavate dagli stessi dati, non da soglie predefinite.</div>'+
        '<div class="grid-2">'+ins.map(function(i){
       return '<div class="card" style="padding:13px 15px">'+

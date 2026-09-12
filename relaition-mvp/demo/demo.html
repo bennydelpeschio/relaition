@@ -20,11 +20,11 @@
      disegnare quattro pannelli attorno all'elemento. */
   #faretto{position:fixed;border-radius:10px;pointer-events:none;z-index:40;display:none;
     box-shadow:0 0 0 9999px rgba(8,15,30,.55), 0 0 0 2px var(--acc) inset;
-    transition:all .4s cubic-bezier(.4,0,.2,1)}
+    transition:all .26s cubic-bezier(.22,1,.36,1)}
 
   #narrazione{position:fixed;z-index:50;width:370px;max-width:calc(100vw - 24px);
     background:var(--carta);border-radius:14px;padding:15px 17px;display:none;
-    box-shadow:0 18px 50px rgba(2,8,23,.35);transition:left .4s cubic-bezier(.4,0,.2,1),top .4s cubic-bezier(.4,0,.2,1)}
+    box-shadow:0 18px 50px rgba(2,8,23,.35);transition:left .26s cubic-bezier(.22,1,.36,1),top .26s cubic-bezier(.22,1,.36,1)}
   /* Mentre inseguono lo scorrimento, faretto e riquadro si muovono senza
      transizione: una transizione di 0,4s significa arrivare 0,4s dopo il
      contenuto, che e' esattamente il ritardo che si vedeva. La transizione
@@ -80,6 +80,9 @@
   #avvio .marchio{display:flex;align-items:center;gap:12px}
   #avvio .tessera{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
     background:linear-gradient(135deg,#2563EB,#7C3AED);box-shadow:0 4px 14px rgba(37,99,235,.35)}
+  #avvio .tessera{background:none;box-shadow:none;width:auto;height:auto;filter:drop-shadow(0 6px 16px rgba(79,70,229,.5))}
+  #avvio .claim{display:inline-flex;gap:.45em;font-size:12px;font-weight:600;letter-spacing:.14em;margin-top:6px}
+  #avvio .claim span:nth-child(1){color:#818CF8}#avvio .claim span:nth-child(3){color:#A5B4FC}#avvio .claim span:nth-child(5){color:#C4B5FD}#avvio .claim span:nth-child(7){color:#D8B4FE}#avvio .claim i{font-style:normal;color:#64748B}
   #avvio .logo{font-size:26px;font-weight:800;letter-spacing:-.02em}
   #avvio .sub{color:#94A3B8;font-size:13px;max-width:440px;text-align:center;line-height:1.6}
   .puntini{display:flex;gap:5px;margin-top:6px}
@@ -124,14 +127,13 @@
   <div class="sep"></div>
   <button id="bVel" onclick="cambiaVelocita()" title="Velocità">1×</button>
   <button onclick="ricomincia()" title="Ricomincia da capo">⟲</button>
-  <button onclick="alternaComandi()" title="Nascondi i comandi (H) — riappaiono muovendo il mouse">✕</button>
+  <button onclick="alternaComandi()" title="Nascondi i comandi (H), riappaiono muovendo il mouse">✕</button>
   <div class="aiuto">→ avanti · P riproduci<br>H nascondi · I capitoli</div>
 </div>
 
 <div id="avvio">
   <div class="marchio">
-    <div class="tessera"><svg viewBox="0 0 512 512" width="26" height="26" aria-hidden="true"><path d="M292 96 L168 288 h74 l-22 128 124 -192 h-74 z" fill="#fff"/></svg></div>
-    <div class="logo">RelAItion</div>
+    <img src="../brand/logo-dark.png" alt="RelAItion" style="width:300px;max-width:80vw;display:block;margin:0 auto 8px">
   </div>
   <div class="sub">Sto preparando la dimostrazione e fotografando lo stato della piattaforma,
     per poterlo rimettere identico alla fine.</div>

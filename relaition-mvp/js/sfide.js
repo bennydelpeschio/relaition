@@ -367,10 +367,10 @@ function sfContenutoPagina(s){
       '<div class="card" style="padding:16px">'+
         (typeof sfBloccoFasi==='function'?sfBloccoFasi(s):'')+
         (typeof sfBloccoProgramma==='function'?sfBloccoProgramma(s):'')+
-        sfTitoletto('📏 Come si valuta')+pesi+
-        sfTitoletto('🏅 Riconoscimenti')+
+        sfTitoletto('Come si valuta')+pesi+
+        sfTitoletto('Riconoscimenti')+
         '<div style="font-size:11.5px;color:var(--tx3);line-height:1.6">'+escHtml(s.premi)+'</div>'+
-        sfTitoletto('👥 Partecipazione')+
+        sfTitoletto('Partecipazione')+
         '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tx4);margin-bottom:4px">'+
           '<span>'+sfConteggio(s)+' di '+s.posti+' posti</span><span>'+pieno+'%</span></div>'+
         '<div style="height:5px;background:var(--bg2);border-radius:3px;overflow:hidden">'+
@@ -400,7 +400,7 @@ function sfContenutoPagina(s){
 function sfHallOfFame(){
   var v=dbAll('SELECT * FROM challenge_winners ORDER BY posizione, id');
   if(!v.length)return '';
-  return '<div class="card mt-20"><div class="card-header"><div class="card-title">🏛️ Edizioni passate</div></div>'+
+  return '<div class="card mt-20"><div class="card-header"><div class="card-title">Edizioni passate</div></div>'+
     '<div class="grid-3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">'+
     v.map(function(x){
       return '<div style="text-align:center;padding:16px;background:var(--bg2);border-radius:var(--rl)">'+

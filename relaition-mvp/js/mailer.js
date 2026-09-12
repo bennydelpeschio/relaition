@@ -124,7 +124,7 @@ function mailPannelloStato(){
 function mailIstruzioni(){
   openModal(
     '<div style="display:flex;justify-content:space-between;align-items:center">'+
-      '<h2>📧 Inviare email davvero</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+      '<h2>Inviare email davvero</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12.5px;color:var(--tx2);margin:12px 0;line-height:1.65">'+
       'Una pagina web non può aprire una connessione SMTP: SMTP viaggia su TCP, il browser parla solo HTTP. '+
       'Il servizio incluso colma esattamente quel divario: riceve la richiesta dal builder e la inoltra al server di posta.</p>'+
@@ -241,7 +241,7 @@ function mailPannelloAllegati(nid){
     '<div class="allegati-azioni">'+
       '<button class="tb-btn" onclick="mailScegliFile('+nid+')">📄 Dal computer</button>'+
       (doc.length?'<select class="prop-select allegati-sel" id="allegKb'+nid+'">'+
-        '<option value="">— documento dalla Knowledge Base —</option>'+
+        '<option value="">documento dalla Knowledge Base</option>'+
         doc.map(function(d){ return '<option value="'+escHtml(d.id)+'">'+escHtml(d.name)+'</option>' }).join('')+
        '</select><button class="tb-btn" onclick="mailAllegaDaKB('+nid+')">Aggiungi</button>':'')+
     '</div>'+

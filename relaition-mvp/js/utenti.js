@@ -86,6 +86,12 @@ function caricaProfiloSalvato(nome){
 // quindi mostra come "tuoi" i contenuti attribuiti a questo nome.
 function applicaUtente(u){
   if(!u)return;
+  // La sandbox appartiene alla sessione di chi l'ha aperta. Se resta attiva
+  // mentre cambia la persona, chiuderla dopo rimette sulla tela il canvas
+  // messo da parte PRIMA del cambio, e l'autosalvataggio lo scrive sopra la
+  // copia di lavoro della persona nuova. Si chiude prima, e ognuno ritrova
+  // il suo.
+  if(typeof SANDBOX!=='undefined'&&SANDBOX&&SANDBOX.attiva&&typeof closeSandbox==='function')closeSandbox();
   // Il nome scelto dall'utente ha la precedenza su quello scritto nel codice:
   // senza, chi si e' rinominato tornerebbe al nome originale a ogni accesso e
   // i suoi contenuti — riattribuiti al nome nuovo — sparirebbero dalla vista.

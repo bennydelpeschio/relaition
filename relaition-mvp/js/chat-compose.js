@@ -79,7 +79,7 @@ function ccBaseRules(){
     '- "ou" (output): nodo finale.\n'+
     'Nomi max 20 caratteri, descrizioni max 30, emoji "ic" pertinente.\n'+
     "REGOLA VINCOLANTE: per \"tr\", \"ac\" e \"gr\" NON inventare nomi. Se una capacità non ha un blocco "+
-    "dedicato — allegare un file a una email, mettere in copia, scegliere un formato — NON creare un "+
+    "dedicato, allegare un file a una email, mettere in copia, scegliere un formato, NON creare un "+
     "blocco nuovo: usa il blocco esistente più vicino e metti quella capacità nella sua configurazione. "+
     "Un blocco con un nome fuori elenco non ha parametri e il flusso non parte.";
 }
@@ -277,7 +277,7 @@ function showComposeWaiting(isModify){
 function retryCompose(){
   if(!ccLastRequest)return;
   var i=document.getElementById('chatBuilderInput');
-  if(i)i.value=ccLastRequest;
+  if(i)i.value=ccLastRequest; if(i&&typeof adattaAltezza==='function')adattaAltezza(i);
   var box=document.getElementById('composePreview');
   if(box){box.style.display='none';box.innerHTML=''}
   aiGenerateWorkflow();
@@ -451,7 +451,7 @@ function previewChanges(plan){
             return '<span class="cc-pastiglia cc-pastiglia-ko">'+escHtml(n.n||'senza nome')+'</span>';
           }).join('')+'</div>'+
           '<div class="cc-perche">Nascono senza parametri e il flusso non sarà eseguibile finché ci sono. '+
-          'Spesso è una capacità di un blocco esistente — un allegato, una copia, un formato — che va messa '+
+          'Spesso è una capacità di un blocco esistente, un allegato, una copia, un formato, che va messa '+
           'nella sua configurazione. Conviene <strong>annullare</strong> e chiedere usando il nome del blocco.</div>'+
         '</div>';
       })()+
@@ -619,7 +619,7 @@ function ccFinalize(toast,verbo){
   if(typeof clearInvalidNodes==='function')clearInvalidNodes();
   b_render();renderProps(B.selId);
   var input=document.getElementById('chatBuilderInput');
-  if(input)input.value='';
+  if(input)input.value=''; if(input&&typeof adattaAltezza==='function')adattaAltezza(input);
   showToast(toast);
   addAct('AI Chat Builder: '+verbo+' workflow');
   if(typeof scheduleAutosave==='function')scheduleAutosave();

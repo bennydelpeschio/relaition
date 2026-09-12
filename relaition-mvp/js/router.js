@@ -57,6 +57,15 @@ function go(page,daStoria){
   // I sovrapposti temporanei (suggerimenti dei grafici) non appartengono alla
   // pagina che si sta lasciando: senza questo restano appesi sullo schermo.
   if(typeof govTip==='function')govTip(null);
+  // Una finestra o il pannello delle notifiche rimasti aperti non appartengono
+  // alla pagina nuova: restavano sopra, coprendo una schermata che parla
+  // d'altro, e per toglierli bisognava cliccare la ✕ di qualcosa che non
+  // c'entrava più niente. Si chiudono qui, dove la pagina cambia, così vale
+  // per ogni percorso — menu, indirizzo, tasto Indietro, dimostrazione.
+  // Chi apre una finestra E poi cambia pagina scrive `go()` prima di
+  // `openModal()`: è già l'ordine usato ovunque nel codice.
+  if(typeof closeModal==='function')closeModal();
+  if(typeof notifOpen!=='undefined' && notifOpen && typeof toggleNotifications==='function')toggleNotifications();
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
   document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('active')});
   var pg=document.getElementById('page-'+page);

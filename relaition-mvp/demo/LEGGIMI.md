@@ -5,12 +5,41 @@ l'elemento di cui parla, compie le azioni e racconta cosa sta facendo, passo per
 passo. Serve per registrare un video da mostrare a una commissione o a un
 investitore senza dover guidare il mouse a mano.
 
-**86 passi in 9 capitoli.** La sola narrazione somma 13 minuti; in riproduzione
+**97 passi in 10 capitoli.** La sola narrazione somma 15 minuti; in riproduzione
 automatica le azioni — esecuzioni, scrittura a macchina, attese — si aggiungono,
 quindi conviene contare qualcosa in più. Il peso sta sul Builder: costruzione a
 mano, costruzione conversazionale, dettaglio dei nodi, esecuzione e
-pianificazione occupano da soli quattro capitoli su nove; il capitolo 8 —
-Learning Hub, Sfide, Community — è il più lungo con 16 passi.
+pianificazione occupano da soli quattro capitoli; il capitolo 8 — Learning Hub,
+Sfide, Community — è il più lungo con 21 passi, e il capitolo 10 chiude uscendo
+e rientrando **con un altro account**, per mostrare che i dati sono per persona.
+
+## Con un modello AI vero
+
+Senza chiave la dimostrazione gira per intero, ma i nodi AI si fermano con un
+errore esplicito e le condizioni vengono valutate in modo simulato: la
+narrazione lo dice, passo per passo, invece di far finta.
+
+Per farla girare con un modello vero — per esempio OpenAI:
+
+1. avvia la demo e fermala al passo **«Collegare un modello»** (capitolo 5, si
+   raggiunge anche dall'indice ☰);
+2. nel pannello **Integrazione AI** a sinistra scegli il fornitore, incolla la
+   tua chiave e premi **Testa**: la piattaforma fa una chiamata vera e dice se
+   funziona;
+3. riprendi. Da lì in avanti i nodi AI chiamano il modello, le condizioni
+   vengono valutate sui dati e il registro dichiara quale fornitore ha
+   risposto.
+
+Sulla chiave, tre cose da sapere: resta in `sessionStorage`, cioè **in quella
+scheda finché non la chiudi** — non finisce su disco, non entra negli export e
+non viene condivisa con altre schede; il pulsante «Rimuovila ora» sotto il
+campo la cancella subito; ed è comunque leggibile da chi apre la console di
+quella scheda, quindi è una comodità da prototipo, non una custodia sicura.
+
+Nota pratica: la demo carica l'applicazione in un riquadro della stessa
+pagina, quindi la chiave va incollata **dentro la demo**, non in una scheda
+separata. E con la chiave collegata la dimostrazione fa chiamate a pagamento
+vere: sono poche e brevi, ma non sono gratis.
 
 ---
 
@@ -71,8 +100,9 @@ Nella barra ci sono anche la **velocità** (1× → 1,5× → 2× → 0,75×) e 
 | 5 | Collegamento e **test del modello**, scelta del modello per nodo, validazione, **costruzione via chat** con **anteprima da confermare o annullare**, richiesta di modifica a tela piena, e **pianificazione** (manuale, a intervallo, a orario, cron, su evento) |
 | 6 | **Esecuzione** di due flussi completi, registro che **scorre riga per riga**, **interruzione a metà**, «Perché questo risultato», storico |
 | 7 | Pubblicazione, coda di revisione, richiesta di modifica, correzione, ripresentazione, approvazione |
-| 8 | Learning Hub, Sfide, Community |
+| 8 | **Learning Hub**: percorsi, livelli, una lezione con **quiz a cui si risponde davvero** e l'esercizio pratico. **Sfide**: i tre formati, le fasi, **iscrizione**, **candidatura di un proprio agente**, classifica calcolata, domande a un AMA. **Community**: un post **scritto e pubblicato**, «mi piace», risposta in una discussione, profilo pubblico |
 | 9 | Profilo, obiettivi configurabili, Monitoraggio e le sue sette aree |
+| 10 | **Uscita e rientro con un altro account**: stessa piattaforma, dashboard, profilo, badge, sfide e formazione con i dati di un'altra persona |
 
 I numeri che compaiono nella narrazione — quanti agenti, quante lezioni, quante
 discussioni, quante voci nel registro — **non sono scritti nel copione**: si
@@ -108,10 +138,9 @@ Il ciclo di revisione — richiesta di modifica, correzione, ripresentazione,
 approvazione — si vede **in entrambi i casi**.
 
 **Per una registrazione destinata a una commissione, collega una chiave nel
-pannello «Integrazione AI» prima di premere P.** La demo diventa completa e
-mostra chiamate al modello vere. Serve una chiave tua: incollane una solo sul
-tuo computer, e ricorda che resta nel `localStorage` del browser finché non la
-rimuovi dal pannello.
+pannello «Integrazione AI» prima di premere P** — come descritto sopra, in
+«Con un modello AI vero». La demo diventa completa e mostra chiamate al modello
+vere. Serve una chiave tua, e resta in quella scheda finché non la chiudi.
 
 ---
 
@@ -126,7 +155,7 @@ nessun pulsante aggiunto, nessuna riga di logica toccata. Cancellando la cartell
 |---|---|
 | `demo.html` | il palco: riquadro, faretto, riquadro di narrazione, comandi |
 | `motore.js` | fotografia e ripristino, avanzamento, puntatore, posizionamento |
-| `copione.js` | gli 86 passi: cosa fa ognuno, cosa illumina, cosa racconta |
+| `copione.js` | i 97 passi: cosa fa ognuno, cosa illumina, cosa racconta |
 
 Funziona perché pagina e applicazione condividono l'origine: da lì si chiamano
 `go()`, `dbAll()` e le altre funzioni esattamente come farebbe il codice

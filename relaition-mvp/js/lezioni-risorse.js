@@ -36,26 +36,26 @@ var RISORSE={
   rag:        {t:'Retrieval-Augmented Generation',u:'https://arxiv.org/abs/2005.11401',k:'articolo',
                d:'L’articolo originale su come fondare le risposte su documenti recuperati.'},
   ragSurvey:  {t:'RAG per i modelli linguistici: rassegna',u:'https://arxiv.org/abs/2312.10997',k:'articolo',
-               d:'Panoramica aggiornata su segmentazione, recupero e riordino — le tre scelte che contano.'},
+               d:'Panoramica aggiornata su segmentazione, recupero e riordino, le tre scelte che contano.'},
   toolformer: {t:'Toolformer: modelli che usano strumenti',u:'https://arxiv.org/abs/2302.04761',k:'articolo',
                d:'Come un modello impara a decidere quando invocare uno strumento esterno.'},
   agentiEff:  {t:'Costruire agenti efficaci',u:'https://www.anthropic.com/engineering/building-effective-agents',k:'guida',
                d:'Quando conviene un agente e quando bastano dei passaggi fissi: la domanda da farsi per prima.'},
-  promptAnt:  {t:'Prompt engineering — documentazione Anthropic',u:'https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview',k:'guida',
+  promptAnt:  {t:'Prompt engineering, documentazione Anthropic',u:'https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview',k:'guida',
                d:'Tecniche verificate, con esempi: la fonte da cui partire prima di improvvisare.'},
-  promptOai:  {t:'Prompt engineering — documentazione OpenAI',u:'https://platform.openai.com/docs/guides/prompt-engineering',k:'guida',
+  promptOai:  {t:'Prompt engineering, documentazione OpenAI',u:'https://platform.openai.com/docs/guides/prompt-engineering',k:'guida',
                d:'Le stesse tecniche viste dal lato OpenAI: utile confrontare le due impostazioni.'},
-  toolAnt:    {t:'Tool use — documentazione Anthropic',u:'https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview',k:'guida',
+  toolAnt:    {t:'Tool use, documentazione Anthropic',u:'https://docs.anthropic.com/en/docs/build-with-claude/tool-use/overview',k:'guida',
                d:'Il formato con cui un modello dichiara di voler usare uno strumento.'},
-  funcOai:    {t:'Function calling — documentazione OpenAI',u:'https://platform.openai.com/docs/guides/function-calling',k:'guida',
+  funcOai:    {t:'Function calling, documentazione OpenAI',u:'https://platform.openai.com/docs/guides/function-calling',k:'guida',
                d:'La stessa idea nel formato OpenAI, quello che la piattaforma usa per questo fornitore.'},
-  embedAnt:   {t:'Embedding — documentazione Anthropic',u:'https://docs.anthropic.com/en/docs/build-with-claude/embeddings',k:'guida',
+  embedAnt:   {t:'Embedding, documentazione Anthropic',u:'https://docs.anthropic.com/en/docs/build-with-claude/embeddings',k:'guida',
                d:'Cosa sono le rappresentazioni vettoriali e quando servono davvero.'},
-  gemini:     {t:'API Gemini — documentazione',u:'https://ai.google.dev/gemini-api/docs',k:'guida',
+  gemini:     {t:'API Gemini, documentazione',u:'https://ai.google.dev/gemini-api/docs',k:'guida',
                d:'Riferimento del terzo fornitore collegabile alla piattaforma.'},
   aiAct:      {t:'Regolamento europeo sull’intelligenza artificiale',u:'https://eur-lex.europa.eu/eli/reg/2024/1689/oj',k:'norma',
                d:'Testo ufficiale. L’Allegato III elenca i casi ad alto rischio che impongono il percorso rafforzato.'},
-  gdpr:       {t:'GDPR — testo ufficiale',u:'https://eur-lex.europa.eu/eli/reg/2016/679/oj',k:'norma',
+  gdpr:       {t:'GDPR, testo ufficiale',u:'https://eur-lex.europa.eu/eli/reg/2016/679/oj',k:'norma',
                d:'Il regolamento a cui rispondono mascheramento dei dati e registro dei trattamenti.'},
   edpb:       {t:'European Data Protection Board',u:'https://edpb.europa.eu/',k:'norma',
                d:'Linee guida e pareri applicativi: è qui che il testo diventa pratica.'},
@@ -69,11 +69,11 @@ var RISORSE={
                d:'Come si pesa un termine in base a quanto è raro: la base del recupero implementato qui.'},
   cron:       {t:'crontab.guru',u:'https://crontab.guru/',k:'strumento',
                d:'Scrivi un’espressione cron e leggila in parole: utile per il pannello «Metti in produzione».'},
-  b3b1:       {t:'3Blue1Brown — reti neurali e transformer',u:'https://www.youtube.com/@3blue1brown',k:'video',
+  b3b1:       {t:'3Blue1Brown, reti neurali e transformer',u:'https://www.youtube.com/@3blue1brown',k:'video',
                d:'La serie visiva che spiega cosa succede dentro un modello. Il punto di partenza se la matematica intimidisce.'},
-  karpathy:   {t:'Andrej Karpathy — costruire un LLM da zero',u:'https://www.youtube.com/@AndrejKarpathy',k:'video',
+  karpathy:   {t:'Andrej Karpathy, costruire un LLM da zero',u:'https://www.youtube.com/@AndrejKarpathy',k:'video',
                d:'Lezioni in cui un modello viene costruito riga per riga: il modo più diretto per togliere la magia.'},
-  hfCourse:   {t:'Hugging Face — corso di NLP',u:'https://huggingface.co/learn/nlp-course/chapter1/1',k:'corso',
+  hfCourse:   {t:'Hugging Face, corso di NLP',u:'https://huggingface.co/learn/nlp-course/chapter1/1',k:'corso',
                d:'Corso gratuito e pratico: tokenizzazione, modelli, fine-tuning.'},
   fsapi:      {t:'File System Access API',u:'https://developer.mozilla.org/en-US/docs/Web/API/File_System_API',k:'guida',
                d:'L’interfaccia con cui la piattaforma scrive davvero su una cartella del computer.'},
@@ -195,10 +195,10 @@ function apriBiblioteca(){
   }).join('');
   openModal(
     '<div style="display:flex;justify-content:space-between;align-items:center">'+
-      '<h2>📚 Biblioteca</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+      '<h2>Biblioteca</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 4px;line-height:1.6">'+
       Object.keys(RISORSE).length+' risorse esterne e pubbliche citate nelle lezioni: articoli originali, '+
-      'documentazione dei fornitori, testi normativi, corsi e video. RelAItion non le ospita — '+
+      'documentazione dei fornitori, testi normativi, corsi e video. RelAItion non le ospita, '+
       'si aprono sul sito di chi le pubblica.</p>'+
     corpo,true);
 }

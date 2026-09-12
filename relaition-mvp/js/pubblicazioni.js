@@ -174,7 +174,7 @@ function applicaModificaRichiesta(pubId){
     showToast('ℹ️ Il revisore non ha scritto una richiesta: descrivi tu la modifica');
     campo.focus();return;
   }
-  campo.value=nota;
+  campo.value=nota; if(typeof adattaAltezza==='function')adattaAltezza(campo);
   campo.focus();
   showToast('🤖 Richiesta del revisore pronta nella chat: premi Genera per vedere l’anteprima');
   addAct('Ripresa la richiesta di modifica su "'+a.name+'"');
@@ -294,8 +294,8 @@ function apriDettaglioPubblicazione(pubId){
       (ambito?'<span class="badge badge-gray">Approva: '+escHtml(ambito.approver)+'</span>':'')+
     '</div>'+
     '<div style="font-size:12px;color:var(--tx2);line-height:1.6">'+escHtml(st.d)+'</div>'+
-    sfTitolettoPub('🧾 Storia delle decisioni')+righeStoria+
-    sfTitolettoPub('🔧 Il flusso come pubblicato ('+nodi.length+' nodi)')+
+    sfTitolettoPub('Storia delle decisioni')+righeStoria+
+    sfTitolettoPub('Il flusso come pubblicato ('+nodi.length+' nodi)')+
     (nodi.length
       ? '<div style="display:flex;gap:6px;overflow-x:auto;padding:6px 0">'+nodi.map(function(n,i){
           var col={tr:'#F59E0B',ai:'#6366F1',cd:'#EF4444',ac:'#10B981',ou:'#64748B',gr:'#0D9488'}[n.type]||'#94A3B8';

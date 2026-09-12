@@ -214,7 +214,7 @@ function connSelettore(nid,n,tipo,etichetta){
   var sceltaOgg=scelta?connPerId(scelta):null;
   return '<div class="prop-group"><div class="prop-label">'+escHtml(etichetta||'Connessione')+' <span style="color:#EF4444">*</span></div>'+
     '<select class="prop-select" onchange="updConfig('+nid+',\'connessioneId\',this.value)">'+
-      '<option value="">— scegli —</option>'+
+      '<option value="">scegli</option>'+
       elenco.map(function(c){
         return '<option value="'+c.id+'"'+(String(scelta)===String(c.id)?' selected':'')+'>'+
           escHtml(c.nome)+(c.stato==='ok'?' ✅':c.stato==='errore'?' ⚠️':'')+'</option>';

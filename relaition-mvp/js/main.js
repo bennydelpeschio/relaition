@@ -211,7 +211,7 @@ function openInstallGuide(){
   var daFile=location.protocol==='file:';
   var giaInstallata=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches;
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>⬇️ Installa RelAItion sul computer</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Installa RelAItion sul computer</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     (giaInstallata
       ? '<p style="font-size:12.5px;color:var(--tx2);margin:12px 0">✅ Stai già usando RelAItion come applicazione installata.</p>'
       : daFile

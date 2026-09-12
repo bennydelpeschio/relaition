@@ -24,7 +24,8 @@ var COPIONE_CAPITOLI={
   6:{n:'6',t:'Eseguire e capire'},
   7:{n:'7',t:'Pubblicazione e revisione'},
   8:{n:'8',t:'Learning Hub, Sfide, Community'},
-  9:{n:'9',t:'Profilo e monitoraggio'}
+  9:{n:'9',t:'Profilo e monitoraggio'},
+  10:{n:'10',t:'Un altro accesso: dati per persona'}
 };
 
 // Scorciatoie leggibili verso l'applicazione dentro il riquadro.
@@ -191,13 +192,23 @@ function selezionaNodo(w,id){
 // sotto funziona benissimo ma non si vede nulla — si illumina il vuoto e la
 // narrazione parla di una schermata coperta. Vale per ogni capitolo dal
 // secondo in poi; il primo racconta proprio l'accesso e va lasciato stare.
+// Con quale account si rientra se la schermata di accesso ricompare. Vuoto
+// significa «il primo», cioè la persona di cui parla la narrazione fino al
+// capitolo 9. L'ultimo capitolo lo cambia.
+var UTENTE_ATTESO=null;
+
 function assicuraAccesso(fine){
   var d=doc(), w=W();
   var schermata=d&&d.getElementById('loginScreen');
   var visibile = schermata && getComputedStyle(schermata).display!=='none';
   if(!visibile){ fine(); return }
   try{
-    var u=(w.UTENTI&&w.UTENTI[0])?w.UTENTI[0].email:null;
+    // Di norma si entra con il primo account, che è quello di cui parla tutta
+    // la narrazione. L'ultimo capitolo però mostra la piattaforma vista da
+    // un'altra persona: da lì in poi il rientro automatico deve riportare
+    // QUELLA, altrimenti il capitolo che parla di Giulia si riaprirebbe come
+    // Mario e mostrerebbe i numeri sbagliati.
+    var u=UTENTE_ATTESO || ((w.UTENTI&&w.UTENTI[0])?w.UTENTI[0].email:null);
     if(u&&typeof w.accediComeDemo==='function')w.accediComeDemo(u);
     else{
       var scheda=QQ('#accountDemo [onclick]')[0];
@@ -212,12 +223,28 @@ function assicuraAccesso(fine){
 // Chiude qualunque finestra sovrapposta. Serve PRIMA di parlare del registro:
 // il passo su «Perche' questo risultato» apre una modale, e quello successivo
 // raccontava il registro mentre la modale lo copriva per intero.
+// Toglie tutto quello che sta SOPRA la schermata: finestre, pannello delle
+// notifiche, suggerimenti dei grafici. In una dimostrazione un sovrapposto
+// rimasto aperto e' il difetto piu' visibile che ci sia — il faretto illumina
+// un elemento della pagina e davanti c'e' una finestra che parla d'altro.
+// Viene chiamata dal motore all'inizio di ogni passo, non solo dove qualcuno
+// si e' ricordato di scriverla.
 function chiudiFinestre(){
   var w=W(); if(!w)return;
   try{ if(typeof w.closeModal==='function')w.closeModal() }catch(e){}
   try{
-    var o=doc().getElementById('modalOverlay');
+    var d=doc();
+    var o=d.getElementById('modalOverlay');
     if(o)o.classList.remove('show');
+    // Il pannello delle notifiche non e' una finestra modale: resta aperto
+    // anche cambiando pagina, e la sua variabile va rimessa a posto o al clic
+    // successivo si riapre invece di chiudersi.
+    var np=d.getElementById('notifPanel');
+    if(np&&np.classList.contains('show')){
+      np.classList.remove('show');
+      try{ w.notifOpen=false }catch(e2){}
+    }
+    if(typeof w.govTip==='function')w.govTip(null);
   }catch(e){}
 }
 
@@ -267,7 +294,10 @@ function quanteLezioni(){
 function modelloCollegato(){
   try{
     var w=W();
-    return (typeof w.anyProviderReady==='function') ? (w.anyProviderReady()||null) : null;
+    var p=(typeof w.anyProviderReady==='function') ? (w.anyProviderReady()||null) : null;
+    // `anyProviderReady` restituisce l'identificativo interno — «openai» —
+    // che nella narrazione si legge come un refuso: si usa il nome per esteso.
+    return (p && typeof w.providerLabel==='function') ? w.providerLabel(p) : p;
   }catch(e){ return null }
 }
 
@@ -417,7 +447,7 @@ var COPIONE=[
 },
 {
   capitolo:3, titolo:'La palette dei blocchi',
-  testo:'Dieci categorie: trigger, AI, integrazioni, dati, output. E una che ai giocattoli manca: i <strong>Controlli</strong> — mascheramento dei dati personali, convalida dell\'output, approvazione umana, limitazione di frequenza.',
+  testo:'Dieci categorie: trigger, AI, integrazioni, dati, output. E una che ai giocattoli manca: i <strong>Controlli</strong>: mascheramento dei dati personali, convalida dell\'output, approvazione umana, limitazione di frequenza.',
   sel:'.builder-sidebar', pos:'right', durata:7500
 },
 {
@@ -441,7 +471,7 @@ var COPIONE=[
     var r=window.__kbEsito;
     if(!r)return 'Cerco fra i documenti aziendali per vedere <strong>cosa verrebbe recuperato davvero</strong>.';
     return r.n
-      ? 'Ho cercato «<em>'+r.q+'</em>»: la Knowledge Base restituisce <strong>'+r.n+' porzioni</strong>, ognuna con il documento di provenienza e quanto somiglia alla domanda. È questo che finisce nel prompt — non il documento intero, e non la conoscenza generale del modello.'
+      ? 'Ho cercato «<em>'+r.q+'</em>»: la Knowledge Base restituisce <strong>'+r.n+' porzioni</strong>, ognuna con il documento di provenienza e quanto somiglia alla domanda. È questo che finisce nel prompt, non il documento intero, e non la conoscenza generale del modello.'
       : 'Ho cercato «<em>'+r.q+'</em>» e la Knowledge Base <strong>non ha trovato nulla</strong>. Lo dichiara invece di far rispondere il modello a caso: un recupero a vuoto è un\'informazione, non un fallimento da nascondere.';
   },
   azione:function(fine){
@@ -621,13 +651,18 @@ var COPIONE=[
 },
 {
   capitolo:4, titolo:'Con un tetto dichiarato',
-  testo:'Il campo <em>Tetto di sicurezza</em> non è burocrazia: un ciclo senza limite dentro una pagina web blocca il browser, e davanti a una commissione non si recupera. Se gli elementi superano il tetto, il registro <strong>lo dichiara</strong> invece di troncare in silenzio — che è la cosa peggiore che un motore possa fare.',
+  testo:'Il campo <em>Tetto di sicurezza</em> non è burocrazia: un ciclo senza limite dentro una pagina web blocca il browser, e davanti a una commissione non si recupera. Se gli elementi superano il tetto, il registro <strong>lo dichiara</strong> invece di troncare in silenzio, che è la cosa peggiore che un motore possa fare.',
   pagina:'builder', sel:'#propsBody', pos:'left', durata:10000
 },
 // ── CAPITOLO 5 · Il modello, la chat, la pianificazione ────────
 {
   capitolo:5, titolo:'Collegare un modello',
-  testo:'Claude, OpenAI, Gemini, Mistral, oppure un <strong>modello che gira sul tuo computer</strong>. Si incolla la chiave e si preme <em>Testa</em>: la piattaforma fa una chiamata vera e dice se funziona.',
+  testo:function(){
+    var p=modelloCollegato();
+    return 'Claude, OpenAI, Gemini, Mistral, oppure un <strong>modello che gira sul tuo computer</strong>. Si incolla la chiave e si preme <em>Testa</em>: la piattaforma fa una chiamata vera e dice se funziona.'+
+      (p ? (' In questa sessione è già collegato <strong>'+escapaTitolo(p)+'</strong>.')
+         : ' <em>Per far girare la dimostrazione con un modello vero: metti in pausa qui, incolla la tua chiave nel pannello a sinistra, premi Testa e riprendi.</em>');
+  },
   pagina:'builder',
   azione:function(fine){
     chiudiFinestre();
@@ -664,7 +699,7 @@ var COPIONE=[
 },
 {
   capitolo:5, titolo:'Cambio fornitore, cambia l\'elenco dei modelli',
-  testo:'Passo a Claude: la tendina sotto si aggiorna con i modelli di <em>quel</em> fornitore, e il modello scelto per il precedente viene azzerato — <strong>«GPT-4o mini» non esiste in casa Anthropic</strong>. L\'identificativo finisce davvero nel corpo della richiesta HTTP: non è un\'etichetta decorativa.',
+  testo:'Passo a Claude: la tendina sotto si aggiorna con i modelli di <em>quel</em> fornitore, e il modello scelto per il precedente viene azzerato, <strong>«GPT-4o mini» non esiste in casa Anthropic</strong>. L\'identificativo finisce davvero nel corpo della richiesta HTTP: non è un\'etichetta decorativa.',
   pagina:'builder',
   azione:function(fine){
     var w=W();
@@ -769,9 +804,9 @@ var COPIONE=[
     return 'Un nodo scritto dal modello e uno trascinato dalla palette devono essere <strong>lo stesso nodo</strong>: '+
       'stesso nome, stessa icona, stessi campi da compilare. '+
       (quanti?('Qui '+quanti+' dei nodi appena creati corrispondono esattamente a una voce di palette'+
-               (nomi.length?(' — '+nomi.join(', ')):'')+'.'):'')+
-      ' Non è un dettaglio estetico: i campi di un controllo — <em>chi approva</em>, <em>quale messaggio</em>, '+
-      '<em>entro quando</em> — vengono riconosciuti <strong>dal nome</strong>. Un «Approvazione Umana» con la U '+
+               (nomi.length?(', '+nomi.join(', ')):'')+'.'):'')+
+      ' Non è un dettaglio estetico: i campi di un controllo, <em>chi approva</em>, <em>quale messaggio</em>, '+
+      '<em>entro quando</em>: vengono riconosciuti <strong>dal nome</strong>. Un «Approvazione Umana» con la U '+
       'maiuscola sembrerebbe il controllo giusto e non avrebbe nessuno di quei campi: un presidio finto, '+
       'che è peggio di un presidio assente.';
   },
@@ -790,7 +825,7 @@ var COPIONE=[
 },
 {
   capitolo:5, titolo:'E poi si chiede una modifica',
-  testo:'La chat non serve solo a partire da zero: <strong>a tela piena capisce cosa c\'è già</strong>. Chiedo di aggiungere la gestione degli errori, e i suggerimenti qui sotto cambiano di conseguenza — sono completamenti letti dal grafo, non esempi fissi.',
+  testo:'La chat non serve solo a partire da zero: <strong>a tela piena capisce cosa c\'è già</strong>. Chiedo di aggiungere la gestione degli errori, e i suggerimenti qui sotto cambiano di conseguenza, sono completamenti letti dal grafo, non esempi fissi.',
   pagina:'builder',
   azione:function(fine){
     var w=W();
@@ -832,7 +867,7 @@ var COPIONE=[
 },
 {
   capitolo:5, titolo:'Allegare un documento vero alla mail',
-  testo:'Il nodo email non manda solo testo. <strong>«Allega i file generati dal flusso»</strong> spedisce ciò che l\'esecuzione ha appena prodotto — un rapporto, un CSV, un PDF — e se a monte non c\'è ancora niente che li produca, il pannello <strong>non dà un errore</strong>: propone i formati e inserisce il blocco che li genera, al posto giusto. Accanto ci sono gli <em>allegati fissi</em>: un listino, un modulo, delle condizioni contrattuali presi dal computer o dalla Knowledge Base, che partono a ogni invio.',
+  testo:'Il nodo email non manda solo testo. <strong>«Allega i file generati dal flusso»</strong> spedisce ciò che l\'esecuzione ha appena prodotto, un rapporto, un CSV, un PDF, e se a monte non c\'è ancora niente che li produca, il pannello <strong>non dà un errore</strong>: propone i formati e inserisce il blocco che li genera, al posto giusto. Accanto ci sono gli <em>allegati fissi</em>: un listino, un modulo, delle condizioni contrattuali presi dal computer o dalla Knowledge Base, che partono a ogni invio.',
   pagina:'builder',
   azione:function(fine){
     var w=W();
@@ -907,7 +942,7 @@ var COPIONE=[
 },
 {
   capitolo:6, titolo:'E si può fermare a metà',
-  testo:'Accanto a Esegui c\'è <strong>Interrompi</strong>, e non è un pulsante finto: ferma davvero l\'esecuzione al nodo corrente. Il registro lo <em>dichiara</em> — l\'esecuzione resta come «interrotta», non sparisce e non finge di essere riuscita. Su un agente che scrive su sistemi veri, poterlo fermare è più importante che farlo partire.',
+  testo:'Accanto a Esegui c\'è <strong>Interrompi</strong>, e non è un pulsante finto: ferma davvero l\'esecuzione al nodo corrente. Il registro lo <em>dichiara</em>: l\'esecuzione resta come «interrotta», non sparisce e non finge di essere riuscita. Su un agente che scrive su sistemi veri, poterlo fermare è più importante che farlo partire.',
   pagina:'builder',
   sel:'#btnStop', pos:'top', durata:10000
 },
@@ -1017,7 +1052,9 @@ var COPIONE=[
     }
     setTimeout(function(){ try{ W().closeModal() }catch(e){} fine() },2400);
   },
-  sel:null, durata:8000
+  // Compila e invia il modulo aperto dal passo precedente: la finestra deve
+  // restare in piedi finché non è questo passo a chiuderla.
+  tieniAperto:true, sel:null, durata:8000
 },
 {
   capitolo:7, titolo:'Ora cambio cappello: sono il revisore',
@@ -1047,7 +1084,8 @@ var COPIONE=[
     try{ w.prompt=originale }catch(e){}
     setTimeout(function(){ try{ W().closeModal() }catch(e){} fine() },2000);
   },
-  sel:null, durata:9000
+  // Decide dentro la coda di revisione aperta dal passo precedente.
+  tieniAperto:true, sel:null, durata:9000
 },
 {
   capitolo:7, titolo:'L\'autore vede la richiesta',
@@ -1123,6 +1161,46 @@ var COPIONE=[
       setTimeout(function(){ try{ w.openLesson(0,0) }catch(e){} setTimeout(fine,900) },700);
     }catch(e){ fine() }
     setTimeout(fine,1500);
+  },
+  sel:'#learn-detail', pos:'left', durata:9000
+},
+{
+  capitolo:8, titolo:'Rispondo al quiz',
+  testo:function(){
+    var w=W(), xp='';
+    try{ if(window.__xpPrima!=null) xp=' L\'esperienza è passata da <strong>'+window.__xpPrima+'</strong> a <strong>'+w.profileStats().xp+'</strong>.' }catch(e){}
+    return 'La risposta giusta dà <strong>25 punti esperienza</strong>, una volta sola: il quiz già superato non si ripaga rifacendolo.'+xp+
+      ' Quella sbagliata non si limita a dire «no»: <em>spiega perché</em>, ed è la differenza fra una verifica e un ostacolo.';
+  },
+  pagina:'learning',
+  azione:function(fine){
+    var w=W();
+    try{ window.__xpPrima=w.profileStats().xp }catch(e){ window.__xpPrima=null }
+    // La risposta giusta si ricava dal contenuto della lezione aperta, non da
+    // un indice scritto nel copione: se un domani il quiz cambia, la
+    // dimostrazione continua a rispondere bene invece di sbagliare in scena.
+    var opzioni=QQ('#learn-detail .quiz-option');
+    if(!opzioni.length){ setTimeout(fine,600); return }
+    var m=/checkQuiz\('([^']+)'/.exec(opzioni[0].getAttribute('onclick')||'');
+    var chiave=m?m[1]:null, giusta=0;
+    try{ var q=w.lezioneQuiz(w.LESSON_CONTENT[chiave].quiz); if(q)giusta=q.correct }catch(e){}
+    clicca(opzioni[giusta]||opzioni[0]);
+    setTimeout(function(){
+      var b=chiave?Q('#quizSubmit-'+chiave):null;
+      if(b)clicca(b);
+      setTimeout(fine,1200);
+    },1100);
+  },
+  sel:'#learn-detail', pos:'left', durata:9500
+},
+{
+  capitolo:8, titolo:'«Provalo adesso»: dalla lezione al prodotto',
+  testo:'Ogni lezione finisce con un <strong>esercizio praticabile</strong> e il pulsante che apre il punto esatto dell\'applicazione di cui ha appena parlato. È la differenza fra un corso <em>sulla</em> piattaforma e un corso <em>dentro</em> la piattaforma: non c\'è un ambiente di esercitazione separato, si impara sugli stessi schermi in cui poi si lavora.',
+  pagina:'learning',
+  azione:function(fine){
+    var el=perTesto('#learn-detail .card','Provalo adesso');
+    if(el)el.scrollIntoView({block:'center'});
+    setTimeout(fine,900);
   },
   sel:'#learn-detail', pos:'left', durata:9000
 },
@@ -1258,7 +1336,7 @@ var COPIONE=[
   testo:function(){
     var s=sfidaDaCandidare()||{};
     return 'È il gesto che distingue una sfida da una bacheca: su «'+escapaTitolo(s.titolo)+'» si sceglie <strong>uno dei propri agenti</strong>, si lascia una nota per la giuria, e da quel momento il flusso viene misurato sulle sue esecuzioni reali'+
-      (s.metrica?(' — qui su <em>'+escapaTitolo(s.metrica.l).toLowerCase()+'</em>'):'')+
+      (s.metrica?(', qui su <em>'+escapaTitolo(s.metrica.l).toLowerCase()+'</em>'):'')+
       '. Candidare implica partecipare: l\'iscrizione si registra da sola, perché chiedere due gesti per la stessa intenzione fa solo dimenticare il secondo.';
   },
   azione:function(fine){
@@ -1274,12 +1352,20 @@ var COPIONE=[
       if(b)clicca(b);
       setTimeout(function(){
         scrivi('#sfNota','Gira ogni mattina sui contatti della notte, con il mascheramento prima del nodo AI.',function(){
-          setTimeout(fine,700);
+          // Si conferma qui, dentro il passo che ha compilato: lasciare il
+          // salvataggio al passo dopo significava tenere aperta una finestra
+          // a cavallo fra due passi, e se qualcuno saltava da indice la
+          // candidatura non veniva mai registrata.
+          setTimeout(function(){
+            var salva=perTesto('#modalContent .tb-btn','Candida');
+            if(salva)clicca(salva);
+            setTimeout(fine,1400);
+          },900);
         });
       },1400);
     },1000);
   },
-  pagina:'challenges', sel:'#modalContent', pos:'left', durata:9500
+  pagina:'challenges', sel:'#modalContent', pos:'left', durata:11000
 },
 {
   capitolo:8, titolo:'Il punteggio lo fanno le esecuzioni, non le promesse',
@@ -1290,28 +1376,20 @@ var COPIONE=[
       if(r)mio=' La mia candidatura è entrata in classifica con <strong>'+r.punti+' punti</strong>: '+r.det+'. Non l\'ho dichiarato io, è la lettura delle sue esecuzioni.';
     }catch(e){}
     return 'La formula è quella scritta nei criteri, applicata alle righe del registro esecuzioni.'+mio+
-      ' Accanto, il <strong>👍 della community</strong> resta una colonna a parte: uno dice cosa piace alle persone, l\'altro cosa fanno le esecuzioni — sommarli in un numero solo nasconderebbe quale dei due sta parlando. E la propria candidatura non si vota, altrimenti il voto misurerebbe quanti partecipanti ci sono.';
+      ' Accanto, il <strong>👍 della community</strong> resta una colonna a parte: uno dice cosa piace alle persone, l\'altro cosa fanno le esecuzioni, sommarli in un numero solo nasconderebbe quale dei due sta parlando. E la propria candidatura non si vota, altrimenti il voto misurerebbe quanti partecipanti ci sono.';
   },
   azione:function(fine){
     var w=W();
-    // La candidatura si CONFERMA qui: il passo precedente ha compilato la
-    // finestra, e chiuderla senza salvare avrebbe raccontato un gesto che non
-    // e' avvenuto — la classifica non conterrebbe niente di mio.
-    var salva=perTesto('#modalContent .tb-btn','Candida');
-    if(salva)clicca(salva);
+    try{
+      var s=sfidaDaCandidare();
+      var d=w.document.querySelector('#challenges-detail');
+      if(s&&(!d||!d.innerText.trim()))w.sfApriPagina(s.id);
+    }catch(e){}
     setTimeout(function(){
-      try{
-        if(typeof w.closeModal==='function')w.closeModal();
-        var s=sfidaDaCandidare();
-        var d=w.document.querySelector('#challenges-detail');
-        if(s&&(!d||!d.innerText.trim()))w.sfApriPagina(s.id);
-      }catch(e){}
-      setTimeout(function(){
-        var el=perTesto('#challenges-detail .card','Classifica');
-        if(el)el.scrollIntoView({block:'center'});
-        setTimeout(fine,900);
-      },900);
-    },1200);
+      var el=perTesto('#challenges-detail .card','Classifica');
+      if(el)el.scrollIntoView({block:'center'});
+      setTimeout(fine,900);
+    },1000);
   },
   pagina:'challenges', sel:'#challenges-detail', pos:'left', durata:10000
 },
@@ -1321,7 +1399,7 @@ var COPIONE=[
     var w=W(), n=0;
     try{ n=w.sfDomande('ama1').length }catch(e){}
     return 'L\'AMA promette che «le domande più votate aprono la sessione»: qui quella promessa ha un posto dove avverarsi. '+
-      (n?('Ce ne sono <strong>'+n+'</strong>, '):'Le domande sono ')+'ordinate <strong>per voti</strong> e non per data — che è il criterio dichiarato nel regolamento, quindi va rispettato anche nell\'elenco, non solo a parole. Chiunque può votarne una, e ritirare il proprio voto.';
+      (n?('Ce ne sono <strong>'+n+'</strong>, '):'Le domande sono ')+'ordinate <strong>per voti</strong> e non per data, che è il criterio dichiarato nel regolamento, quindi va rispettato anche nell\'elenco, non solo a parole. Chiunque può votarne una, e ritirare il proprio voto.';
   },
   azione:function(fine){
     var w=W();
@@ -1389,8 +1467,74 @@ var COPIONE=[
   sel:'#posts-list', pos:'right', durata:10000
 },
 {
+  capitolo:8, titolo:'Scrivo io un contributo',
+  testo:'Titolo, tipo, tag, testo e fino a <strong>cinque allegati</strong>. Il tipo non è decorativo: distingue una <em>domanda</em> da una <em>soluzione</em> da un <em>tutorial</em>, ed è quello che permette di cercare per intenzione e non solo per parole.',
+  pagina:'community',
+  azione:function(fine){
+    var w=W();
+    try{ if(typeof w.openNewPost==='function')w.openNewPost() }catch(e){}
+    setTimeout(function(){
+      scrivi('#newPostTitle','Come ho tagliato di due giorni l\'onboarding di un fornitore',function(){
+        scrivi('#newPostBody','Il flusso legge i dati dal portale, verifica la partita IVA, chiede l\'approvazione solo sopra i cinque milioni e genera il dossier. Il tempo se ne andava tutto nell\'attesa di una firma che nel 90% dei casi non serviva.',function(){
+          setTimeout(fine,600);
+        });
+      });
+    },1100);
+  },
+  sel:'#modalContent', pos:'left', durata:11000
+},
+{
+  capitolo:8, titolo:'Pubblicato, e il conto torna',
+  testo:function(){
+    var w=W(), n=0, mio=0;
+    try{ n=(w.POSTS||[]).length; mio=(typeof w.fmMieiPost==='function')?w.fmMieiPost():0 }catch(e){}
+    return 'Il post entra nell\'elenco: ora sono <strong>'+n+'</strong>, di cui <strong>'+mio+'</strong> miei. '+
+      'Pubblicare vale <strong>20 punti esperienza</strong>, e il contributo compare anche nel mio profilo pubblico, chi guarda la classifica vede da dove arrivano i punti, non solo il totale.';
+  },
+  pagina:'community',
+  // Pubblica dentro la finestra aperta dal passo precedente, poi la chiude.
+  tieniAperto:true,
+  azione:function(fine){
+    var b=perTesto('#modalContent .tb-btn','Pubblica');
+    if(b)clicca(b);
+    setTimeout(function(){ chiudiFinestre(); setTimeout(fine,700) },1600);
+  },
+  sel:'#posts-list', pos:'right', durata:9000
+},
+{
+  capitolo:8, titolo:'Apro una discussione e rispondo',
+  testo:function(){
+    var w=W(), c=0;
+    try{ c=(typeof w.fmMieiCommenti==='function')?w.fmMieiCommenti():0 }catch(e){}
+    return 'Il post si apre per esteso, con le <strong>risposte in fila</strong> e il campo per aggiungerne una. '+
+      (c?('Di risposte mie ora ce ne sono <strong>'+c+'</strong>. '):'')+
+      'Il <strong>«mi piace» si conta una volta sola</strong>: è una riga con il nome di chi l\'ha messo, non un contatore che sale a ogni clic, ricliccando si toglie. E anche la <em>visualizzazione</em> si registra una volta per persona: riaprire lo stesso post dieci volte non fa dieci lettori.';
+  },
+  pagina:'community',
+  azione:function(fine){
+    var w=W();
+    try{
+      // Un post di qualcun altro: mettere «mi piace» al proprio, e commentarsi
+      // da soli, racconterebbe l'esatto contrario di una community.
+      var altrui=(w.POSTS||[]).filter(function(x){return x.user!==w.utenteCorrente()});
+      var p=altrui[0]||(w.POSTS||[])[0];
+      if(!p){ setTimeout(fine,600); return }
+      if(typeof w.fmAlternaLike==='function')w.fmAlternaLike(p.id);
+      if(typeof w.openPostDetail==='function')w.openPostDetail(p.id);
+      setTimeout(function(){
+        if(!Q('#newCommentInput')){ setTimeout(fine,500); return }
+        scrivi('#newCommentInput','Ci ho provato anch\'io: il pezzo che cambia tutto è mettere il mascheramento PRIMA del nodo AI.',function(){
+          try{ if(typeof w.addComment==='function')w.addComment(p.id) }catch(e){}
+          setTimeout(fine,1100);
+        });
+      },1200);
+    }catch(e){ setTimeout(fine,600) }
+  },
+  sel:'#modalContent', pos:'left', durata:10000
+},
+{
   capitolo:8, titolo:'I riconoscimenti si vedono da fuori',
-  testo:'La classifica non e\u0300 un elenco: ogni riga apre il <strong>profilo pubblico</strong> di quella persona, con i suoi riconoscimenti. Sono tutti <em>calcolati sulla sua attivita\u0300</em> — agenti scritti, esecuzioni, controlli inseriti, prompt, giorni consecutivi — non assegnati a mano. Un badge che vede solo chi lo possiede non riconosce niente davanti a nessuno.',
+  testo:'La classifica non e\u0300 un elenco: ogni riga apre il <strong>profilo pubblico</strong> di quella persona, con i suoi riconoscimenti. Sono tutti <em>calcolati sulla sua attivita\u0300</em>: agenti scritti, esecuzioni, controlli inseriti, prompt, giorni consecutivi, non assegnati a mano. Un badge che vede solo chi lo possiede non riconosce niente davanti a nessuno.',
   azione:function(fine){
     var w=W();
     try{
@@ -1428,7 +1572,7 @@ var COPIONE=[
 },
 {
   capitolo:9, titolo:'Cambio le mie informazioni',
-  testo:'Modifico ruolo e organizzazione. Se cambiassi il <strong>nome</strong>, la piattaforma direbbe prima <em>quanti elementi cambieranno intestatario</em> — agenti, esecuzioni, pubblicazioni, recensioni, candidature — e chiederebbe conferma: il nome è la chiave di attribuzione in ventidue tabelle.',
+  testo:'Modifico ruolo e organizzazione. Se cambiassi il <strong>nome</strong>, la piattaforma direbbe prima <em>quanti elementi cambieranno intestatario</em>: agenti, esecuzioni, pubblicazioni, recensioni, candidature, e chiederebbe conferma: il nome è la chiave di attribuzione in ventidue tabelle.',
   azione:function(fine){
     var w=W();
     try{
@@ -1466,8 +1610,120 @@ var COPIONE=[
 },
 {
   capitolo:9, titolo:'Il giro è chiuso',
-  testo:'Abbiamo <strong>costruito</strong> un agente da zero, <strong>configurato</strong> il modello, <strong>eseguito</strong> tre flussi, <strong>pubblicato</strong>, <strong>revisionato</strong>, corretto e approvato — e attraversato formazione, sfide, community, profilo e monitoraggio. Tutto in un\'applicazione che gira nel browser, senza server.',
+  testo:'Abbiamo <strong>costruito</strong> un agente da zero, <strong>configurato</strong> il modello, <strong>eseguito</strong> tre flussi, <strong>pubblicato</strong>, <strong>revisionato</strong>, corretto e approvato, e attraversato formazione, sfide, community, profilo e monitoraggio. Tutto in un\'applicazione che gira nel browser, senza server.',
   pagina:'dashboard', sel:'.stats-row', pos:'bottom', durata:10000
+},
+
+// ── CAPITOLO 10 · La stessa piattaforma, un'altra persona ──────
+// Serve a mostrare che la separazione dei dati non e' una promessa scritta
+// nella documentazione: si esce, si rientra come qualcun altro, e i numeri
+// cambiano davanti agli occhi di chi guarda.
+{
+  capitolo:10, titolo:'Esco',
+  testo:function(){
+    var w=W(), n='';
+    // I nomi finiscono con un punto — «Mario R.» — e aggiungerne un altro
+    // fa «Mario R..»: il punto della frase c'e' gia'.
+    try{ n=String(w.utenteCorrente()||'').replace(/\.$/,'') }catch(e){}
+    return 'Fin qui la piattaforma l\'ha usata <strong>'+escapaTitolo(n||'una persona sola')+'</strong>. Adesso esco e rientro come qualcun altro: '+
+      'il modo più diretto per far vedere che <strong>agenti, esecuzioni, progressi, iscrizioni e punteggi appartengono alla persona</strong>, e non alla piattaforma.';
+  },
+  azione:function(fine){
+    UTENTE_ATTESO=null;
+    ricaricaApp(function(){ setTimeout(fine,600) });
+  },
+  sel:'#loginScreen', pos:'right', durata:8500
+},
+{
+  capitolo:10, titolo:'Entro come Giulia',
+  testo:function(){
+    var w=W(), r='';
+    try{
+      var g=(w.UTENTI||[]).filter(function(u){return /giulia/i.test(u.email)})[0];
+      if(g)r=' <em>'+escapaTitolo(g.role)+'</em>, '+escapaTitolo(g.org)+'.';
+    }catch(e){}
+    return 'Le quattro schede sotto il modulo non sono decorazione: sono <strong>account veri</strong>, con dati propri.'+r+
+      ' Nessuna password da leggere a voce: la scheda compila il modulo e accede.';
+  },
+  azione:function(fine){
+    var w=W();
+    try{
+      var g=(w.UTENTI||[]).filter(function(u){return /giulia/i.test(u.email)})[0];
+      UTENTE_ATTESO = g ? g.email : null;
+      var scheda=perTesto('#accountDemo .account-scheda','Giulia');
+      if(scheda)clicca(scheda);
+      else if(g&&typeof w.accediComeDemo==='function')w.accediComeDemo(g.email);
+    }catch(e){}
+    setTimeout(fine,2200);
+  },
+  sel:'#accountDemo', pos:'right', durata:9000
+},
+{
+  capitolo:10, titolo:'Gli stessi riquadri, altri numeri',
+  testo:function(){
+    var w=W(), t='';
+    try{
+      var s=w.profileStats();
+      // Gli stessi numeri che il riquadro illuminato sta mostrando, composti
+      // allo stesso modo: la scheda «agenti» conta creati piu' installati, e
+      // dire un numero diverso da quello che si vede sarebbe la cosa peggiore
+      // da fare mentre lo si indica.
+      t=' Agenti <strong>'+(s.agenti+s.installati)+'</strong>: '+s.agenti+(s.agenti===1?' creato':' creati')+' e '+s.installati+(s.installati===1?' installato':' installati')+' —, '+
+        'esecuzioni <strong>'+s.esecuzioni+'</strong>, esperienza <strong>'+s.xp+'</strong>: '+
+        'sono le righe del database filtrate su di lei, non un secondo insieme di dati finti.';
+    }catch(e){}
+    return 'Stessa applicazione, stessa dashboard, <strong>contenuto diverso</strong>.'+t+
+      ' Anche l\'attività recente racconta il suo lavoro, non quello di prima.';
+  },
+  pagina:'dashboard', sel:'.stats-row', pos:'bottom', durata:9500
+},
+{
+  capitolo:10, titolo:'Un altro profilo, altri riconoscimenti',
+  testo:function(){
+    var w=W(), b='';
+    try{
+      var tutti=w.profileBadges(w.profileStats());
+      var presi=tutti.filter(function(x){return x.ok});
+      b=' Dei <strong>'+tutti.length+'</strong> riconoscimenti ne ha ottenuti <strong>'+presi.length+'</strong>, e non sono gli stessi di prima: ognuno ha una soglia calcolata sulla <em>sua</em> attività.';
+    }catch(e){}
+    return 'Il profilo è suo: ruolo, presentazione, obiettivi, badge.'+b+
+      ' È qui che si vede la differenza fra una gamification dichiarata e una calcolata: nessuno ha assegnato niente a mano.';
+  },
+  pagina:'profile', sel:'.page-pad', pos:'bottom', durata:9500
+},
+{
+  capitolo:10, titolo:'Sfide e formazione ripartono da dove è lei',
+  testo:function(){
+    var w=W(), s='', l='';
+    try{
+      var isc=(w.SFIDE||[]).filter(function(x){ try{ return w.sfIscritto(x.id) }catch(e){ return false } }).length;
+      var cand=(w.SFIDE||[]).filter(function(x){ try{ return !!w.sfCandidatura(x.id) }catch(e){ return false } }).length;
+      s=' Risulta iscritta a <strong>'+isc+'</strong> iniziative e ha <strong>'+cand+'</strong> agenti in gara: sono le sue, non quelle di Mario.';
+    }catch(e){}
+    try{
+      var n=w.livelloRaggiunto();
+      l=n ? (' Nel Learning Hub ha raggiunto <strong>'+w.livelloInfo(n).nome+'</strong>.')
+          : ' Nel Learning Hub non ha ancora completato il primo livello: la barra riparte da lì.';
+    }catch(e){}
+    return 'Le iscrizioni, le candidature e i progressi dei corsi sono per persona.'+s+l+
+      ' Il catalogo, i contenuti dei corsi e le discussioni restano invece <strong>in comune</strong>: è ciò che l\'organizzazione mette a disposizione, e non avrebbe senso duplicarlo per ognuno.';
+  },
+  pagina:'challenges',
+  azione:function(fine){
+    var w=W();
+    try{ if(typeof w.renderChallenges==='function')w.renderChallenges() }catch(e){}
+    setTimeout(fine,900);
+  },
+  sel:'#challenges-content', pos:'bottom', durata:10000
+},
+{
+  capitolo:10, titolo:'Fine',
+  testo:'Una piattaforma sola, dati separati per persona, tutto dentro il browser. Da qui si ricomincia: <strong>il ripristino</strong> rimette lo stato com\'era prima della dimostrazione, così la prossima parte identica a questa.',
+  azione:function(fine){
+    UTENTE_ATTESO=null;
+    setTimeout(fine,400);
+  },
+  pagina:'dashboard', sel:'.stats-row', pos:'bottom', durata:9000
 }
 
 ];

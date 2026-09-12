@@ -224,13 +224,13 @@ function seedDemoData(){
   // verde non permetterebbe di mostrare né i registri d'errore né il
   // Monitoraggio, che su dati perfetti non ha nulla da dire.
   var storico=[
-    {a:0,st:'ok',     d:2840,m:'builder',  g:6,s:'Contatto qualificato — punteggio 82, notificato su #commerciale'},
-    {a:0,st:'ok',     d:3120,m:'scheduled',g:5,s:'Contatto da coltivare — punteggio 41, aggiornato su HubSpot'},
+    {a:0,st:'ok',     d:2840,m:'builder',  g:6,s:'Contatto qualificato, punteggio 82, notificato su #commerciale'},
+    {a:0,st:'ok',     d:3120,m:'scheduled',g:5,s:'Contatto da coltivare, punteggio 41, aggiornato su HubSpot'},
     {a:1,st:'err',    d:1450,m:'builder',  g:5,s:'Convalida output fallita: totale non quadra con imponibile piu IVA'},
-    {a:0,st:'ok',     d:2610,m:'scheduled',g:4,s:'Contatto qualificato — punteggio 91'},
+    {a:0,st:'ok',     d:2610,m:'scheduled',g:4,s:'Contatto qualificato, punteggio 91'},
     {a:2,st:'ok',     d:4380,m:'builder',  g:4,s:'Risposta inviata citando regolamento-rimborsi.txt Art. 2'},
     {a:1,st:'waiting',d:1980,m:'builder',  g:3,s:'In attesa di approvazione: campi estratti da verificare'},
-    {a:3,st:'ok',     d:5240,m:'builder',  g:3,s:'Indice di anomalia 34 — avviata la liquidazione'},
+    {a:3,st:'ok',     d:5240,m:'builder',  g:3,s:'Indice di anomalia 34, avviata la liquidazione'},
     {a:2,st:'ok',     d:3990,m:'scheduled',g:2,s:'Risposta inviata citando faq-clienti.txt'},
     {a:3,st:'err',    d:2210,m:'builder',  g:2,s:'PostgreSQL non raggiungibile: storico sinistri non consultabile'},
     {a:0,st:'aborted',d:1180,m:'builder',  g:1,s:'Interrotta dall utente dopo 2 nodi'},

@@ -57,7 +57,7 @@ function explainExecution(fonte){
     String(parseInt(localStorage.getItem('relaition_xai_aperto')||'0',10)+1))}catch(e){}
   var ev=function(tipo){return d.eventi.filter(function(e){return e.event_type===tipo})};
 
-  var html='<div style="display:flex;justify-content:space-between;align-items:center"><h2>🔍 Perché questo risultato</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+  var html='<div style="display:flex;justify-content:space-between;align-items:center"><h2>Perché questo risultato</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:8px 0 16px">Ricostruzione di ciò che ha determinato l\'esito di «'+escHtml(d.agente||'esecuzione')+'», a partire dagli eventi registrati durante l\'esecuzione. Nessun elemento è ricostruito a posteriori.</p>';
 
   // ── 1. FONTI CONSULTATE ──

@@ -58,24 +58,24 @@ function markAllRead(){
 
 function openDocsModal(){
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>📖 Documentazione</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Documentazione</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<div class="tabs mt-16" style="margin-bottom:16px">'+
       '<div class="tab active">Quick Start</div>'+
     '</div>'+
     '<div class="lesson-content" style="border:none;padding:0">'+
-    '<h3>🚀 Quick Start in 4 passi</h3>'+
+    '<h3>Quick Start in 4 passi</h3>'+
     '<p><strong>1. Configura l\'AI</strong>: Nel Builder, pannello laterale sinistro in basso: scegli il provider (Claude, GPT, Gemini o endpoint custom), inserisci la API key e clicca Test.</p>'+
     '<p><strong>2. Crea il workflow</strong>: Due modalità: trascina i blocchi dalla palette (63 connettori in 10 categorie) oppure descrivi l\'obiettivo nell\'AI Chat Builder in alto.</p>'+
     '<p><strong>3. Configura i nodi</strong>: Clicca un nodo per aprire il pannello proprietà: ogni connettore ha campi specifici (canale Slack, query SQL, bucket S3...). I nodi AI hanno system prompt e temperature.</p>'+
     '<p><strong>4. Esegui e monitora</strong>: ▶️ Run esegue il flusso end-to-end: i nodi si illuminano in sequenza, l\'execution log mostra output reali, tutto viene tracciato nel Log Esecuzioni.</p>'+
-    '<div class="concept-box">💡 <strong>Placeholder dinamici:</strong> usa <code>{{result}}</code> nei campi dei connettori per inserire l\'output del nodo precedente.</div>'+
+    '<div class="concept-box"><strong>Placeholder dinamici:</strong> usa <code>{{result}}</code> nei campi dei connettori per inserire l\'output del nodo precedente.</div>'+
     '</div>'
   ,true);
 }
 
 function bookOfficeHours(){
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>🤝 Prenota Office Hours</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Prenota Office Hours</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Sessioni 1:1 di 30 minuti con il team RelAItion, ogni mercoledì.</p>'+
     '<div class="prop-group"><div class="prop-label">Slot disponibili</div><select class="prop-select" id="ohSlot"><option>Mercoledì 8 Luglio: 17:00</option><option>Mercoledì 8 Luglio, 17:30</option><option>Mercoledì 8 Luglio, 18:00</option><option>Mercoledì 15 Luglio, 17:00</option></select></div>'+
     '<div class="prop-group"><div class="prop-label">Argomento</div><input class="prop-input" id="ohTopic" placeholder="es. Aiuto con integrazione Salesforce"></div>'+

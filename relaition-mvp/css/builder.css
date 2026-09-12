@@ -125,7 +125,8 @@ textarea.prop-input{min-height:80px;resize:vertical}
 .b-node.exec-skipped{opacity:.35}
 .chat-builder{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:30;width:520px;max-width:90%}
 .chat-builder-bar{display:flex;gap:8px;background:var(--card);border:1px solid var(--bo);border-radius:14px;padding:8px;box-shadow:var(--sh-lg);align-items:center}
-.chat-builder-bar input{flex:1;border:none;outline:none;font-size:13px;font-family:inherit;padding:6px 10px;background:transparent}
+.chat-builder-bar input,.chat-builder-bar textarea{flex:1;border:none;outline:none;font-size:13px;font-family:inherit;padding:6px 10px;background:transparent}
+.chat-builder-bar textarea{resize:none;line-height:1.45;max-height:132px;overflow-y:auto;min-width:0}
 .chat-builder-btn{height:34px;padding:0 16px;border-radius:10px;border:none;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:var(--trans);font-family:inherit;flex-shrink:0}
 .chat-builder-btn:hover{box-shadow:0 4px 12px rgba(99,102,241,.4)}
 .chat-builder-btn:disabled{opacity:.5;cursor:wait}
@@ -361,3 +362,20 @@ body.bgrip-trascino.row{cursor:row-resize}
 .exec-exp{flex-shrink:0;cursor:pointer;color:var(--tx4);font-size:10px;line-height:1;
   padding:2px 5px;border:1px solid var(--bo);border-radius:5px;transition:var(--trans)}
 .exec-exp:hover{color:var(--ac-d);border-color:var(--ac);background:var(--ac-l,var(--bg2))}
+
+/* Pulsanti spenti mentre la sandbox didattica è attiva: il limite si vede
+   prima del clic, non dopo. */
+.tb-btn.sandbox-off{opacity:.38;cursor:not-allowed;filter:grayscale(1)}
+
+/* Aiuto alla scrittura sotto le aree di testo: un collegamento discreto che
+   apre una riga in cui si dice cosa si vuole, e due azioni. Non un pannello:
+   deve stare sotto un campo senza rubargli la scena. */
+.aiuto-testo{margin-top:5px}
+.aiuto-testo-apri{background:none;border:none;padding:0;font:inherit;font-size:10.5px;font-weight:700;color:#6D28D9;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.aiuto-testo-apri:hover{color:#4C1D95}
+.aiuto-testo-corpo{margin-top:6px;padding:8px;border:1px dashed #C4B5FD;border-radius:8px;background:#FAF5FF}
+.aiuto-testo-corpo textarea{resize:vertical;font-size:11.5px}
+.aiuto-testo-azioni{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.aiuto-testo-azioni .tb-btn{height:26px;font-size:10.5px;padding:0 9px}
+.aiuto-testo-stato{font-size:10.5px;color:var(--tx3);line-height:1.4;flex-basis:100%}
+.aiuto-testo-link{color:#6D28D9;cursor:pointer;text-decoration:underline}

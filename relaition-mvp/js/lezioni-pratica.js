@@ -70,7 +70,7 @@ function bloccoPratica(key){
   return '<div class="card" style="margin-top:18px;padding:14px 16px;border-left:3px solid var(--ac2);display:flex;gap:14px;align-items:center;flex-wrap:wrap">'+
     '<div style="font-size:24px">🧪</div>'+
     '<div style="flex:1;min-width:200px">'+
-      '<div style="font-size:13px;font-weight:800">Provalo adesso — '+escHtml(p.t)+'</div>'+
+      '<div style="font-size:13px;font-weight:800">Provalo adesso, '+escHtml(p.t)+'</div>'+
       '<div style="font-size:11.5px;color:var(--tx3);margin-top:3px;line-height:1.55">'+escHtml(p.d)+'</div>'+
     '</div>'+
     '<button class="tb-btn primary" style="flex-shrink:0" onclick="'+p.a+'">'+escHtml(p.l)+' →</button>'+

@@ -5,23 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RelAItion · AI Agent Marketplace</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Il tema salvato si applica PRIMA del primo disegno: messo dopo, la pagina
+     comparirebbe chiara e diventerebbe scura un istante dopo. -->
+<script>try{if(localStorage.getItem("relaition_tema")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/marketplace.css">
 <link rel="stylesheet" href="css/builder.css">
 <link rel="stylesheet" href="css/pages.css">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#2563EB">
-<link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="apple-touch-icon" href="icon.svg">
+<meta name="theme-color" content="#4F46E5">
+<link rel="icon" type="image/png" href="brand/icon-192.png">
+<link rel="apple-touch-icon" href="brand/icon-192.png">
 </head>
 <body>
 <div id="loginScreen" style="position:fixed;inset:0;background:linear-gradient(160deg,#0F172A 0%,#1E293B 100%);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:Inter,sans-serif;padding:20px">
   <div style="width:100%;max-width:380px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:36px 32px;backdrop-filter:blur(12px)">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
-      <div style="width:44px;height:44px;background:linear-gradient(135deg,#2563EB,#7C3AED);border-radius:12px;display:grid;place-items:center;font-size:22px;box-shadow:0 4px 12px rgba(37,99,235,.35)"><svg viewBox="0 0 512 512" width="24" height="24" aria-hidden="true"><path d="M292 96 L168 288 h74 l-22 128 124 -192 h-74 z" fill="#fff"/></svg></div>
-      <div><div style="color:#F8FAFC;font-size:19px;font-weight:800;letter-spacing:-.5px">RelAItion</div><div style="color:rgba(148,163,184,.7);font-size:11px;font-weight:500;letter-spacing:.5px">AI Agent Marketplace</div></div>
-    </div>
+    <!-- Logo ufficiale per sfondo scuro (brand/logo-dark.png), con il claim
+         Learn / Build / Share / Grow gia' dentro. -->
+    <img src="brand/logo-dark.png" alt="RelAItion. Learn, Build, Share, Grow" class="logo-intero" style="margin:-6px 0 18px">
     <div style="color:#F1F5F9;font-size:16px;font-weight:700;margin-bottom:4px">Bentornato</div>
     <div style="color:#94A3B8;font-size:12px;margin-bottom:22px">Accedi per continuare sulla piattaforma</div>
     <form id="loginForm" onsubmit="return doLogin(event)">
@@ -48,7 +50,7 @@
   </div>
 </div>
 <div id="bootOverlay" style="position:fixed;inset:0;background:linear-gradient(160deg,#0F172A 0%,#1E293B 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:Inter,sans-serif;gap:12px">
-  <div style="font-size:32px;width:44px;height:44px;background:linear-gradient(135deg,#2563EB,#7C3AED);border-radius:12px;display:grid;place-items:center;box-shadow:0 4px 12px rgba(37,99,235,.35)"><svg viewBox="0 0 512 512" width="24" height="24" aria-hidden="true"><path d="M292 96 L168 288 h74 l-22 128 124 -192 h-74 z" fill="#fff"/></svg></div>
+  <img src="brand/logo-dark.png" alt="RelAItion" class="logo-intero" style="width:260px">
   <div style="font-size:13px;color:#94A3B8">Inizializzazione database locale (SQLite)...</div>
 </div>
 <div class="app">
@@ -57,8 +59,8 @@
   <div class="logo-area">
     <div style="display:flex;align-items:center;gap:8px">
       <div class="logo-row" style="flex:1;min-width:0" onclick="go('dashboard')" title="Torna alla Dashboard">
-        <div class="logo-mark"><svg viewBox="0 0 512 512" width="20" height="20" aria-hidden="true"><path d="M292 96 L168 288 h74 l-22 128 124 -192 h-74 z" fill="#fff"/></svg></div>
-        <div><div class="logo-text">RelAItion</div><div class="logo-sub">AI Agent Marketplace</div></div>
+        <div class="logo-mark"><img src="brand/mark.png" alt="" width="32" height="30"></div>
+        <div><div class="logo-text">RelAItion</div><div class="logo-sub claim claim-mini"><span>Learn</span><i>/</i><span>Build</span><i>/</i><span>Share</span><i>/</i><span>Grow</span></div></div>
       </div>
       <button class="sb-toggle" id="sbToggle" onclick="alternaMenu()" title="Riduci il menu" aria-label="Riduci il menu">☰</button>
     </div>
@@ -104,6 +106,7 @@
     <div class="tb-spacer"></div>
     <div class="tb-search"><span>🔍</span><input placeholder="Cerca agenti, corsi, post..." id="globalSearch" oninput="onGlobalSearch(this.value)"></div>
     <button class="tb-btn" id="btnInstallApp" onclick="installApp()" style="display:none" title="Installa RelAItion come applicazione sul computer">⬇️ Installa app</button>
+    <div class="tb-icon-btn" title="Passa al tema scuro" onclick="alternaTema()"><span class="tb-tema" id="temaIcona">☾</span></div>
     <div class="tb-icon-btn" title="Connessioni: cartelle, endpoint, database" onclick="openConnessioni()"><span>🔌</span></div>
     <div class="tb-icon-btn" title="La tua Knowledge Base" onclick="openKnowledgeBaseModal()"><span>📦</span></div>
     <div class="tb-icon-btn" onclick="toggleNotifications()"><span>🔔</span><div class="notif-dot"></div></div>
@@ -128,17 +131,17 @@
 
         <div class="grid-2">
           <div class="card">
-            <div class="card-header"><div class="card-title">📈 Agenti più usati</div></div>
+            <div class="card-header"><div class="card-title">Agenti più usati</div></div>
             <div id="dash-popular"></div>
           </div>
           <div class="card">
-            <div class="card-header"><div class="card-title">🕐 Attività recente</div></div>
+            <div class="card-header"><div class="card-title">Attività recente</div></div>
             <div id="dash-activity"></div>
           </div>
         </div>
 
         <div class="card mt-20">
-          <div class="card-header"><div class="card-title">🚀 Quick Actions</div></div>
+          <div class="card-header"><div class="card-title">Quick Actions</div></div>
           <div style="display:flex;gap:12px;flex-wrap:wrap">
             <button class="tb-btn" onclick="startNewAgent()">🔧 Crea nuovo agente</button>
             <button class="tb-btn" onclick="go('marketplace')">🏪 Esplora marketplace</button>
@@ -149,11 +152,11 @@
 
         <div class="grid-2 mt-20">
           <div class="card">
-            <div class="card-header"><div class="card-title">💡 Consigliati per te</div><span class="badge badge-b">In base al tuo profilo</span></div>
+            <div class="card-header"><div class="card-title">Consigliati per te</div><span class="badge badge-b">In base al tuo profilo</span></div>
             <div id="dash-suggestions"></div>
           </div>
           <div class="card">
-            <div class="card-header"><div class="card-title">📢 Novità piattaforma</div></div>
+            <div class="card-header"><div class="card-title">Novità piattaforma</div></div>
             <div id="dash-news"></div>
           </div>
         </div>
@@ -198,7 +201,7 @@
         <!-- Palette -->
         <div class="builder-sidebar">
           <div class="builder-sidebar-header">
-            <h3>🧩 Blocchi</h3>
+            <h3>Blocchi</h3>
             <input class="palette-search" placeholder="Cerca blocchi..." id="paletteSearch" oninput="filterPalette(this.value)">
           </div>
           <div class="palette-tabs" style="flex-wrap:wrap">
@@ -241,7 +244,7 @@
                 </select>
                 <input class="ai-key-input" style="width:100%;margin-bottom:6px" id="localeUrl" placeholder="http://localhost:11434">
                 <div style="display:flex;gap:6px;margin-bottom:6px">
-                  <select class="prop-select" id="localeModel" style="flex:1"><option value="">— nessun modello rilevato —</option></select>
+                  <select class="prop-select" id="localeModel" style="flex:1"><option value="">nessun modello rilevato</option></select>
                   <button class="tb-btn" onclick="discoverLocalModels()" style="height:30px;font-size:11px;padding:0 10px" title="Cerca i modelli installati">🔄</button>
                 </div>
                 <div style="font-size:10px;color:var(--tx4);line-height:1.5">Nessuna chiave necessaria. Il modello gira sul tuo computer: i dati non escono dalla macchina.</div>
@@ -287,7 +290,9 @@
               <div class="chat-builder-bar">
                 <span style="font-size:16px;padding-left:6px">✨</span>
                 <span id="chatAIStatusDot" title="Stato AI" style="width:8px;height:8px;border-radius:50%;background:var(--tx4);flex-shrink:0"></span>
-                <input id="chatBuilderInput" placeholder="Descrivi l'agente che vuoi creare... es: 'qualifica i lead in arrivo e notifica il sales team'" onkeydown="if(event.key==='Enter')aiGenerateWorkflow()">
+                <!-- Area di testo, non campo a riga singola: una richiesta articolata si scrive
+                     su piu' righe. Invio genera, Maiusc+Invio va a capo, e l'altezza segue il testo. -->
+                <textarea id="chatBuilderInput" rows="1" placeholder="Descrivi l'agente che vuoi creare... es: 'qualifica i lead in arrivo e notifica il sales team' (Maiusc+Invio per andare a capo)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiGenerateWorkflow()}" oninput="adattaAltezza(this)"></textarea>
                 <button class="chat-builder-btn" id="chatBuilderBtn" onclick="aiGenerateWorkflow()">Genera</button>
               </div>
               <div class="chat-builder-hint" id="chatBuilderHint">🤖 AI Chat Builder: crea o modifica il workflow in linguaggio naturale</div>
@@ -343,7 +348,7 @@
         <div class="builder-props" id="builderProps">
           <div class="builder-props-header" style="flex-direction:column;align-items:stretch;gap:10px">
             <div style="display:flex;justify-content:space-between;align-items:center">
-              <h3>⚙️ Proprietà</h3>
+              <h3>Proprietà</h3>
               <div style="display:flex;gap:6px;align-items:center">
                 <span id="suggBadge" class="chip" onclick="checkWorkflow()" style="display:none;font-size:11px;color:#A21CAF;background:#FDF4FF;border:1px solid #F5D0FE;padding:3px 9px;border-radius:20px;cursor:pointer;font-weight:600"></span>
                 <button class="tb-btn" onclick="startOnboardingTour()" title="Guida rapida: come costruire un workflow" style="width:28px;height:28px;padding:0;border-radius:50%"><center>&nbsp;&nbsp;❓</center></button>
@@ -388,7 +393,7 @@
     <!-- ═══ EXEC LOG ═══ -->
     <div class="page" id="page-execlog">
       <div class="page-pad">
-        <div class="section-title">📜 Log Esecuzioni</div>
+        <div class="section-title">Log Esecuzioni</div>
         <div class="section-sub">Storico completo delle esecuzioni dei tuoi agenti: audit trail personale con esito, durata e dettaglio nodi.</div>
         <div id="execlog-content"></div>
       </div>
@@ -397,7 +402,7 @@
     <!-- ═══ GOVERNO DELLA PIATTAFORMA ═══ -->
     <div class="page" id="page-monitoraggio">
       <div class="page-pad">
-        <div class="section-title">📡 Monitoraggio della piattaforma</div>
+        <div class="section-title">Monitoraggio della piattaforma</div>
         <div class="section-sub">Vista complessiva su tutta la piattaforma: totali, medie per utente, presidio e segnali di rischio. Ogni numero è calcolato sui dati reali, non stimato.</div>
         <div id="monitoraggio-body"></div>
       </div>
@@ -435,7 +440,7 @@
     <!-- ═══ CHALLENGES ═══ -->
     <div class="page" id="page-challenges">
       <div class="page-pad">
-        <div class="section-title">🏆 Sfide & Eventi</div>
+        <div class="section-title">Sfide & Eventi</div>
         <div class="section-sub">Hackathon, competizioni e sfide a tema per guadagnare XP e badge.</div>
         <div id="challenges-content"></div>
         <div id="challenges-detail" class="lesson-view"></div>
@@ -445,7 +450,7 @@
     <!-- ═══ COMMUNITY ═══ -->
     <div class="page" id="page-community">
       <div class="page-pad">
-        <div class="section-title">💬 Community</div>
+        <div class="section-title">Community</div>
         <div class="section-sub">Condividi, chiedi e impara dalla community di AI agent builders.</div>
         <div class="community-grid">
           <div>
@@ -460,15 +465,15 @@
           </div>
           <div>
             <div class="com-sidebar-card">
-              <h3>🏅 Leaderboard</h3>
+              <h3>Leaderboard</h3>
               <div id="leaderboard"></div>
             </div>
             <div class="com-sidebar-card">
-              <h3>📅 Prossimi eventi</h3>
+              <h3>Prossimi eventi</h3>
               <div id="events-list"></div>
             </div>
             <div class="com-sidebar-card">
-              <h3>🔥 Tag popolari</h3>
+              <h3>Tag popolari</h3>
               <div id="popular-tags" style="display:flex;flex-wrap:wrap;gap:6px"></div>
             </div>
           </div>
@@ -499,30 +504,30 @@
         <div class="profile-grid">
           <div>
             <div class="card mb-16">
-              <div class="card-header"><div class="card-title">📁 Il tuo lavoro</div></div>
+              <div class="card-header"><div class="card-title">Il tuo lavoro</div></div>
               <div id="profile-work"></div>
             </div>
             <div class="card mb-16">
-              <div class="card-header"><div class="card-title">🏅 Badge</div></div>
+              <div class="card-header"><div class="card-title">Badge</div></div>
               <div class="badge-shelf" id="badge-shelf"></div>
             </div>
             <div class="card">
-              <div class="card-header"><div class="card-title">📊 Competenze</div></div>
+              <div class="card-header"><div class="card-title">Competenze</div></div>
               <div id="skills-chart"></div>
             </div>
           </div>
           <div>
             <div class="card mb-16">
-              <div class="card-header"><div class="card-title">🕐 Attività recente</div></div>
+              <div class="card-header"><div class="card-title">Attività recente</div></div>
               <div id="profile-activity"></div>
             </div>
             <div class="card mb-16">
-              <div class="card-header"><div class="card-title">🛡️ Governance</div></div>
+              <div class="card-header"><div class="card-title">Governance</div></div>
               <div id="profile-governance"></div>
               <div id="profile-obiettivi" style="margin-top:16px"></div>
             </div>
             <div class="card">
-              <div class="card-header"><div class="card-title">⚙️ Preferenze</div></div>
+              <div class="card-header"><div class="card-title">Preferenze</div></div>
               <div id="profile-prefs"></div>
             </div>
           </div>
@@ -566,6 +571,8 @@
 <script src="js/seed-demo.js"></script>
 <script src="js/tour.js"></script>
 <script src="js/ai-client.js"></script>
+<script src="js/aiuto-testo.js"></script>
+<script src="js/tema.js"></script>
 <script src="js/chat-compose.js"></script>
 <script src="js/agent-runtime.js"></script>
 <script src="js/builder.js"></script>

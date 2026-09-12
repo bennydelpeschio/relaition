@@ -77,6 +77,7 @@ function autosaveAgentToDB(){
 }
 
 function saveAgent(){
+  if(typeof sandboxBlocca==='function'&&sandboxBlocca('salvare'))return;
   // Salvare NON è eseguire. Un flusso incompleto è comunque lavoro fatto, e
   // perderlo perché non è ancora finito è il modo peggiore di segnalare un
   // problema: si finisce per costruire tutto in una volta sola per paura di
@@ -193,7 +194,7 @@ function uninstallAgent(catalogId){
 
 function importAgentJSON(){
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>📥 Importa agente</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Importa agente</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:12px 0">Carica un file JSON esportato dal builder per importare un workflow completo.</p>'+
     '<div class="import-drop" onclick="document.getElementById(\'importFileInput\').click()" id="importDrop">'+
       '<div style="font-size:32px;margin-bottom:8px">📁</div>'+
@@ -280,6 +281,11 @@ function importFromText(){
 // connettori: è ciò che rende possibile la riesecuzione deterministica.
 // Restituisce l'id della riga, che serve ad agganciarvi gli eventi.
 function recordExecution(agentName,nodeCount,status,durationMs,mode,summary,steps,trace,utente){
+  // Un'esecuzione fatta nella sandbox didattica non entra nello storico: la
+  // sandbox promette di non toccare dati reali, e il Log Esecuzioni e il
+  // Monitoraggio contano proprio quelle righe. Il registro nel Builder resta,
+  // perche' e' cio' che chi impara sta guardando.
+  if(typeof SANDBOX!=='undefined'&&SANDBOX&&SANDBOX.attiva)return null;
   // Un'esecuzione pianificata appartiene al PROPRIETARIO dell'agente, non a chi
   // è connesso in quel momento: altrimenti comparirebbe nel registro di
   // chiunque avesse la scheda aperta quando lo scheduler è scattato.
@@ -442,7 +448,7 @@ function mostraErroriKBUpload(falliti){
   if(typeof openModal==='function'){
     openModal(
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
-        '<h2>⚠️ '+falliti.length+' documento/i non caricato/i</h2>'+
+        '<h2>'+falliti.length+' documento/i non caricato/i</h2>'+
         '<button class="modal-close" onclick="closeModal()">✕</button></div>'+
       '<p style="font-size:12px;color:var(--tx3);margin:12px 0">Gli altri documenti del lotto sono stati indicizzati regolarmente.</p>'+
       html+
@@ -484,7 +490,7 @@ function previewKBDoc(id,tab){
   }
   var tabBtn=function(k,l){return '<span onclick="previewKBDoc(\''+id+'\',\''+k+'\')" style="font-size:11px;font-weight:600;padding:5px 11px;border-radius:20px;cursor:pointer;'+(tab===k?'background:var(--ac2-l);color:var(--ac2)':'color:var(--tx4)')+'">'+l+'</span>'};
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>📄 '+escHtml(d.name)+'</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>'+escHtml(d.name)+'</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<div style="font-size:10.5px;color:var(--tx4);margin:6px 0 10px">'+tipo+(unita?': segmentato per '+unita:'')+' · '+escHtml(d.business_unit||'Tutte')+' · '+escHtml(d.confidentiality||'interno')+' · '+chunks.length+' porzioni</div>'+
     '<div style="display:flex;gap:4px;margin-bottom:10px">'+tabBtn('porzioni','🧩 Porzioni ('+chunks.length+')')+tabBtn('testo','📄 Testo originale')+'</div>'+
     corpo
@@ -496,7 +502,7 @@ function previewKBDoc(id,tab){
 // momento (una procedura dettata a voce, una risposta concordata).
 function openKBPasteModal(){
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>✍️ Aggiungi testo alla Knowledge Base</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Aggiungi testo alla Knowledge Base</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 12px">Il testo viene segmentato e indicizzato come un documento caricato. La tipologia è riconosciuta dal contenuto.</p>'+
     '<div class="prop-group"><div class="prop-label">Titolo *</div><input class="prop-input" id="kbPasteName" placeholder="es. Procedura resi 2026"></div>'+
     '<div style="display:flex;gap:8px;margin-bottom:10px">'+
@@ -587,7 +593,7 @@ function runKBTestSearch(){
 
 function openKBDocsModal(){
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>📚 Knowledge Base: Documenti aziendali</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Knowledge Base: Documenti aziendali</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 14px">Carica normative, contratti, procedure, FAQ, listini o liste clienti: ogni documento viene segmentato secondo la propria struttura e indicizzato per il recupero. Formati: txt, csv, json, md, xml, html, PDF e DOCX vanno convertiti in testo.</p>'+
     '<div style="display:flex;gap:8px;margin-bottom:10px">'+
       '<div style="flex:1"><div class="prop-label">Business unit</div>'+
@@ -916,7 +922,7 @@ function openKnowledgeBaseModal(){
     return {t:t,n:c?c.c:0};
   });
   openModal(
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>🗄️ Il tuo Database</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Il tuo Database</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Tutto ciò che crei su RelAItion (workflow, agenti, log, pubblicazioni, documenti caricati, progressi Learning Hub e Community) vive in un vero database SQLite eseguito nel tuo browser (nessun server). Puoi esportarlo in qualsiasi momento e portarlo con te: anche se lasci la piattaforma.</p>'+
     '<div class="validation-list" style="margin-top:0">'+
     sizeInfo.map(function(s){return '<div class="validation-item" style="background:var(--bg2);border-color:var(--bo);cursor:default"><span class="vi-ic">🗂️</span><span class="vi-msg">'+(KB_TABLE_LABELS[s.t]||s.t)+': '+s.n+' righe</span></div>'}).join('')+

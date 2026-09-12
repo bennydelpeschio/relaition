@@ -31,7 +31,7 @@ var SFIDA_CONTENUTI={
       {t:'NIST AI Risk Management Framework',u:'https://www.nist.gov/itl/ai-risk-management-framework',d:'La struttura con cui la giuria valuta il presidio.'}
     ],
     faq:[
-      {d:'Posso partecipare da solo?',r:'No: il minimo è due persone. È una scelta di formato, non una regola tecnica — la piattaforma non lo impedisce.'},
+      {d:'Posso partecipare da solo?',r:'No: il minimo è due persone. È una scelta di formato, non una regola tecnica, la piattaforma non lo impedisce.'},
       {d:'Vale un agente che avevo già in bozza?',r:'Sì se non era pubblicato. Va dichiarato nella nota della candidatura.'},
       {d:'Serve una chiave API mia?',r:'Serve per far girare i nodi AI davvero. Senza, il flusso si costruisce e si valida, ma le esecuzioni sono dimostrative e la giuria lo vede dal registro.'}
     ]
@@ -40,7 +40,7 @@ var SFIDA_CONTENUTI={
   sprint1:{
     regolamento:[
       'Si candida un proprio agente già costruito. Non c’è un tema: conta come si comporta.',
-      'Il punteggio è calcolato dalla piattaforma sulle esecuzioni reali dell’agente candidato — 60% esecuzioni riuscite, 40% assenza di errori.',
+      'Il punteggio è calcolato dalla piattaforma sulle esecuzioni reali dell’agente candidato, 60% esecuzioni riuscite, 40% assenza di errori.',
       'Le esecuzioni valide sono quelle registrate nel Log Esecuzioni a nome di chi candida.',
       'Si può cambiare l’agente candidato fino alla scadenza: vale sempre l’ultimo.',
       'Le esecuzioni con approvazione umana ancora in attesa non contano né come riuscite né come fallite.'
@@ -51,7 +51,7 @@ var SFIDA_CONTENUTI={
       {q:0,  t:'Chiusura',d:'La classifica si congela sull’ultima esecuzione registrata.'}
     ],
     materiali:[
-      {t:'Prompt engineering — Anthropic',u:'https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview',d:'Un prompt più preciso è il modo più veloce per alzare il tasso di successo.'},
+      {t:'Prompt engineering, Anthropic',u:'https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview',d:'Un prompt più preciso è il modo più veloce per alzare il tasso di successo.'},
       {t:'Chain-of-Thought prompting',u:'https://arxiv.org/abs/2201.11903',d:'Perché far esplicitare i passaggi riduce gli errori di classificazione.'}
     ],
     faq:[
@@ -67,7 +67,7 @@ var SFIDA_CONTENUTI={
       'Punteggio: 50% tasso di successo, 25% numero di esecuzioni, 25% controlli configurati. I pesi mostrati sono la formula.',
       'Un tasso alto su poche esecuzioni non vince: il numero di esecuzioni ha un tetto dichiarato a dieci.',
       'Il mascheramento dei dati personali è consigliato ma non obbligatorio: pesa dentro il criterio dei controlli.',
-      'Le esecuzioni dimostrative — quelle senza un modello collegato — contano come le altre: la sfida misura il flusso, non la chiave.'
+      'Le esecuzioni dimostrative, quelle senza un modello collegato, contano come le altre: la sfida misura il flusso, non la chiave.'
     ],
     fasi:[
       {q:-20,t:'Apertura',d:'Pubblicazione del regolamento e apertura delle candidature.'},
@@ -77,7 +77,7 @@ var SFIDA_CONTENUTI={
     ],
     materiali:[
       {t:'RAG: rassegna aggiornata',u:'https://arxiv.org/abs/2312.10997',d:'Utile se l’agente confronta i documenti con procedure interne.'},
-      {t:'Function calling — OpenAI',u:'https://platform.openai.com/docs/guides/function-calling',d:'Per far calcolare i totali a uno strumento invece che al modello.'}
+      {t:'Function calling, OpenAI',u:'https://platform.openai.com/docs/guides/function-calling',d:'Per far calcolare i totali a uno strumento invece che al modello.'}
     ],
     faq:[
       {d:'Che documenti posso usare?',r:'Quelli che vuoi, anche di prova. La piattaforma non li invia da nessuna parte: restano nel tuo browser.'},
@@ -125,7 +125,7 @@ var SFIDA_CONTENUTI={
       'Il pacchetto di modelli viene consegnato a fine giornata a chi ha partecipato.'
     ],
     materiali:[
-      {t:'Prompt engineering — OpenAI',u:'https://platform.openai.com/docs/guides/prompt-engineering',d:'Da leggere prima: si parte dando per acquisite le basi.'},
+      {t:'Prompt engineering, OpenAI',u:'https://platform.openai.com/docs/guides/prompt-engineering',d:'Da leggere prima: si parte dando per acquisite le basi.'},
       {t:'crontab.guru',u:'https://crontab.guru/',d:'Serve nella sessione sulla pianificazione.'}
     ],
     faq:[
@@ -279,7 +279,7 @@ function sfTitoletto(t){
 function sfBloccoFasi(s){
   var c=SFIDA_CONTENUTI[s.id];
   if(!c||!c.fasi)return '';
-  return sfTitoletto('🗓️ Come si svolge')+
+  return sfTitoletto('Come si svolge')+
     c.fasi.map(function(f){
       var st=sfStatoFase(s,f.q);
       var col=st==='fatta'?'#94A3B8':st==='oggi'?s.colore:'var(--tx4)';
@@ -300,7 +300,7 @@ function sfBloccoFasi(s){
 function sfBloccoProgramma(s){
   var c=SFIDA_CONTENUTI[s.id];
   if(!c||!c.programma)return '';
-  return sfTitoletto('📋 Programma')+
+  return sfTitoletto('Programma')+
     c.programma.map(function(p){
       return '<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--bg2)">'+
         '<span style="font-size:11px;font-weight:700;color:'+s.colore+';flex-shrink:0;width:44px">'+escHtml(p.o)+'</span>'+
@@ -314,7 +314,7 @@ function sfBloccoProgramma(s){
 function sfBloccoRegolamento(s){
   var c=SFIDA_CONTENUTI[s.id];
   if(!c||!c.regolamento)return '';
-  return sfTitoletto('📜 Regolamento')+
+  return sfTitoletto('Regolamento')+
     '<ol style="margin:0;padding-left:18px;font-size:11.5px;color:var(--tx2);line-height:1.65">'+
       c.regolamento.map(function(r){return '<li style="margin-bottom:5px">'+escHtml(r)+'</li>'}).join('')+
     '</ol>';
@@ -323,7 +323,7 @@ function sfBloccoRegolamento(s){
 function sfBloccoMateriali(s){
   var c=SFIDA_CONTENUTI[s.id];
   if(!c||!c.materiali)return '';
-  return sfTitoletto('📚 Materiale')+
+  return sfTitoletto('Materiale')+
     c.materiali.map(function(m){
       return '<a href="'+m.u+'" target="_blank" rel="noopener noreferrer" '+
         'style="display:block;padding:7px 0;border-bottom:1px solid var(--bg2);text-decoration:none;color:inherit">'+
@@ -335,7 +335,7 @@ function sfBloccoMateriali(s){
 function sfBloccoFaq(s){
   var c=SFIDA_CONTENUTI[s.id];
   if(!c||!c.faq)return '';
-  return sfTitoletto('❓ Domande frequenti')+
+  return sfTitoletto('Domande frequenti')+
     c.faq.map(function(f){
       return '<div style="padding:7px 0;border-bottom:1px solid var(--bg2)">'+
         '<div style="font-size:12px;font-weight:700">'+escHtml(f.d)+'</div>'+
@@ -367,7 +367,7 @@ function sfBloccoDomande(s){
       '</div></div>';
   }).join('') : '<div style="font-size:11.5px;color:var(--tx4);font-style:italic;padding:6px 0">Nessuna domanda ancora: la tua sarebbe la prima.</div>';
 
-  return sfTitoletto('💬 Domande alla community ('+d.length+')')+
+  return sfTitoletto('Domande alla community ('+d.length+')')+
     '<div style="font-size:10.5px;color:var(--tx4);margin-bottom:8px">Ordinate per voti. Le più votate hanno la precedenza.</div>'+
     '<div style="display:flex;gap:6px;margin-bottom:10px">'+
       '<input id="sfDomandaTesto" class="prop-input" style="flex:1" placeholder="Scrivi una domanda su questa iniziativa…" '+
@@ -454,7 +454,7 @@ function sfBloccoClassifica(s){
         '<span style="width:22px;font-size:13px;text-align:center;flex-shrink:0">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1))+'</span>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:12px;font-weight:700">'+escHtml(r.utente)+(r.io?' · tu':'')+'</div>'+
-          '<div style="font-size:10.5px;color:var(--tx4)">'+escHtml(r.agente)+' — '+escHtml(r.det)+'</div>'+
+          '<div style="font-size:10.5px;color:var(--tx4)">'+escHtml(r.agente)+', '+escHtml(r.det)+'</div>'+
           (sub&&sub.nota?'<div style="font-size:11px;color:var(--tx3);font-style:italic;margin-top:3px">«'+escHtml(sub.nota)+'»</div>':'')+
         '</div>'+
         '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'+
@@ -487,9 +487,9 @@ function sfBloccoClassifica(s){
     '</div>';
   }).join('');
 
-  return sfTitoletto('🥇 Classifica')+
+  return sfTitoletto('Classifica')+
     '<div style="font-size:11px;color:var(--tx4);margin-bottom:8px">'+escHtml(s.metrica.l)+
-      ' — calcolata sulle esecuzioni reali degli agenti candidati, non su un punteggio dichiarato. '+
+      ', calcolata sulle esecuzioni reali degli agenti candidati, non su un punteggio dichiarato. '+
       'Il pollice è il voto della community e resta un conteggio a parte.</div>'+
     (classifica.length? righe
       : '<div style="font-size:11.5px;color:var(--tx4);font-style:italic">Nessuna candidatura: la classifica si popola quando qualcuno candida un agente.</div>');

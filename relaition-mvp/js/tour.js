@@ -232,6 +232,28 @@ var SANDBOX_COMPONENTI=[
   'Mascheramento dati','Convalida output','Gestore eccezioni'
 ];
 
+// La sandbox promette «nulla viene salvato», ma la promessa era mantenuta solo
+// dall'autosalvataggio: i pulsanti Salva, Pubblica e Pianifica funzionavano
+// come sempre, e un flusso di prova poteva finire in «I miei agenti» o in coda
+// di revisione. Un banco di prova dove si può pubblicare non è un banco di
+// prova. Le tre azioni passano da qui; Esporta e Python restano liberi perché
+// producono un file per chi impara e non toccano niente della piattaforma.
+function sandboxBlocca(azione){
+  if(!SANDBOX.attiva)return false;
+  showToast('La sandbox è didattica: '+azione+' non è disponibile. Esci dalla sandbox per farlo sul tuo agente.');
+  return true;
+}
+
+// I pulsanti bloccati si vedono spenti mentre la sandbox è attiva, così non si
+// scopre il limite solo dopo aver cliccato.
+function sandboxAggiornaPulsanti(){
+  document.querySelectorAll('[onclick="saveAgent()"],[onclick="openPublishModal()"],[onclick="openDeployModal()"]').forEach(function(b){
+    b.classList.toggle('sandbox-off',SANDBOX.attiva);
+    if(SANDBOX.attiva){ if(!b.dataset.titoloOrig)b.dataset.titoloOrig=b.title||''; b.title='Non disponibile nella sandbox didattica'; }
+    else if(b.dataset.titoloOrig!==undefined){ b.title=b.dataset.titoloOrig; delete b.dataset.titoloOrig; }
+  });
+}
+
 function openSandbox(){
   if(SANDBOX.attiva){go('builder');return}
   SANDBOX.attiva=true;
@@ -255,7 +277,8 @@ function openSandbox(){
   go('builder');
   b_render();
   sandboxBanner(true);
-  showToast('🧪 Sandbox attiva: '+PALETTE.length+' componenti, nessun dato reale toccato');
+  sandboxAggiornaPulsanti();
+  showToast('Sandbox attiva: '+PALETTE.length+' componenti, nessun dato reale toccato');
 }
 
 function closeSandbox(){
@@ -281,6 +304,7 @@ function closeSandbox(){
   }
   B.selId=-1;B.selIds=[];
   sandboxBanner(false);
+  sandboxAggiornaPulsanti();
   if(typeof renderPalette==='function')renderPalette();
   b_render();renderProps(-1);
   showToast('✅ Uscito dalla sandbox: il tuo agente è tornato com\'era');
@@ -296,7 +320,7 @@ function sandboxBanner(mostra){
   b.id='sandboxBanner';
   b.style.cssText='position:absolute;top:0;left:0;right:0;z-index:35;background:linear-gradient(90deg,#FEF3C7,#FDE68A);border-bottom:1px solid #FCD34D;padding:7px 14px;display:flex;align-items:center;gap:10px;font-size:11.5px;color:#78350F';
   b.innerHTML='<span style="font-size:14px">🧪</span>'+
-    '<div style="flex:1;line-height:1.45"><strong>Sandbox didattica</strong>: palette ridotta a '+PALETTE.length+' componenti, nessuna scrittura su sistemi esterni, niente salvataggio automatico. Sbaglia pure.</div>'+
+    '<div style="flex:1;line-height:1.45"><strong>Sandbox didattica</strong>: palette ridotta a '+PALETTE.length+' componenti, nessuna scrittura su sistemi esterni, niente da salvare, pubblicare o pianificare: si prova e basta. Sbaglia pure.</div>'+
     '<button class="tb-btn" style="font-size:11px;height:26px" onclick="closeSandbox()">Esci dalla sandbox</button>';
   ca.appendChild(b);
 }

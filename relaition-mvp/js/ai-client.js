@@ -179,7 +179,7 @@ function onLocalePresetChange(){
   // Cambiando server cambiano i modelli disponibili: quelli di prima non
   // valgono più, e lasciarli in elenco sarebbe fuorviante.
   var sel=document.getElementById('localeModel');
-  if(sel)sel.innerHTML='<option value="">— premi 🔄 per cercare i modelli —</option>';
+  if(sel)sel.innerHTML='<option value="">premi 🔄 per cercare i modelli</option>';
 }
 
 // Interroga il server locale per sapere quali modelli sono davvero
@@ -197,7 +197,7 @@ async function discoverLocalModels(){
     var elenco=(d.data||d.models||[]).map(function(m){return m.id||m.name}).filter(Boolean);
     var sel=document.getElementById('localeModel');
     if(!elenco.length){
-      sel.innerHTML='<option value="">— nessun modello installato —</option>';
+      sel.innerHTML='<option value="">nessun modello installato</option>';
       st.innerHTML='<span class="ai-dot err"></span> Server raggiunto ma nessun modello installato: scaricane uno (es. <code>ollama pull llama3.1</code>)';
       return;
     }
@@ -717,7 +717,7 @@ async function aiModifySingleNode(nodeId,desc,btn,input,prov){
   // di trasparenza del resto della composizione conversazionale.
   var op={op:'update',id:nodeId,n:parsed.n,d:parsed.d,config:parsed.config,perche:'richiesta: '+desc};
   previewChanges({mode:'modify',interpretation:parsed.interpretazione||('Modifica del solo nodo "'+node.name+'"'),ops:[op]});
-  if(input)input.value='';
+  if(input)input.value=''; if(input&&typeof adattaAltezza==='function')adattaAltezza(input);
 }
 
 
@@ -740,7 +740,7 @@ function openConnectionGuide(){
     '<div class="lesson-content" style="border:none;padding:0;margin-top:12px">'+
     '<h3>Perché "Failed to fetch"?</h3>'+
     '<p>I browser bloccano le chiamate verso API che non autorizzano esplicitamente le richieste da pagine web (<strong>CORS</strong>). Non è un problema della tua key: è il server del provider che rifiuta chiamate dirette dal browser.</p>'+
-    '<div class="concept-box">✅ <strong>Funzionano direttamente dal browser:</strong><br>· <strong>Anthropic Claude</strong>: supporto ufficiale via header dedicato (consigliato per la demo)<br>· <strong>Google Gemini</strong>, funziona con key nell\'URL<br>· <strong>Ollama locale</strong>, provider Custom con base URL <code>http://localhost:11434/v1</code> (avvia con <code>OLLAMA_ORIGINS=* ollama serve</code>)</div>'+
+    '<div class="concept-box"><strong>Funzionano direttamente dal browser:</strong><br>· <strong>Anthropic Claude</strong>: supporto ufficiale via header dedicato (consigliato per la demo)<br>· <strong>Google Gemini</strong>, funziona con key nell\'URL<br>· <strong>Ollama locale</strong>, provider Custom con base URL <code>http://localhost:11434/v1</code> (avvia con <code>OLLAMA_ORIGINS=* ollama serve</code>)</div>'+
     '<div class="warning-box">❌ <strong>OpenAI blocca le chiamate browser-direct.</strong> La key funziona da server/terminale ma non da una pagina web. Due soluzioni:</div>'+
     '<h3>Soluzione 1: Proxy locale (2 minuti)</h3>'+
     '<p>Avvia questo micro-proxy sul tuo computer, poi inserisci <code>http://localhost:8010/</code> nel campo "Proxy CORS":</p>'+

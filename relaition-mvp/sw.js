@@ -4,21 +4,20 @@
 // che l'app si apra anche senza connessione — il che è coerente con il fatto
 // che i dati vivono nel browser e non su un server.
 
-var CACHE = 'relaition-v89';
+var CACHE = 'relaition-v96';
 // L'elenco e' generato dai <script> e <link> di index.html: quando era
 // scritto a mano restava indietro a ogni modulo aggiunto, e nell'app
 // installata i moduli mancanti non avevano copia di riserva — bastava una
 // richiesta non andata a buon fine perche' l'app partisse monca (senza
 // Connessioni, Posta, utenti) senza dire perche'.
 var GUSCIO = [
-  './', './index.html', './manifest.webmanifest', './icon.svg', './sw.js',
+  './', './index.html', './manifest.webmanifest', './sw.js',
   './css/base.css',
   './css/components.css',
   './css/marketplace.css',
   './css/builder.css',
   './css/pages.css',
   './manifest.webmanifest',
-  './icon.svg',
   './lib/sqljs/sql-wasm.js',
   './lib/sqljs/sql-wasm-inline.js',
   './js/state.js',
@@ -42,6 +41,14 @@ var GUSCIO = [
   './js/seed-demo.js',
   './js/tour.js',
   './js/ai-client.js',
+  './js/aiuto-testo.js',
+  './js/tema.js',
+  './brand/mark.png',
+  './brand/logo-dark.png',
+  './brand/icon-192.png',
+  './brand/icon-512.png',
+  './brand/icon-192-maskable.png',
+  './brand/icon-512-maskable.png',
   './js/chat-compose.js',
   './js/agent-runtime.js',
   './js/builder.js',

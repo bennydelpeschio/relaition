@@ -32,7 +32,8 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
 .logo-area{padding:20px;border-bottom:1px solid rgba(255,255,255,.08)}
 .logo-row{display:flex;align-items:center;gap:12px;cursor:pointer;border-radius:10px;padding:4px;margin:-4px;transition:background .15s}
 .logo-row:hover{background:rgba(255,255,255,.06)}
-.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,#2563EB,#7C3AED);border-radius:10px;display:grid;place-items:center;font-size:18px;box-shadow:0 4px 12px rgba(37,99,235,.4)}
+.logo-mark{width:36px;height:36px;display:grid;place-items:center;filter:drop-shadow(0 4px 10px rgba(79,70,229,.45))}
+.logo-mark img{width:32px;height:32px;display:block}
 .logo-text{color:#F8FAFC;font-size:16px;font-weight:800;letter-spacing:-.5px}
 .logo-sub{color:rgba(148,163,184,.7);font-size:10px;font-weight:500;letter-spacing:.5px;margin-top:2px}
 .sidebar nav{flex:1;padding:8px 12px;overflow-y:auto}
@@ -181,3 +182,157 @@ html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;col
    come gli avvisi la faceva leggere come un allarme, quindi nel menu compatto
    sparisce invece di diventare un pallino. */
 .sidebar.compatta .ni-badge.ni-etichetta{display:none}
+
+/* Ingresso al Learning Hub dalla barra in alto: colore proprio, così non si
+   confonde con le azioni sul contenuto, ma non primario, che resta «Nuovo
+   Agente». */
+.tb-btn.tb-impara{color:#6D28D9;border-color:#DDD6FE;background:#F5F3FF;font-weight:700}
+.tb-btn.tb-impara:hover{background:#EDE9FE;border-color:#C4B5FD}
+
+/* ── Marchio ────────────────────────────────────────────────────
+   La parola «RelAItion» con il segno al posto di «AI», e il claim nei
+   quattro colori del foglio di identita' (#4F46E5 #6366F1 #A855F7 e il viola
+   chiaro). Il segno e' un'immagine vettoriale trasparente, quindi vale su
+   sfondo chiaro e scuro: cambia solo il colore della parola. */
+.wordmark{display:inline-flex;align-items:center;font-weight:800;font-size:34px;letter-spacing:-1.2px;line-height:1;color:#0F172A}
+.wordmark-chiaro{color:#F8FAFC}
+.wordmark-mark{width:1.35em;height:1.35em;margin:0 -.04em;position:relative;top:.02em;display:block}
+.claim{display:inline-flex;align-items:center;gap:.45em;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:none}
+.claim span:nth-child(1){color:#4F46E5}
+.claim span:nth-child(3){color:#6366F1}
+.claim span:nth-child(5){color:#8B5CF6}
+.claim span:nth-child(7){color:#A855F7}
+.claim i{font-style:normal;color:#94A3B8;font-weight:400}
+.claim-mini{font-size:9px;letter-spacing:.08em;gap:.3em;margin-top:2px}
+/* Sul menu scuro i colori del claim si alzano di un tono per leggersi. */
+.sidebar .claim span:nth-child(1){color:#818CF8}
+.sidebar .claim span:nth-child(3){color:#A5B4FC}
+.sidebar .claim span:nth-child(5){color:#C4B5FD}
+.sidebar .claim span:nth-child(7){color:#D8B4FE}
+.sidebar.compatta .logo-mark img{width:34px;height:34px}
+
+/* ── Tema scuro ─────────────────────────────────────────────────
+   Tutta l'interfaccia legge i colori dalle variabili qui sopra: il tema
+   scuro le ridefinisce e basta. Restano chiari, di proposito, i riquadri di
+   avviso con colore proprio (ambra, rosso): sono segnali, e un segnale deve
+   restare riconoscibile in entrambi i temi. La scelta si salva nel browser e
+   si applica prima del primo disegno (vedi lo script in testa a index.html),
+   cosi' non c'e' il lampo bianco al caricamento. */
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0B1220;--bg2:#111A2E;--bg3:#1B2740;
+  --card:#131C31;--card-h:#182340;
+  --tx:#F1F5F9;--tx2:#CBD5E1;--tx3:#94A3B8;--tx4:#64748B;
+  --bo:#233049;--bo2:#33415A;
+  --ac-l:#1E2A5C;--ac-ul:#151D3A;
+  --ac2-l:#2E1F5E;
+  --ac3-l:#3A2A0E;
+  --ok-l:#0F3B2E;--ok-ul:#0C2A22;
+  --sh:0 1px 3px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.3);
+  --sh-md:0 4px 6px -1px rgba(0,0,0,.45),0 2px 4px -2px rgba(0,0,0,.35);
+  --sh-lg:0 10px 15px -3px rgba(0,0,0,.5),0 4px 6px -4px rgba(0,0,0,.4);
+  --sh-xl:0 20px 25px -5px rgba(0,0,0,.55),0 8px 10px -6px rgba(0,0,0,.45);
+  --glass:rgba(19,28,49,.75);
+}
+html[data-theme="dark"] .wordmark{color:#F1F5F9}
+html[data-theme="dark"] .tb-btn.tb-impara{background:#2E1F5E;border-color:#4C3A8A;color:#C4B5FD}
+html[data-theme="dark"] .tb-btn.tb-impara:hover{background:#3B2A75}
+html[data-theme="dark"] .tb-search{background:var(--bg2)}
+html[data-theme="dark"] input,html[data-theme="dark"] textarea,html[data-theme="dark"] select{background:var(--bg2);color:var(--tx);border-color:var(--bo)}
+html[data-theme="dark"] .prop-input,html[data-theme="dark"] .prop-select{background:var(--bg2);color:var(--tx)}
+/* Interruttore nella barra in alto */
+.tb-tema{font-size:15px;line-height:1}
+html[data-theme="dark"] .ai-panel{background:linear-gradient(135deg,#151D3A,#0F2A24)}
+html[data-theme="dark"] .aiuto-testo-corpo{background:#1B1530;border-color:#4C3A8A}
+html[data-theme="dark"] .exec-entry.aperta .exec-msg{background:var(--bg2)}
+html[data-theme="dark"] .account-scheda{background:rgba(255,255,255,.04)}
+html[data-theme="dark"] .mkt-hero{background:linear-gradient(135deg,#151D3A 0%,#1F1740 50%,#2A1F0E 100%)}
+html[data-theme="dark"] .learn-hero{background:linear-gradient(135deg,#151D3A 0%,#1F1740 100%)}
+html[data-theme="dark"] .connector-config{background:linear-gradient(135deg,#0F2A24,#151D3A)}
+
+/* Ingresso alla sandbox didattica: ambra, lo stesso colore del banner che
+   compare quando e' attiva, cosi' il pulsante e il posto in cui porta si
+   riconoscono a vicenda. */
+.tb-btn.tb-sandbox{color:#92400E;border-color:#FCD34D;background:#FEF3C7;font-weight:700}
+.tb-btn.tb-sandbox:hover{background:#FDE68A;border-color:#F59E0B}
+html[data-theme="dark"] .tb-btn.tb-sandbox{background:#3A2A0E;border-color:#92400E;color:#FCD34D}
+
+/* ── Tema scuro: riquadri con colore scritto in linea ──────────────
+   I riquadri di avviso (verifica del flusso, presidi consigliati, note ambra
+   e rosse) hanno lo sfondo pastello scritto nel template: nel tema scuro
+   restavano chiari con sopra il testo chiaro del tema, illeggibili. Qui si
+   intercettano dallo stile in linea e si portano alla tinta scura
+   corrispondente, con il testo alzato di tono. E' un rimedio dichiarato: il
+   modo pulito sarebbe una classe per ogni riquadro, e questo blocco e' la
+   lista di quelle che mancano. */
+html[data-theme="dark"] .validation-item{background:#3A1418;border-color:#5B1F26}
+html[data-theme="dark"] .validation-item:hover{background:#4A1A20}
+html[data-theme="dark"] .validation-item .vi-msg{color:#FECACA}
+html[data-theme="dark"] .cc-testa-avviso{background:#3A2A0E;border-bottom-color:#78350F;color:#FDE68A}
+html[data-theme="dark"] .cc-conteggio{background:#3A2A0E;color:#FCD34D}
+/* ambra */
+html[data-theme="dark"] [style*="background:#FEF3C7" i],
+html[data-theme="dark"] [style*="background:#FFFBEB" i],
+html[data-theme="dark"] [style*="background:#FDE68A" i]{background:#3A2A0E!important;border-color:#78350F!important;color:#FDE68A!important}
+/* rosso */
+html[data-theme="dark"] [style*="background:#FEE2E2" i],
+html[data-theme="dark"] [style*="background:#FEF2F2" i]{background:#3A1418!important;border-color:#7F1D1D!important;color:#FECACA!important}
+/* viola */
+html[data-theme="dark"] [style*="background:#FDF4FF" i],
+html[data-theme="dark"] [style*="background:#F5F3FF" i],
+html[data-theme="dark"] [style*="background:#EDE9FE" i],
+html[data-theme="dark"] [style*="background:#FAF5FF" i]{background:#2E1F5E!important;border-color:#4C3A8A!important;color:#DDD6FE!important}
+/* blu */
+html[data-theme="dark"] [style*="background:#DBEAFE" i],
+html[data-theme="dark"] [style*="background:#EFF6FF" i],
+html[data-theme="dark"] [style*="background:#EEF2FF" i]{background:#1E2A5C!important;border-color:#3B4A8A!important;color:#BFDBFE!important}
+/* verde */
+html[data-theme="dark"] [style*="background:#D1FAE5" i],
+html[data-theme="dark"] [style*="background:#ECFDF5" i],
+html[data-theme="dark"] [style*="background:#F0FDF4" i]{background:#0F3B2E!important;border-color:#166534!important;color:#A7F3D0!important}
+/* bianchi e grigi chiari */
+html[data-theme="dark"] [style*="background:#F8FAFC" i],
+html[data-theme="dark"] [style*="background:#F1F5F9" i],
+html[data-theme="dark"] [style*="background:#E2E8F0" i]{background:var(--bg2)!important;color:var(--tx)!important}
+html[data-theme="dark"] [style*="background:#FFFFFF" i],
+html[data-theme="dark"] [style*="background:#FFF;" i],
+html[data-theme="dark"] [style*="background:#FFF\"" i],
+html[data-theme="dark"] [style*="background:white" i]{background:var(--card)!important;color:var(--tx)!important}
+/* testi scuri scritti in linea dentro quei riquadri */
+html[data-theme="dark"] [style*="color:#92400E" i],
+html[data-theme="dark"] [style*="color:#B45309" i],
+html[data-theme="dark"] [style*="color:#78350F" i]{color:#FDE68A!important}
+html[data-theme="dark"] [style*="color:#991B1B" i],
+html[data-theme="dark"] [style*="color:#B91C1C" i],
+html[data-theme="dark"] [style*="color:#7F1D1D" i]{color:#FCA5A5!important}
+html[data-theme="dark"] [style*="color:#1E40AF" i],
+html[data-theme="dark"] [style*="color:#1D4ED8" i]{color:#93C5FD!important}
+html[data-theme="dark"] [style*="color:#065F46" i],
+html[data-theme="dark"] [style*="color:#047857" i]{color:#6EE7B7!important}
+html[data-theme="dark"] [style*="color:#6D28D9" i],
+html[data-theme="dark"] [style*="color:#5B21B6" i]{color:#C4B5FD!important}
+html[data-theme="dark"] [style*="color:#0F172A" i],
+html[data-theme="dark"] [style*="color:#1E293B" i],
+html[data-theme="dark"] [style*="color:#334155" i]{color:var(--tx)!important}
+/* Logo intero (file ufficiale): largo quanto il contenitore, mai piu' di 320px */
+.logo-intero{display:block;width:100%;max-width:320px;height:auto}
+.logo-mark img{width:32px;height:auto;display:block}
+.sidebar.compatta .logo-mark img{width:36px}
+/* classi con tinta pastello scritta nel foglio di stile */
+html[data-theme="dark"] .lesson-content .warning-box{background:#3A2A0E;color:#FDE68A}
+html[data-theme="dark"] .quiz-option.correct{background:#0F3B2E}
+html[data-theme="dark"] .quiz-option.wrong{background:#3A1418}
+html[data-theme="dark"] .cc-fuoripalette,html[data-theme="dark"] .allegati-manca{background:#3A2A0E;border-color:#78350F}
+html[data-theme="dark"] .cc-pastiglia-ko,html[data-theme="dark"] .cc-pastiglia-ko:hover{background:#3A2A0E;border-color:#92400E;color:#FCD34D}
+html[data-theme="dark"] .badge-r{background:#3A1418;color:#FCA5A5}
+html[data-theme="dark"] .conn-stato.errore{background:#3A1418;color:#FCA5A5}
+html[data-theme="dark"] .conn-stato.nuovo{background:#3A2A0E;color:#FDE68A}
+html[data-theme="dark"] .conn-sim{background:#2E1F5E;color:#C4B5FD}
+html[data-theme="dark"] .conn-esito.errore{background:#3A1418;color:#FCD34D}
+/* il toast e' scuro con testo bianco: nel tema scuro si inverte, altrimenti
+   sparisce sullo sfondo */
+html[data-theme="dark"] .toast{background:#F1F5F9;color:#0F172A}
+html[data-theme="dark"] .badge-b{color:#C4B5FD}
+html[data-theme="dark"] .badge-g{color:#6EE7B7}
+html[data-theme="dark"] .badge-y{color:#FCD34D}
+html[data-theme="dark"] .badge-p{background:#2E1F5E;color:#C4B5FD}

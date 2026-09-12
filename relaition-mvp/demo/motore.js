@@ -202,6 +202,30 @@ function risolviSel(s){
   try{ return (typeof s==='function')?s():s }catch(e){ return null }
 }
 
+// Aspetta che uno scorrimento morbido sia FINITO davvero. `scrollend` arriva
+// quando il contenuto si è fermato — che è il momento in cui riagganciare il
+// faretto — ma non tutti i browser lo emettono e non arriva mai se non c'è
+// stato nessuno scorrimento: la scadenza chiude il caso in entrambi i sensi,
+// e chiunque arrivi primo vince, una volta sola.
+function attendiFineScorrimento(cercaEvento, fine, scadenza){
+  var chiuso=false;
+  var chiudi=function(){
+    if(chiuso)return;
+    chiuso=true;
+    try{ if(d)d.removeEventListener('scrollend',chiudi,true) }catch(e){}
+    clearTimeout(t);
+    fine();
+  };
+  var d=null, t;
+  if(cercaEvento){
+    try{
+      d=doc();
+      if(d)d.addEventListener('scrollend',chiudi,true);
+    }catch(e){ d=null }
+  }
+  t=setTimeout(chiudi, Math.max(60, scadenza||200));
+}
+
 // ── INSEGUIMENTO DEL BERSAGLIO ──────────────────────────────────
 // Il faretto veniva posizionato una volta e restava lì. Scorrendo a mano
 // dentro l'applicazione, il contenuto si muoveva e l'evidenziazione no: da qui
@@ -210,12 +234,28 @@ function risolviSel(s){
 // davvero cambiata — muovere il DOM 60 volte al secondo senza motivo costa
 // senza rendere.
 var _inseguoId=null, _inseguoSel=null, _ultimoR=null, _posNarrazione='bottom', _ascolto=null;
+// La regola del passo in corso — stringa o funzione — tenuta da parte per
+// poter ritrovare il bersaglio se l'applicazione lo ridisegna.
+var _selPasso=null;
 
 // Aggiorna subito la posizione del bersaglio, se è cambiata.
 function aggiornaPosizioneBersaglio(){
   if(!_inseguoSel)return;
   var spot=document.getElementById('faretto');
   if(!spot||spot.style.display==='none')return;
+  // Riaggancio a caldo. Quando il bersaglio e' stato trovato come ELEMENTO —
+  // «il pulsante che contiene la parola Installa» — e l'applicazione ridisegna
+  // quella parte di schermata, l'elemento esce dal documento: il faretto
+  // restava acceso dov'era, cioe' sul posto sbagliato. E' il disallineamento
+  // che si vede scorrendo o cambiando scheda. Qui si prova a ritrovare il
+  // bersaglio con la stessa regola del passo, e solo se non si trova si resta
+  // fermi invece di saltare nell'angolo.
+  if(_inseguoSel && typeof _inseguoSel!=='string' && _inseguoSel.isConnected===false){
+    var nuovo=risolviSel(_selPasso);
+    if(!nuovo)return;
+    if(typeof nuovo!=='string' && nuovo.isConnected===false)return;
+    _inseguoSel=nuovo;
+  }
   var r=rettangolo(_inseguoSel);
   // Un elemento staccato dal documento — perche' la schermata e' stata
   // ridisegnata — restituisce un rettangolo tutto a zero: seguirlo porterebbe
@@ -366,6 +406,20 @@ function vaiA(i){
   var s=COPIONE[i];
   var w=app(); if(!w)return;
 
+  // Nessun sovrapposto sopravvive al passo successivo. Prima la chiusura era
+  // scritta a mano dentro le azioni di alcuni passi: bastava saltare da
+  // indice, o aggiungere un passo dimenticandosene, e la finestra restava
+  // aperta sopra la schermata di cui parlava il passo dopo.
+  //
+  // Due eccezioni, ed entrambe si riconoscono dal passo stesso: chi illumina
+  // `#modalContent` sta parlando proprio della finestra, e chi dichiara
+  // `tieniAperto` ci lavora dentro (compila un modulo aperto dal passo
+  // precedente, preme Invia, e poi la chiude da solo).
+  var dentroUnaFinestra = (s.sel==='#modalContent') || s.tieniAperto;
+  if(!dentroUnaFinestra && typeof chiudiFinestre==='function'){
+    try{ chiudiFinestre() }catch(e){}
+  }
+
   // Prima di qualunque cosa: si e' dentro l'applicazione? La schermata di
   // accesso e' un sovrapposto a tutta pagina, e chi salta a un capitolo
   // dall'indice senza passare dal passo che effettua l'accesso vedrebbe quella
@@ -390,12 +444,13 @@ function vaiA(i){
       //     finiscono di disegnarsi dopo che l'azione e' tornata.
       attendiFineEsecuzione(function(){
         if(D.passo!==i)return;
+        _selPasso=s.sel;
         var mira=risolviSel(s.sel);
         sel_ultimo=illumina(mira);
         narra(s,i);
         aggiornaIndice();
         var spostato=portaInVista(mira);
-        setTimeout(function(){
+        var ricontrolla=function(){
           if(D.passo!==i)return;
           // Ricontrollo: il bersaglio puo' essere stato ridisegnato — e in quel
           // caso l'elemento agganciato prima non e' piu' nel documento.
@@ -403,7 +458,13 @@ function vaiA(i){
           sel_ultimo=illumina(m2);
           narra(s,i);
           if(D.riproduce)programmaProssimo(s);
-        }, (spostato?620:(s.dopo||200))/D.velocita);
+        };
+        // Il ricontrollo aspettava 620 millisecondi buoni dopo uno scorrimento,
+        // scelti a occhio: se lo scorrimento finiva prima, il faretto restava
+        // mezzo secondo sulla posizione vecchia; se durava di piu', arrivava
+        // comunque presto. Adesso si aspetta l'evento vero, con la scadenza
+        // come rete di sicurezza per i browser che non lo emettono.
+        attendiFineScorrimento(spostato, ricontrolla, (spostato?700:(s.dopo||200))/D.velocita);
       }, 14000);
     };
     if(s.azione){

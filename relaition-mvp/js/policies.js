@@ -334,7 +334,7 @@ function openPoliciesModal(){
   }).join('');
 
   var html =
-    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>🔒 Politiche di controllo</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center"><h2>Politiche di controllo</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 6px">Le politiche indicano quali presidi l\'organizzazione si attende sui flussi. Chi costruisce un agente decide se applicarli al proprio caso; la piattaforma li propone dove il rischio è effettivo.</p>'+
     '<div style="display:flex;gap:8px;margin:0 0 16px;font-size:11px;color:var(--tx3)">'+
       '<div style="flex:1;background:var(--bg2);border-radius:8px;padding:8px 10px"><strong>💡 Consigliata</strong><div style="margin-top:2px;line-height:1.4">Segnalata in fase di verifica, con inserimento a un click. Non blocca l\'esecuzione.</div></div>'+

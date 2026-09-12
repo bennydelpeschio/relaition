@@ -310,7 +310,7 @@ function pubRestoreVersion(versionRowId){
 // Pannello di sorveglianza post-pubblicazione (D4)
 function openPublishHealthPanel(){
   var righe=dbAll("SELECT * FROM published_agents WHERE status IN ('pubblicato','sospeso') ORDER BY status,name");
-  var html='<div style="display:flex;justify-content:space-between;align-items:center"><h2>📈 Salute delle pubblicazioni</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+  var html='<div style="display:flex;justify-content:space-between;align-items:center"><h2>Salute delle pubblicazioni</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 16px">Tasso di fallimento, valutazione e inattività calcolati sulle esecuzioni reali. Oltre il '+PUB_SOGLIA_FALLIMENTI+'% di fallimenti (su almeno 5 esecuzioni) l\'agente viene sospeso: non è più installabile, chi lo usa già riceve la segnalazione e decide.</p>';
   if(!righe.length){
     html+='<div style="text-align:center;padding:40px;color:var(--tx4)"><div style="font-size:32px;margin-bottom:8px">📭</div><div style="font-size:13px">Nessun agente pubblicato</div></div>';
@@ -353,7 +353,7 @@ function pubSuspendUI(id){
 function pubVersionsUI(id){
   var vs=pubVersions(id);
   var a=dbGetOne('SELECT name,version FROM published_agents WHERE id=?',[id]);
-  var html='<div style="display:flex;justify-content:space-between;align-items:center"><h2>🗂️ Versioni di '+escHtml(a.name)+'</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
+  var html='<div style="display:flex;justify-content:space-between;align-items:center"><h2>Versioni di '+escHtml(a.name)+'</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
     '<p style="font-size:12px;color:var(--tx3);margin:10px 0 14px">Il ripristino di una versione precedente notifica chi ha installato l\'agente.</p>'+
     vs.map(function(v){
       var def=JSON.parse(v.definition_json||'{}');

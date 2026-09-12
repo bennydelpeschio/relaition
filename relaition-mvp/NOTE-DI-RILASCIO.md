@@ -1,11 +1,64 @@
 # RelAItion, note di rilascio
 
-**Versione del 6 settembre 2026**
+**Versione del 12 settembre 2026**
 
-Questo aggiornamento nasce quasi interamente dalle segnalazioni della sessione di test.
-Qui sotto c'è cosa è cambiato e, dove utile, perché.
+Un rilascio di chiusura: ciò che restava dai test, più le pulizie prima della consegna.
+
+## Builder
+
+- **Sandbox didattica davvero senza persistenza.** Salva, Pubblica e Pianifica
+  non sono disponibili mentre la sandbox è attiva, e i pulsanti si vedono
+  spenti. Prima funzionavano come sempre, e un flusso di prova poteva finire
+  fra i tuoi agenti o in coda di revisione. Esporta e Python restano.
+- **Aiuto alla scrittura.** Sotto il prompt di un nodo AI, sotto il contesto
+  del flusso e sotto ogni area di testo dei nodi c'è «Aiutami a scriverlo»:
+  dici a parole cosa vuoi ottenere, il modello collegato scrive il testo o
+  migliora quello che c'è, e puoi ripristinare il precedente. Senza modello
+  collegato lo dice, non finge.
+- **A capo nella chat e nelle etichette delle frecce.** La chat cresce con il
+  testo (Invio genera, Maiusc+Invio va a capo); l'etichetta di una freccia
+  accetta fino a tre righe, anche sulla tela.
+- **Registro di esecuzione.** Le righe lunghe si aprono con una freccia e
+  mostrano il testo intero: prima veniva tagliato a 80 caratteri prima ancora
+  di arrivare al registro.
+
+## Ingressi e aspetto
+
+- **Identità visiva ufficiale.** Logo con il claim *Learn / Build / Share /
+  Grow* in accesso, avvio e demo, segno nel menu, icona dell'app installabile
+  dall'asset ufficiale. Tutto PNG con sfondo trasparente.
+- **Tema scuro.** Interruttore nella barra in alto (☾/☀); la scelta resta nel
+  browser. Predefinito chiaro. Finestre di verifica, avvisi, badge e quiz
+  leggibili anche al buio.
+- **Sandbox senza tracce.** Eseguire nella sandbox non scrive più nello storico
+  delle esecuzioni né nel Monitoraggio.
+
+- **Sandbox didattica in evidenza** nel Learning Hub: pulsante proprio accanto al
+  giro guidato, non più un collegamento in piccolo.
+- **Testi puliti.** Niente trattini lunghi nei testi visibili, niente emoji nei
+  titoli: le icone restano dove servono (palette, nodi, pulsanti, badge).
+- **Finestre e pannelli si chiudono cambiando pagina.** Una finestra aperta non
+  resta più sopra la schermata successiva.
+
+## Sfide, formazione, community
+
+- Il dettaglio della classifica scrive «1 controllo», non «1 controlli».
+- Le iscrizioni alle sfide vengono ricostruite dalle candidature: in classifica
+  comparivano persone che risultavano non iscritte.
+- Demo guidata: 97 passi in 10 capitoli, con iscrizione, candidatura,
+  classifica e domande nelle Sfide, quiz e post nella Community, e un capitolo
+  finale con un secondo account per mostrare i dati per persona.
+
+## Esempi
+
+- `esempi/4-invoice-extractor.json`: il flusso della tabella 3.H.2 della tesi,
+  importabile così com'è.
 
 ---
+
+
+# Versione del 6 settembre 2026
+
 
 ## Cose che non funzionavano
 
