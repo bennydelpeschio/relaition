@@ -22,7 +22,7 @@
   --sh-lg:0 10px 15px -3px rgba(0,0,0,.08),0 4px 6px -4px rgba(0,0,0,.04);
   --sh-xl:0 20px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.06);
   --glass:rgba(255,255,255,.7);--glass-b:blur(12px);
-  --trans:all .2s cubic-bezier(.4,0,.2,1);
+  --trans:all .14s cubic-bezier(.2,0,0,1);
 }
 html,body{height:100%;font-family:'Inter',system-ui,-apple-system,sans-serif;color:var(--tx);background:var(--bg);overflow:hidden;-webkit-font-smoothing:antialiased}
 .app{display:flex;height:100vh}
@@ -315,7 +315,7 @@ html[data-theme="dark"] [style*="color:#0F172A" i],
 html[data-theme="dark"] [style*="color:#1E293B" i],
 html[data-theme="dark"] [style*="color:#334155" i]{color:var(--tx)!important}
 /* Logo intero (file ufficiale): largo quanto il contenitore, mai piu' di 320px */
-.logo-intero{display:block;width:100%;max-width:320px;height:auto}
+.logo-intero{display:block;width:100%;max-width:320px;height:auto;margin-left:auto;margin-right:auto;image-rendering:auto}
 .logo-mark img{width:32px;height:auto;display:block}
 .sidebar.compatta .logo-mark img{width:36px}
 /* classi con tinta pastello scritta nel foglio di stile */
@@ -336,3 +336,6 @@ html[data-theme="dark"] .badge-b{color:#C4B5FD}
 html[data-theme="dark"] .badge-g{color:#6EE7B7}
 html[data-theme="dark"] .badge-y{color:#FCD34D}
 html[data-theme="dark"] .badge-p{background:#2E1F5E;color:#C4B5FD}
+/* Versione in esecuzione, in fondo al menu: piccola, letta dal service worker */
+.versione-app{font-size:9px;color:rgba(148,163,184,.45);text-align:right;padding:4px 6px 0;letter-spacing:.04em;min-height:12px}
+.sidebar.compatta .versione-app{display:none}

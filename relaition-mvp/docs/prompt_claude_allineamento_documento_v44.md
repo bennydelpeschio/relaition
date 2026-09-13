@@ -2,7 +2,7 @@
 
 Da usare in una **conversazione Claude** allegando:
 
-1. `relaition-mvp aggiornata 20260912.zip`
+1. `relaition-mvp aggiornata 20260913.zip`
 2. il master document della tesi (capitoli, appendice, bibliografia)
 
 Questo prompt è **incrementale**: presuppone che il documento sia già stato
@@ -20,8 +20,8 @@ documento in cui intervenire. Il tuo compito non è rileggere tutto: è
 applicare queste modifiche, verificare nel codice che siano vere, e dirmi se
 toccano altro.
 
-Fonti nello zip: `ARCHITECTURE.md` dalla sezione **§5.145 alla §5.150** (le
-ultime sei), `NOTE-DI-RILASCIO.md` (blocco «Versione del 12 settembre 2026»),
+Fonti nello zip: `ARCHITECTURE.md` dalla sezione **§5.145 alla §5.151** (le
+ultime sette), `NOTE-DI-RILASCIO.md` (blocco «Versione del 12 settembre 2026»),
 `brand/LEGGIMI.md`, `demo/LEGGIMI.md`. Il codice vince sempre sulla
 documentazione: se trovi una discordanza, segnalamela.
 
@@ -108,7 +108,7 @@ capitolo. Se il punto non esiste nel documento, dimmi dove andrebbe aggiunto.
 
 ### Cosa mi devi restituire
 
-- Per ognuno degli 11 punti: **trovato / non trovato** nel documento, punto
+- Per ognuno dei 13 punti: **trovato / non trovato** nel documento, punto
   esatto (titolo di sezione o frase da cercare), azione (sostituisci /
   integra / togli), **testo nuovo pronto**.
 - L'elenco degli **screenshot da rifare**, con la schermata, lo stato in cui
@@ -126,3 +126,19 @@ Non inventare funzionalità: se un punto non trova riscontro nel codice, dillo.
 Non riscrivere capitoli: interventi puntuali. Se il documento è ancora fermo a
 prima di settembre, fermati e dimmelo: serve prima il prompt completo (v43).
 Scrivi in italiano, nel registro del documento.
+
+### Aggiunte del 13 settembre (stesso prompt, due punti in più)
+
+12. **Prestazioni.** Sono state tolte le animazioni continue (marchio pulsante,
+    gradienti in movimento) e la sfocatura dello sfondo dietro le finestre
+    modali: se il documento descrive «micro-animazioni» o «effetti di sfondo»
+    come parte del design system, va ridimensionato a: transizioni brevi
+    (0,2-0,3 s) solo al cambio di stato, nessun effetto permanente. → *Dove*:
+    capitolo 3, design system / accessibilità (`prefers-reduced-motion` è
+    rispettato).
+
+13. **Icona e logo.** L'icona installabile è a misura piena (asset ufficiale
+    ritagliato al contenuto); il logo di accesso è quello ufficiale, senza
+    alone e centrato. Nessun testo da cambiare oltre al punto 1, ma gli
+    screenshot di accesso e dell'app installata vanno fatti **dopo** aver
+    disinstallato e reinstallato l'app, altrimenti mostrano l'icona vecchia.

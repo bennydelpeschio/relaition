@@ -3978,3 +3978,57 @@ l'**esecuzione**: eseguire nella sandbox scriveva nello storico, e da lì nel
 Monitoraggio. `recordExecution()` ora non scrive con la sandbox attiva; il
 registro dentro il Builder resta, perché è ciò che chi impara sta guardando.
 Cache `relaition-v96`.
+
+### 5.151 Icona piccola, logo sfocato, animazioni a scatti
+
+Tre segnalazioni dopo l'arrivo degli asset ufficiali, tutte vere.
+
+**L'icona installata era più piccola delle altre.** L'app icon ufficiale ha un
+margine trasparente attorno al quadrato arrotondato: 164 pixel di contenuto su
+210. Windows e Android riscalano il file intero, margine compreso, quindi
+l'icona usciva al 78%. `brand/prepara-icone.ps1` ora ritaglia al contenuto e
+da lì produce le due forme del manifest (`any` a tutto campo, `maskable` con
+l'8% di margine sul blu dell'icona). L'icona già installata resta quella
+vecchia finché non si disinstalla e reinstalla: i sistemi la congelano
+all'installazione.
+
+**Il logo di accesso sembrava sfocato e fuori centro.** Due cause. Attorno
+alle lettere il logo chiaro ha un alone grigio semitrasparente (antialiasing
+verso il bianco) che, reso bianco per il fondo scuro, si vedeva come una
+sfumatura sporca: sotto una certa opacità ora si azzera. E il file portava con
+sé un margine trasparente asimmetrico, per cui «centrato» non lo era: si
+ritaglia al contenuto (907×303) e si centra con i margini automatici. Tolto
+anche il `backdrop-filter` della scheda di accesso, invisibile su un gradiente
+piatto e costoso.
+
+**Le finestre si aprivano a scatti.** Non era JavaScript (aprire una finestra
+costa 0,1 ms): erano tre cose che il browser ridisegnava di continuo. Il
+marchio nel menu pulsava con un `filter: drop-shadow` animato all'infinito, su
+ogni pagina, sempre; le intestazioni di Marketplace e Learning Hub facevano
+scorrere un gradiente a tutta larghezza per dodici secondi e poi da capo; e la
+finestra modale sfocava tutto lo sfondo con `backdrop-filter: blur`, cioè
+rifiltrava l'intera pagina a ogni apertura. Tolte tutte e tre: la pulsazione
+resta solo sulla schermata di avvio, che dura un secondo, e come opacità; il
+gradiente è fermo; la modale scurisce lo sfondo senza sfocarlo. Verifica:
+`document.getAnimations()` a regime non contiene più animazioni infinite
+(prima due). Cache `relaition-v97`.
+
+### 5.152 «Le finestre si aprono lente»: cosa era e cosa no
+
+Segnalazione dopo il §5.151. Misure prima di toccare: il ricalcolo degli stili
+con i selettori `[style*=…]` del tema scuro costa 0,02 ms su 1 125 elementi
+(sospettati, scagionati); aprire una finestra costa 0,1 ms di JavaScript;
+nessuna animazione infinita a regime. Restavano due cose, entrambe di
+percezione più che di carico:
+
+- la curva di apertura delle finestre aveva una sovraelongazione (1,4): la
+  finestra arrivava e poi «si assestava», e quel rimbalzo di un quarto di
+  secondo si legge come lentezza. Ora 160 ms, curva senza rimbalzo;
+- le transizioni generiche (`--trans`) erano di 200 ms: portate a 140, e il
+  cambio pagina da 220 a 150.
+
+E una cosa che non si poteva sapere: se il browser stesse ancora servendo una
+versione precedente. Il numero della cache in esecuzione ora compare in fondo
+al menu, chiesto al service worker che sta servendo la pagina (non
+un'etichetta scritta a mano, che resta indietro): se la segnalazione dice
+«v96», la causa è già nota. Cache `relaition-v98`.

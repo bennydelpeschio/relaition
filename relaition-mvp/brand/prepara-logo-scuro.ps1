@@ -61,3 +61,28 @@ $rect = New-Object System.Drawing.Rectangle 349, 29, 273, 250
 $mk = $ld.Clone($rect, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
 $mk.Save("$p\mark.png", [System.Drawing.Imaging.ImageFormat]::Png); $mk.Dispose(); $ld.Dispose()
 "segno: mark.png"
+
+# ── Rifinitura: via l'alone e i margini.
+#    Attorno alle lettere il logo chiaro ha un alone grigio semitrasparente
+#    (antialiasing verso il bianco) che, reso bianco, su fondo scuro si vedeva
+#    come una sfumatura sporca: sotto una certa opacita' si azzera. Poi si
+#    ritaglia al contenuto, cosi' l'immagine si centra davvero e non porta
+#    con se' un margine trasparente asimmetrico.
+$t3 = [System.Drawing.Bitmap]::FromFile("$p\logo-dark.png"); $ld2 = New-Object System.Drawing.Bitmap $t3; $t3.Dispose()
+$W = $ld2.Width; $H = $ld2.Height
+$bx0 = $W; $by0 = $H; $bx1 = 0; $by1 = 0
+for ($y = 0; $y -lt $H; $y++) { for ($x = 0; $x -lt $W; $x++) {
+  $c = $ld2.GetPixel($x, $y)
+  if ($c.A -eq 0) { continue }
+  $dentroSegno = ($x -ge 349 -and $x -le 621 -and $y -ge 29 -and $y -le 278)
+  if (-not $dentroSegno -and $c.A -lt 70) { $ld2.SetPixel($x, $y, [System.Drawing.Color]::FromArgb(0, 0, 0, 0)); continue }
+  if ($c.A -gt 10) {
+    if ($x -lt $bx0) { $bx0 = $x }; if ($x -gt $bx1) { $bx1 = $x }
+    if ($y -lt $by0) { $by0 = $y }; if ($y -gt $by1) { $by1 = $y }
+  }
+} }
+$mg = 4
+$r2 = New-Object System.Drawing.Rectangle ([Math]::Max(0, $bx0 - $mg)), ([Math]::Max(0, $by0 - $mg)), ([Math]::Min($W, $bx1 + $mg) - [Math]::Max(0, $bx0 - $mg)), ([Math]::Min($H, $by1 + $mg) - [Math]::Max(0, $by0 - $mg))
+$fin = $ld2.Clone($r2, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+$fin.Save("$p\logo-dark.png", [System.Drawing.Imaging.ImageFormat]::Png); $fin.Dispose(); $ld2.Dispose()
+"ritaglio logo scuro: $($r2.Width)x$($r2.Height)"

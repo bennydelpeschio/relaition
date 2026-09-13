@@ -30,6 +30,12 @@ Un rilascio di chiusura: ciò che restava dai test, più le pulizie prima della 
 - **Tema scuro.** Interruttore nella barra in alto (☾/☀); la scelta resta nel
   browser. Predefinito chiaro. Finestre di verifica, avvisi, badge e quiz
   leggibili anche al buio.
+- **Versione in fondo al menu**, letta dal service worker in esecuzione: dice
+  quale build sta girando davvero.
+- **Più fluida.** Tolte le animazioni che giravano sempre (marchio pulsante,
+  gradienti in movimento) e la sfocatura dello sfondo dietro le finestre:
+  finestre e transizioni non scattano più.
+- **Icona installabile a misura piena** e logo di accesso nitido e centrato.
 - **Sandbox senza tracce.** Eseguire nella sandbox non scrive più nello storico
   delle esecuzioni né nel Monitoraggio.
 

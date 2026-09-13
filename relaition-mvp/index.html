@@ -20,10 +20,10 @@
 </head>
 <body>
 <div id="loginScreen" style="position:fixed;inset:0;background:linear-gradient(160deg,#0F172A 0%,#1E293B 100%);display:flex;align-items:center;justify-content:center;z-index:10000;font-family:Inter,sans-serif;padding:20px">
-  <div style="width:100%;max-width:380px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:36px 32px;backdrop-filter:blur(12px)">
+  <div style="width:100%;max-width:380px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:36px 32px">
     <!-- Logo ufficiale per sfondo scuro (brand/logo-dark.png), con il claim
          Learn / Build / Share / Grow gia' dentro. -->
-    <img src="brand/logo-dark.png" alt="RelAItion. Learn, Build, Share, Grow" class="logo-intero" style="margin:-6px 0 18px">
+    <img src="brand/logo-dark.png" alt="RelAItion. Learn, Build, Share, Grow" class="logo-intero" style="margin:0 auto 22px;width:280px">
     <div style="color:#F1F5F9;font-size:16px;font-weight:700;margin-bottom:4px">Bentornato</div>
     <div style="color:#94A3B8;font-size:12px;margin-bottom:22px">Accedi per continuare sulla piattaforma</div>
     <form id="loginForm" onsubmit="return doLogin(event)">
@@ -94,6 +94,7 @@
           <line x1="21" y1="12" x2="9" y2="12"></line>
         </svg>Esci</span>
     </div>
+    <div id="versioneApp" class="versione-app"></div>
   </div>
 </aside>
 

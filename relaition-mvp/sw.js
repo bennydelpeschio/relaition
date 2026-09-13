@@ -4,7 +4,7 @@
 // che l'app si apra anche senza connessione — il che è coerente con il fatto
 // che i dati vivono nel browser e non su un server.
 
-var CACHE = 'relaition-v96';
+var CACHE = 'relaition-v98';
 // L'elenco e' generato dai <script> e <link> di index.html: quando era
 // scritto a mano restava indietro a ogni modulo aggiunto, e nell'app
 // installata i moduli mancanti non avevano copia di riserva — bastava una
@@ -126,4 +126,13 @@ self.addEventListener('fetch', function(e){
       });
     })
   );
+});
+
+// La pagina puo' chiedere quale versione della cache sta servendo. Serve a
+// capire, durante una segnalazione, se il browser sta ancora usando una
+// versione vecchia: e' il numero che compare in fondo al menu.
+self.addEventListener('message', function(e){
+  if(e.data && e.data.tipo==='versione' && e.source){
+    e.source.postMessage({ tipo:'versione', cache:CACHE });
+  }
 });
