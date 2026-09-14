@@ -231,6 +231,13 @@ function assicuraAccesso(fine){
 // si e' ricordato di scriverla.
 function chiudiFinestre(){
   var w=W(); if(!w)return;
+  // La sandbox didattica e' uno stato del Builder, non una finestra, ma per la
+  // dimostrazione vale lo stesso: aperta in un passo, non deve sopravvivere al
+  // passo dopo, altrimenti la palette resta ridotta per tutto il resto.
+  try{
+    var passo=(typeof COPIONE!=='undefined'&&typeof D!=='undefined')?COPIONE[D.passo]:null;
+    if(w.SANDBOX&&w.SANDBOX.attiva&&!(passo&&passo.tieniSandbox)&&typeof w.closeSandbox==='function')w.closeSandbox();
+  }catch(e){}
   try{ if(typeof w.closeModal==='function')w.closeModal() }catch(e){}
   try{
     var d=doc();
@@ -327,7 +334,7 @@ var COPIONE=[
 },
 {
   capitolo:1, titolo:'La dashboard risponde a «come sto andando»',
-  testo:'Quattro numeri: agenti, esecuzioni, corsi, esperienza. Sono <strong>calcolati sulle righe reali del database</strong> e filtrati sulla persona che ha effettuato l\'accesso. Il sottotitolo dice com\'è composto il totale: due creati da lui, cinque installati.',
+  testo:'Quattro numeri: agenti, esecuzioni, corsi, esperienza. Sono <strong>calcolati sulle righe reali del database</strong> e filtrati sulla persona che ha effettuato l\'accesso. Il sottotitolo dice com\'è composto il totale: due creati da lui, cinque installati. Anche i riquadri sotto sono suoi: gli agenti che ha usato di più, la sua attività, le sue esecuzioni della settimana. Solo consigli e novità sono uguali per tutti.',
   pagina:'dashboard', sel:'.stats-row', pos:'bottom', durata:8000
 },
 {
@@ -592,6 +599,32 @@ var COPIONE=[
   sel:'#propsBody', pos:'left', durata:11000
 },
 {
+  capitolo:4, titolo:'E se non so scrivere un prompt?',
+  testo:function(){
+    var p=modelloCollegato();
+    return 'Sotto ogni area di testo c\'è <strong>«Aiutami a scriverlo»</strong>: dico a parole cosa voglio ottenere e il modello collegato scrive il prompt, o migliora quello che c\'è, sapendo in quale nodo sta scrivendo e quali campi arrivano da monte. Il precedente si ripristina con un clic.'+
+      (p?' Qui è collegato '+escapaTitolo(p)+': premendo «Scrivi da zero» il testo arriva nel campo.':' Senza un modello collegato non finge: dice dove collegarlo.');
+  },
+  pagina:'builder',
+  azione:function(fine){
+    var w=W();
+    try{
+      var ai=(w.B&&w.B.nodes||[]).filter(function(n){return n.type==='ai'})[0];
+      if(ai)selezionaNodo(w,ai.id);
+    }catch(e){}
+    setTimeout(function(){
+      var apri=Q('#propsBody .aiuto-testo-apri');
+      if(apri)clicca(apri);
+      setTimeout(function(){
+        var r=Q('#propsBody .aiuto-testo-corpo textarea');
+        if(r)scrivi(r,'classificare una richiesta in amministrazione, tecnico o commerciale, con urgenza',function(){ setTimeout(fine,600) });
+        else fine();
+      },900);
+    },1000);
+  },
+  sel:'#propsBody', pos:'left', durata:11000
+},
+{
   capitolo:4, titolo:'Un nodo di controllo, che i giocattoli non hanno',
   testo:'Prima di far leggere il testo al modello ci metto un <strong>mascheramento dei dati personali</strong>. È la categoria che distingue uno strumento aziendale da una demo: il modello valuta il contenuto, non chi lo ha scritto.',
   azione:function(fine){
@@ -676,13 +709,13 @@ var COPIONE=[
     var p=modelloCollegato();
     return p
       ? 'Collegamento <strong>riuscito</strong>: il fornitore attivo è <em>'+p+'</em>. Da qui in avanti i nodi AI chiamano il modello vero, e il registro lo dichiara.'
-      : 'In questa sessione <strong>non c\'è nessuna chiave collegata</strong>, e la piattaforma non lo nasconde: i nodi AI verranno bloccati con un errore esplicito invece di restituire una risposta inventata. <em>Con una chiave incollata qui, questo passaggio mostra il test che va a buon fine.</em>';
+      : 'In questa sessione <strong>non c\'è nessuna chiave collegata</strong>, e la piattaforma non lo nasconde. I nodi AI possono girare lo stesso con la <strong>quota di prova</strong>, ma con risposte <em>simulate e dichiarate tali</em> in ogni riga del registro: si vede la struttura del flusso, non il contenuto. Chi vuole una risposta vera collega la sua chiave, e la quota non si tocca. <em>Con una chiave incollata qui, questo passaggio mostra il test che va a buon fine.</em>';
   },
   pagina:'builder', sel:'.ai-panel, .builder-sidebar', pos:'right', durata:10000
 },
 {
   capitolo:5, titolo:'La scelta del modello sta sul nodo',
-  testo:'Non è un\'impostazione globale: <strong>ogni nodo AI sceglie il proprio</strong>. Su un flusso che classifica mille richieste al giorno il modello economico cambia il conto di fine mese; su una stesura di testo cambia il risultato.',
+  testo:'Non è un\'impostazione globale: <strong>ogni nodo AI sceglie il proprio</strong>. Su un flusso che classifica mille richieste al giorno il modello economico cambia il conto di fine mese; su una stesura di testo cambia il risultato. Con il fornitore su <em>Automatico</em> la tendina del modello resta bloccata: prima si sceglie con chi si parla, poi quale modello.',
   pagina:'builder',
   azione:function(fine){
     var w=W();
@@ -1032,7 +1065,7 @@ var COPIONE=[
   testo:function(){
     return window.__pubAperta
       ? 'Presenza di un output, gestione degli errori, controlli sui dati personali, parametri compilati, almeno un\'esecuzione riuscita. <strong>Sono verifiche, non caselle da spuntare</strong>: chi non le passa non entra in catalogo.'
-      : 'Il modulo <strong>non si è nemmeno aperto</strong>: la validazione ha bloccato prima. Senza un modello collegato due nodi non possono funzionare, e la piattaforma <em>non pubblica un flusso che non è in grado di eseguire</em>. Collegando una chiave, questo passaggio mostra il modulo con i controlli.';
+      : 'Il modulo <strong>non si è nemmeno aperto</strong>: la validazione ha bloccato prima. Senza chiave né quota residua due nodi non possono funzionare, e la piattaforma <em>non pubblica un flusso che non è in grado di eseguire</em>. Con la quota di prova il modulo si apre, ma i controlli segnalano che il collaudo è avvenuto solo con risposte simulate.';
   },
   sel:'#modalContent', pos:'left', durata:9500
 },
@@ -1203,6 +1236,24 @@ var COPIONE=[
     setTimeout(fine,900);
   },
   sel:'#learn-detail', pos:'left', durata:9000
+},
+{
+  capitolo:8, titolo:'La sandbox: sbagliare senza conseguenze',
+  testo:function(){
+    var w=W(), n=0; try{ n=w.PALETTE.length }catch(e){}
+    return 'Dal Learning Hub si apre la <strong>sandbox didattica</strong>: un Builder con la palette ridotta'+(n?' a '+n+' blocchi':'')+', dati finti, e <strong>niente da salvare, pubblicare o pianificare</strong>: i tre pulsanti sono spenti, e un\'esecuzione fatta qui non entra nello storico. Serve a provare, non a produrre. Esco, e ritrovo il mio agente com\'era.';
+  },
+  pagina:'learning',
+  azione:function(fine){
+    var w=W();
+    try{ if(typeof w.renderLearning==='function')w.renderLearning() }catch(e){}
+    setTimeout(function(){
+      var b=perTesto('#page-learning .tb-sandbox','sandbox');
+      if(b)clicca(b); else { try{ w.openSandbox() }catch(e){} }
+      setTimeout(fine,1500);
+    },800);
+  },
+  tieniSandbox:true, sel:'#canvasArea', pos:'left', durata:11000
 },
 {
   capitolo:8, titolo:'Sfide ed eventi',
@@ -1556,6 +1607,22 @@ var COPIONE=[
   pagina:'profile', sel:'.page-pad', pos:'bottom', durata:8500
 },
 {
+  capitolo:9, titolo:'Quanto costa un uso reale',
+  testo:function(){
+    var w=W(), c=null; try{ c=w.consumoUtente() }catch(e){}
+    var f=function(n){return Number(n||0).toLocaleString('it-IT')};
+    return 'La piattaforma <strong>conta i token</strong> di ogni chiamata al modello: misurati dove il fornitore li riporta, stimati altrove, e lo dice.'+
+      (c?' Qui sono <strong>'+f(c.tot)+'</strong> su '+f(c.chiamate)+' chiamate'+(c.stimati?', '+f(c.stimati)+' stimati':'')+'.':'')+
+      ' La <strong>quota di prova</strong> di '+f(w.QUOTA_PROVA_TOKEN||100000)+' token non paga niente al posto di nessuno: la chiave resta di chi la usa. Serve a far vedere quanto costa un uso reale, ed è il contatore su cui un piano aziendale addebiterebbe il consumo oltre i crediti di benvenuto.';
+  },
+  pagina:'profile',
+  azione:function(fine){
+    var el=Q('#profile-consumo'); if(el)el.scrollIntoView({block:'center'});
+    setTimeout(fine,800);
+  },
+  sel:'#profile-consumo', pos:'left', durata:10000
+},
+{
   capitolo:9, titolo:'Badge e privilegi',
   testo:function(){
     var w=W(), p='';
@@ -1606,6 +1673,20 @@ var COPIONE=[
 {
   capitolo:9, titolo:'Quello che questo cruscotto non può dirti',
   testo:'In fondo alla pagina c\'è il <strong>limite dichiarato</strong>: cosa è calcolato sui dati veri e cosa no. Un prototipo che dichiara i propri confini è più affidabile di uno che fa finta di non averne.',
+  sel:'#monitoraggio-body', pos:'top', durata:9000
+},
+{
+  capitolo:9, titolo:'Anche al buio',
+  testo:'Un interruttore in alto e la piattaforma passa al <strong>tema scuro</strong>: tutti i colori vengono dalle stesse variabili, quindi cambia la tavolozza e non un componente per volta. La scelta resta nel browser. Lo rimetto chiaro: gli screenshot e questa dimostrazione devono venire uguali su ogni macchina.',
+  pagina:'monitoraggio',
+  azione:function(fine){
+    var w=W();
+    try{ if(typeof w.applicaTema==='function')w.applicaTema('dark') }catch(e){}
+    setTimeout(function(){
+      try{ if(typeof w.applicaTema==='function')w.applicaTema('light') }catch(e){}
+      fine();
+    },4200);
+  },
   sel:'#monitoraggio-body', pos:'top', durata:9000
 },
 {

@@ -282,6 +282,7 @@ initDatabase().then(function(){
   // Blocco F: dati dimostrativi al primo avvio, mai sopra il lavoro esistente.
   if(typeof seedDemoData==="function"){
     var _s=seedDemoData();
+    if(typeof seedConsumoToken==='function')seedConsumoToken();
     if(!_s.saltato)addAct("Caricati i dati dimostrativi: "+_s.flussi+" flussi, "+_s.documenti+" documenti, "+_s.esecuzioni+" esecuzioni");
   }
   // La configurazione AI verificata nella stessa scheda torna disponibile: un

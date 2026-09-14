@@ -681,7 +681,9 @@ async function rtRunAiNode(ctx, node){
     // al modello può durare decine di secondi, ed è proprio quella che
     // l'utente vuole poter troncare.
     var cfgRun = Object.assign({}, cfg, { model: provRisolto, modelId: cfg.modelId,
-      signal: ctx.abortCtrl ? ctx.abortCtrl.signal : undefined });
+      signal: ctx.abortCtrl ? ctx.abortCtrl.signal : undefined,
+      // Da dove viene la chiamata, per il conto dei token (js/consumo.js).
+      consumo: { agente: ctx.agentName, nodo: node.name } });
     var res = (typeof callAIWithTools === 'function' && strumenti.length)
       ? await callAIWithTools(user, sys, cfgRun, strumenti)
       : await callAI(user, sys, cfgRun);
@@ -720,8 +722,9 @@ async function rtRunAiNode(ctx, node){
       continue;
     }
     testo = res.text;
-    if(res.demo) msgs.push('[Demo] '+rtTesto(res.text));
-    else msgs.push('🧠 '+rtTesto(res.text));
+    if(res.quota) msgs.push('[Quota di prova · risposta simulata] '+rtTesto(res.text)+(res.usage?' · '+((res.usage.input|0)+(res.usage.output|0)).toLocaleString('it-IT')+' token stimati, presi dalla quota':''));
+    else if(res.demo) msgs.push('[Demo] '+rtTesto(res.text));
+    else msgs.push('🧠 '+rtTesto(res.text)+(res.usage?' · '+((res.usage.input|0)+(res.usage.output|0)).toLocaleString('it-IT')+' token'+(res.usage.stimato?' (stimati)':''):''));
     break;
   }
 
@@ -1247,7 +1250,7 @@ async function rtRunLogicNode(ctx, node, stato){
     if(modelloCond){
       var cr = await callAI('Dato questo contesto:\n'+String(ctx.pipeline).substring(0,600)+'\n\nValuta la condizione: "'+expr+'". Rispondi SOLO con la parola TRUE o FALSE.',
                             'Sei un valutatore di condizioni booleane. Rispondi solo TRUE o FALSE.',
-                            { temperature:0, model:modelloCond, signal: ctx.abortCtrl ? ctx.abortCtrl.signal : undefined });
+                            { temperature:0, model:modelloCond, signal: ctx.abortCtrl ? ctx.abortCtrl.signal : undefined, consumo:{ agente: ctx.agentName, nodo: node.name } });
       cond = cr.text.toUpperCase().indexOf('TRUE') >= 0;
       valutatoDa = providerLabel(modelloCond);
     }else{

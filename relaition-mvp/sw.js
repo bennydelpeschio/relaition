@@ -4,7 +4,7 @@
 // che l'app si apra anche senza connessione — il che è coerente con il fatto
 // che i dati vivono nel browser e non su un server.
 
-var CACHE = 'relaition-v98';
+var CACHE = 'relaition-v105';
 // L'elenco e' generato dai <script> e <link> di index.html: quando era
 // scritto a mano restava indietro a ogni modulo aggiunto, e nell'app
 // installata i moduli mancanti non avevano copia di riserva — bastava una
@@ -41,6 +41,7 @@ var GUSCIO = [
   './js/seed-demo.js',
   './js/tour.js',
   './js/ai-client.js',
+  './js/consumo.js',
   './js/aiuto-testo.js',
   './js/tema.js',
   './brand/mark.png',
@@ -62,6 +63,7 @@ var GUSCIO = [
   './js/pubblicazioni.js',
   './js/marketplace.js',
   './js/pages.js',
+  './js/dashboard-utente.js',
   './js/lessons-piattaforma.js',
   './js/lessons-fondamenti.js',
   './js/modals.js',

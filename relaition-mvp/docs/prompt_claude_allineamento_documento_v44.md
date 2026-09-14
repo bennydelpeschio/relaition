@@ -82,7 +82,7 @@ capitolo. Se il punto non esiste nel documento, dimmi dove andrebbe aggiunto.
    più, resta un tetto dichiarato di 4000. → *Dove*: capitolo 3, esecuzione e
    tracciabilità.
 
-8. **Demo guidata**: 97 passi in 10 capitoli; il capitolo 10 esce e rientra con
+8. **Demo guidata**: 100 passi in 10 capitoli (con aiuto alla scrittura, sandbox e tema scuro mostrati); il capitolo 10 esce e rientra con
    un altro account per mostrare i dati per persona; nelle Sfide si vede
    iscrizione, candidatura, classifica calcolata e domande all'AMA; nel
    Learning Hub il quiz viene risposto davvero; in Community un post viene

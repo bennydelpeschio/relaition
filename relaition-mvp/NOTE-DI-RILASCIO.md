@@ -1,6 +1,6 @@
 # RelAItion, note di rilascio
 
-**Versione del 12 settembre 2026**
+**Versione del 14 settembre 2026**
 
 Un rilascio di chiusura: ciò che restava dai test, più le pulizie prima della consegna.
 
@@ -21,6 +21,34 @@ Un rilascio di chiusura: ciò che restava dai test, più le pulizie prima della 
 - **Registro di esecuzione.** Le righe lunghe si aprono con una freccia e
   mostrano il testo intero: prima veniva tagliato a 80 caratteri prima ancora
   di arrivare al registro.
+
+## Dashboard
+
+- **Tutta di chi è connesso.** Agenti più usati, attività recente e grafico
+  della settimana ora sono calcolati sulle righe della persona: chi non ha
+  ancora fatto niente vede tre riquadri vuoti che dicono cosa comparirà lì,
+  non i numeri di qualcun altro. Consigli e novità restano comuni. Vale anche
+  per «Attività recente» nel profilo, che senza attività non inventa più nulla.
+
+## Consumo
+
+- **Contatore dei token.** Ogni chiamata al modello viene contata per utente,
+  agente, nodo e fornitore: misurata dove il fornitore riporta i token, stimata
+  altrove (e lo dice). Si vede nel registro, nel profilo e nel Monitoraggio.
+- **Quota di prova** di 100.000 token per utente. Senza chiave collegata i
+  nodi AI usano la quota, con risposte simulate e dichiarate tali in ogni
+  riga del registro; con la propria chiave le risposte sono vere e la quota
+  non si tocca. La regola è automatica: il selettore «Fonte delle chiamate»
+  della versione precedente è stato tolto. Esaurita la quota, serve la chiave.
+- **Aiuto alla scrittura riparato.** Con la chiave collegata rispondeva
+  «provider auto non configurato»: la scelta «automatico» non veniva risolta
+  sul fornitore collegato. Ora scrive davvero nel campo; Ctrl+Invio invia.
+- **Autosalvataggio sui nomi omonimi.** Aprendo un flusso di esempio con lo
+  stesso nome di un agente di un altro utente, l'autosalvataggio falliva in
+  silenzio a ogni modifica. Ora il nome prende il suffisso «(2)».
+- **Tendina del modello a cascata.** Elenca i modelli del fornitore scelto
+  sul nodo (prima poteva mostrare quelli di un altro fornitore); con
+  «Automatico» resta bloccata finché non si sceglie il fornitore.
 
 ## Ingressi e aspetto
 

@@ -37,8 +37,12 @@ function salvaCopiaDiLavoro(){
 // Il nome identifica l'agente in "I miei agenti" e loadSavedAgent lo cerca per
 // nome: due righe omonime rendono la seconda irraggiungibile e fanno sembrare
 // che un agente sia sparito. I nomi restano quindi univoci.
+// L'indice univoco sul nome e' su TUTTA la tabella, non per autore: il
+// controllo deve esserlo altrettanto. Limitato ai propri agenti, chi apriva un
+// flusso di esempio omonimo di un agente di un altro utente vedeva
+// l'autosalvataggio fallire in silenzio (UNIQUE constraint) a ogni modifica.
 function agentNameTaken(name,exceptId){
-  var r=dbGetOne('SELECT id FROM agents WHERE name=? AND author=? AND id<>?',[name,utenteCorrente(),exceptId||-1]);
+  var r=dbGetOne('SELECT id FROM agents WHERE name=? AND id<>?',[name,exceptId||-1]);
   return r?r.id:null;
 }
 

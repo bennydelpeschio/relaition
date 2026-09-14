@@ -378,4 +378,5 @@ body.bgrip-trascino.row{cursor:row-resize}
 .aiuto-testo-azioni{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
 .aiuto-testo-azioni .tb-btn{height:26px;font-size:10.5px;padding:0 9px}
 .aiuto-testo-stato{font-size:10.5px;color:var(--tx3);line-height:1.4;flex-basis:100%}
+.aiuto-testo-nota{font-size:10px;color:var(--tx4);line-height:1.4;margin-top:4px}
 .aiuto-testo-link{color:#6D28D9;cursor:pointer;text-decoration:underline}

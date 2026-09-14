@@ -4032,3 +4032,171 @@ versione precedente. Il numero della cache in esecuzione ora compare in fondo
 al menu, chiesto al service worker che sta servendo la pagina (non
 un'etichetta scritta a mano, che resta indietro): se la segnalazione dice
 «v96», la causa è già nota. Cache `relaition-v98`.
+
+### 5.153 La demo mostra anche le ultime tre cose
+
+La dimostrazione pilota l'applicazione vera, quindi eredita ogni modifica da
+sola: logo, tema, sandbox senza persistenza, animazioni. Ma non le
+*raccontava*. Tre passi in più (100 in tutto): «E se non so scrivere un
+prompt?» apre l'aiuto alla scrittura sotto il prompt del nodo AI e detta
+l'obiettivo; «La sandbox: sbagliare senza conseguenze» la apre dal Learning
+Hub e mostra i pulsanti spenti; «Anche al buio» accende il tema scuro sul
+Monitoraggio e lo rispegne. La sandbox è uno stato del Builder, non una
+finestra, ma per la demo vale la stessa regola dei sovrapposti: aperta in un
+passo, si chiude all'inizio del successivo (`tieniSandbox` sul passo che la
+mostra), altrimenti la palette resterebbe ridotta per tutto il resto.
+Verificato: sandbox attiva durante il suo passo, chiusa al passo dopo, palette
+tornata a 81; tema chiaro a fine passo.
+
+### 5.154 Contare i token: metering e quota di prova, non crediti
+
+**La richiesta** era «crediti di benvenuto»: un bonus di token che il fornitore
+della piattaforma regala per provare il prodotto, finito il quale l'azienda
+collega i propri modelli. Ha senso come modello commerciale. Ma un credito
+«pagato da RelAItion» vuol dire che è la piattaforma a pagare l'inferenza con
+una chiave sua, dietro un proxy che contabilizza per tenant: senza server non
+esiste, e un saldo che scende mentre in realtà paga la chiave dell'utente
+sarebbe il numero finto che questa piattaforma si è impegnata a non mostrare.
+
+**Cosa c'è invece.** Il pezzo che manca a ogni modello di crediti e che si
+può fare davvero lato client: il **contatore**. `js/consumo.js` avvolge
+`callAI` e per ogni chiamata registra in `consumo_token` chi, per quale
+agente e nodo, con quale fornitore, quanti token in ingresso e in uscita. I
+numeri vengono dalla risposta del fornitore (`usage`, `usageMetadata`) quando
+c'è; altrimenti sono stimati dai caratteri, circa quattro per token, e la riga
+è marcata `stimato`: ovunque si mostrano, si dice quanti sono misurati e
+quanti stimati. Le chiamate simulate (nessuna chiave) non si contano, perché
+non consumano niente. Si vede nel registro dell'esecuzione (per nodo), nel
+profilo (totale, ultimi trenta giorni, chiamate) e nel Monitoraggio (totale e
+per fornitore). Il limite dichiarato nel Monitoraggio cambia di conseguenza:
+non più «la piattaforma non contabilizza», ma «conta i token, non li traduce
+in costo».
+
+**La quota di prova** (100.000 token per utente) è una politica come le
+altre: superata, la piattaforma lo dice una volta e continua. Il testo che la
+accompagna è esplicito: non paga i token al posto di nessuno, la chiave resta
+dell'utente; serve a far vedere quanto costa un uso reale, ed è il contatore
+su cui un piano aziendale addebiterebbe il consumo oltre i crediti di
+benvenuto. È così che il capitolo può descrivere il modello commerciale
+senza che la POC lo finga.
+
+Limiti: le chiamate con strumenti (`callAIWithTools`) passano per un percorso
+proprio e non sono ancora contate; i token non diventano euro, perché i
+listini cambiano e le chiavi sono dell'utente. Il seme aggiunge righe stimate
+alle esecuzioni già presenti, una volta sola, così il riquadro non parte a
+zero. Verificato: 68 righe di seme, Mario a 27.062 token (tutti stimati,
+dichiarati), chiamata senza chiave non registrata, riquadro nel profilo,
+riga nel Monitoraggio. Cache `relaition-v99`.
+
+### 5.155 La dashboard era per metà di qualcun altro
+
+Le quattro schede in alto erano già calcolate su chi è connesso. I tre
+riquadri sotto no: «Agenti più usati», «Attività recente» e il grafico della
+settimana erano **scritti nel codice**, uguali per tutti. Sara, che non ha mai
+eseguito niente, vedeva 42 esecuzioni di «Lead Qualifier Pro», 148 esecuzioni
+in settimana e un commento a un post che non ha scritto. Su una dashboard che
+si presenta come «la tua attività» è il peggior difetto possibile: numeri veri
+e numeri finti nella stessa schermata, senza modo di distinguerli.
+
+`js/dashboard-utente.js` li calcola sulle righe della persona connessa:
+
+- **agenti più usati**: dallo storico delle esecuzioni, con l'andamento degli
+  ultimi sette giorni contro i sette precedenti («+100%», «nuovo», «fermo»),
+  l'icona presa dall'agente salvato o dal catalogo;
+- **attività recente**: unione delle righe che le sue azioni hanno lasciato
+  (esecuzioni, esperienza guadagnata, installazioni) e dei commenti di altri
+  ai suoi post, ordinate per data, le cinque più recenti;
+- **grafico**: le sue esecuzioni negli ultimi sette giorni, giorno per giorno,
+  con il totale in settimana.
+
+Chi non ha ancora fatto niente vede tre stati vuoti che dicono cosa comparirà
+lì, non barre di altri. Lo stesso valeva per «Attività recente» nel
+**profilo**: se in quella sessione non era successo niente, mostrava cinque
+righe inventate («Raggiunto Livello 12»); ora prende prima le azioni di questa
+sessione e poi le stesse righe calcolate dal database, e se non c'è niente lo
+dice. E il registro di sessione si svuota al cambio di persona, altrimenti chi
+entra dopo erediterebbe le azioni di chi c'era prima. «Consigliati per te» e
+«Novità piattaforma» restano comuni, di proposito: sono ciò che la piattaforma
+propone, non ciò che la persona ha fatto. Verificato con Mario, Sara e un
+utente senza righe. Cache `relaition-v101`.
+
+### 5.156 Senza chiave i nodi AI usano la quota di prova, e nessuno deve sceglierlo
+
+Il §5.154 aveva messo il contatore, ma la quota restava un numero: per
+eseguire un flusso serviva comunque una chiave. La segnalazione era giusta:
+chi ha ancora quota deve poter eseguire.
+
+Il vincolo non cambia: la quota, in questo prototipo, **non compra
+inferenza**, perché non c'è un proxy con una chiave del fornitore della
+piattaforma. Quindi una chiamata «a quota» restituisce una risposta
+**simulata** (`rispostaQuota()` in `js/consumo.js`): nel formato che il nodo
+si aspetta (JSON con `simulato:true` o testo), con dentro la dichiarazione di
+essere simulata e un estratto della richiesta. Il flusso gira, si vede la
+struttura, non il contenuto. La simulazione è dichiarata quattro volte: una
+riga SISTEMA in testa al registro prima del primo nodo, il prefisso «[Quota
+di prova · risposta simulata]» su ogni riga AI, il fornitore `quota-prova`
+nel conto dei token (tenuto a parte dal consumo con la chiave), il prefisso
+`[quota di prova]` nel riepilogo dell'esecuzione, che la pubblicazione usa
+per non contarla come collaudo («eseguito solo con la quota di prova: nessun
+collaudo con un modello vero»). La costruzione via chat e l'aiuto alla
+scrittura **rifiutano** la quota: una risposta simulata non compone un flusso
+e non scrive un prompt.
+
+La regola è **automatica e unica**, `usaQuota()`: se c'è un fornitore
+collegato si usa quello e la quota non si tocca; altrimenti, finché resta
+quota, si usa la quota. La validazione blocca solo quando non c'è né chiave
+né quota. Una prima versione (v102) aveva anche un selettore «Fonte delle
+chiamate» con tre scelte (automatico, sempre la quota, solo la mia chiave),
+nel pannello Integrazione AI e nel profilo: **tolto nella v103**. Era
+fuorviante (chi lo lasciava su «solo la mia chiave» si trovava bloccato senza
+capire perché, e il riquadro aggiungeva quattro righe di testo a un pannello
+già denso) e non serviva a nessun caso d'uso: con una chiave collegata
+nessuno vuole risposte simulate, e senza chiave l'unica alternativa alla
+quota è non eseguire. Sparite anche `fonteInferenza()` e la voce in
+`localStorage`.
+
+In un'installazione con il proxy di inferenza, lo stesso bivio manderebbe la
+chiamata al proxy invece che alla simulazione: quello che cambia è il ramo
+«senza chiave», non la regola.
+
+### 5.157 L'aiuto alla scrittura chiedeva un fornitore chiamato «auto»
+
+L'aiuto alla scrittura (§5.148) chiamava `callAI` con `model:'auto'`, cioè
+«il fornitore collegato, quale che sia». Ma `callAIUnaVolta` leggeva la
+scelta alla lettera e cercava in `aiConfig.providers` un fornitore di nome
+`auto`: non lo trovava e rispondeva «[Demo] Provider "auto" non configurato»,
+con la chiave di OpenAI collegata e il pannello che diceva «configurato e
+pronto». La risoluzione di «auto» esisteva già (`risolviProvider`), ma la
+usavano solo il registro dell'esecuzione e la validazione, non la chiamata.
+
+Ora `providerEffettivo(scelta)` in `js/ai-client.js` fa quella risoluzione
+per la chiamata stessa e per il ripiego: un nome preciso vale così com'è,
+«auto» o vuoto diventano il fornitore collegato. Nell'aiuto alla scrittura si
+è aggiunto Ctrl+Invio nella riga della richiesta (migliora il testo se il
+campo ne ha uno, altrimenti scrive da zero) e una riga che dice cosa succede
+al campo. Il funzionamento è quello di prima, solo che adesso funziona.
+
+### 5.158 L'autosalvataggio falliva in silenzio sui nomi omonimi
+
+L'indice univoco `idx_agents_name` è su tutta la tabella `agents`, ma
+`agentNameTaken()` in `js/storage.js` controllava l'omonimia solo fra gli
+agenti dell'autore connesso. Chi apriva nel Builder un flusso di esempio con
+lo stesso nome di un agente di un'altra persona (Mario R. su «2 · Estrazione
+dati da fattura», che nel seme è di Giulia D.) vedeva l'autosalvataggio
+lanciare `UNIQUE constraint failed` a ogni modifica: niente riga, nessun
+avviso, e in console un errore per ogni pausa di digitazione. Il controllo è
+ora globale come l'indice, e il nome riceve il suffisso «(2)» come per i
+propri omonimi.
+
+### 5.159 La tendina del modello non seguiva il fornitore scelto
+
+`renderSceltaModello()` in `js/builder.js` chiedeva a `risolviProvider()` il
+fornitore, cioè quello che avrebbe risposto **in esecuzione**: con «Claude»
+scelto sul nodo e solo OpenAI collegato, sotto l'etichetta Anthropic la
+tendina elencava GPT-4o mini. Corretto: la tendina è a cascata sul fornitore
+**scelto** (l'elenco è `AI_MODELLI_DISPONIBILI`, lo stesso della tabella dei
+fornitori nel documento: Anthropic, OpenAI, Google, Mistral; locale e custom
+restano campo libero). Con «Automatico» la tendina è bloccata e dice quale
+predefinito seguirà, o che seguirà il fornitore che si collegherà: il modello
+non si può scegliere prima del fornitore. La sostituzione in esecuzione resta
+quella di prima, dichiarata nel registro.

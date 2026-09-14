@@ -92,6 +92,9 @@ function applicaUtente(u){
   // copia di lavoro della persona nuova. Si chiude prima, e ognuno ritrova
   // il suo.
   if(typeof SANDBOX!=='undefined'&&SANDBOX&&SANDBOX.attiva&&typeof closeSandbox==='function')closeSandbox();
+  // Il registro delle azioni di sessione e' per scheda, non per persona: se
+  // resta, chi entra dopo eredita le azioni di chi c'era prima.
+  if(typeof activities!=='undefined'&&activities.length)activities.length=0;
   // Il nome scelto dall'utente ha la precedenza su quello scritto nel codice:
   // senza, chi si e' rinominato tornerebbe al nome originale a ogni accesso e
   // i suoi contenuti — riattribuiti al nome nuovo — sparirebbero dalla vista.

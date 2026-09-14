@@ -520,3 +520,28 @@ function ricaricaDatiDemo(){
   showToast('🌱 Dati dimostrativi ricaricati: '+r.flussi+' flussi, '+r.porzioni+' porzioni, '+r.esecuzioni+' esecuzioni');
   go('myagents');
 }
+
+// ── Consumo di token di esempio ───────────────────────────────
+// Il contatore dei token (js/consumo.js) e' arrivato dopo il seme: nei
+// database gia' popolati il riquadro del profilo sarebbe a zero per tutti,
+// e a zero non si capisce a cosa serve. Si aggiunge una volta sola, se la
+// tabella e' vuota, con righe agganciate alle esecuzioni gia' presenti nello
+// storico di ognuno: stimate, e marcate come tali.
+function seedConsumoToken(){
+  try{
+    if(typeof DB==='undefined'||!DB)return;
+    if(dbGetOne('SELECT COUNT(*) c FROM consumo_token').c>0)return;
+    var righe=dbAll("SELECT agent,user,ts FROM exec_log WHERE status='ok' AND user IS NOT NULL ORDER BY id");
+    if(!righe.length)return;
+    var forn=['claude','openai','gemini'];
+    righe.forEach(function(r,i){
+      // Due chiamate per esecuzione riuscita: un nodo AI tipico e una condizione.
+      var ti=900+((i*137)%1400), to=220+((i*89)%500);
+      dbRun('INSERT INTO consumo_token (user,agent,node,provider,tokens_in,tokens_out,stimato,ts) VALUES (?,?,?,?,?,?,?,?)',
+        [r.user,r.agent,'nodo AI',forn[i%3],ti,to,1,r.ts]);
+      dbRun('INSERT INTO consumo_token (user,agent,node,provider,tokens_in,tokens_out,stimato,ts) VALUES (?,?,?,?,?,?,?,?)',
+        [r.user,r.agent,'condizione',forn[i%3],180+((i*31)%120),3,1,r.ts]);
+    });
+    if(typeof persistDatabase==='function')persistDatabase();
+  }catch(e){}
+}

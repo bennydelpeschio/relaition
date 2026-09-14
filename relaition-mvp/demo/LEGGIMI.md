@@ -5,19 +5,20 @@ l'elemento di cui parla, compie le azioni e racconta cosa sta facendo, passo per
 passo. Serve per registrare un video da mostrare a una commissione o a un
 investitore senza dover guidare il mouse a mano.
 
-**97 passi in 10 capitoli.** La sola narrazione somma 15 minuti; in riproduzione
+**101 passi in 10 capitoli.** La sola narrazione somma 15 minuti; in riproduzione
 automatica le azioni — esecuzioni, scrittura a macchina, attese — si aggiungono,
 quindi conviene contare qualcosa in più. Il peso sta sul Builder: costruzione a
 mano, costruzione conversazionale, dettaglio dei nodi, esecuzione e
 pianificazione occupano da soli quattro capitoli; il capitolo 8 — Learning Hub,
-Sfide, Community — è il più lungo con 21 passi, e il capitolo 10 chiude uscendo
+Sfide, Community — è il più lungo con 22 passi, e il capitolo 10 chiude uscendo
 e rientrando **con un altro account**, per mostrare che i dati sono per persona.
 
 ## Con un modello AI vero
 
-Senza chiave la dimostrazione gira per intero, ma i nodi AI si fermano con un
-errore esplicito e le condizioni vengono valutate in modo simulato: la
-narrazione lo dice, passo per passo, invece di far finta.
+Senza chiave la dimostrazione gira per intero: i nodi AI usano la quota di
+prova, con risposte simulate e dichiarate in ogni riga del registro, e le
+condizioni vengono valutate in modo simulato. La narrazione lo dice, passo per
+passo, invece di far finta.
 
 Per farla girare con un modello vero — per esempio OpenAI:
 
@@ -96,12 +97,12 @@ Nella barra ci sono anche la **velocità** (1× → 1,5× → 2× → 0,75×) e 
 | 1 | Accesso, i quattro profili, dashboard, struttura del menu |
 | 2 | Marketplace: filtri, ricerca, scheda agente, recensioni, installazione |
 | 3 | Builder e **Knowledge Base**: le tre zone, la palette, i documenti aziendali e una ricerca vera fra le loro porzioni |
-| 4 | **Costruzione a mano**: ricerca nella palette, blocchi trascinabili, nodo AI selezionato con i suoi campi spiegati, prompt **scritto a video**, un nodo di controllo **inserito fra due nodi esistenti**, output, annullamento |
+| 4 | **Costruzione a mano**: ricerca nella palette, blocchi trascinabili, nodo AI selezionato con i suoi campi spiegati, prompt **scritto a video**, **aiuto alla scrittura** del prompt, un nodo di controllo **inserito fra due nodi esistenti**, output, annullamento |
 | 5 | Collegamento e **test del modello**, scelta del modello per nodo, validazione, **costruzione via chat** con **anteprima da confermare o annullare**, richiesta di modifica a tela piena, e **pianificazione** (manuale, a intervallo, a orario, cron, su evento) |
 | 6 | **Esecuzione** di due flussi completi, registro che **scorre riga per riga**, **interruzione a metà**, «Perché questo risultato», storico |
 | 7 | Pubblicazione, coda di revisione, richiesta di modifica, correzione, ripresentazione, approvazione |
-| 8 | **Learning Hub**: percorsi, livelli, una lezione con **quiz a cui si risponde davvero** e l'esercizio pratico. **Sfide**: i tre formati, le fasi, **iscrizione**, **candidatura di un proprio agente**, classifica calcolata, domande a un AMA. **Community**: un post **scritto e pubblicato**, «mi piace», risposta in una discussione, profilo pubblico |
-| 9 | Profilo, obiettivi configurabili, Monitoraggio e le sue sette aree |
+| 8 | **Learning Hub**: percorsi, livelli, una lezione con **quiz a cui si risponde davvero** e l'esercizio pratico. **Sandbox didattica** aperta e richiusa, con i pulsanti spenti. **Sfide**: i tre formati, le fasi, **iscrizione**, **candidatura di un proprio agente**, classifica calcolata, domande a un AMA. **Community**: un post **scritto e pubblicato**, «mi piace», risposta in una discussione, profilo pubblico |
+| 9 | Profilo, obiettivi configurabili, **consumo di token e quota di prova**, Monitoraggio e le sue sette aree, **tema scuro** acceso e spento |
 | 10 | **Uscita e rientro con un altro account**: stessa piattaforma, dashboard, profilo, badge, sfide e formazione con i dati di un'altra persona |
 
 I numeri che compaiono nella narrazione — quanti agenti, quante lezioni, quante
@@ -115,7 +116,7 @@ racconto resta vero senza doverlo ricorreggere.
 
 ### Non lascia traccia
 
-All'avvio la demo **fotografa tutte le 29 tabelle** del database e le rimette
+All'avvio la demo **fotografa tutte le 30 tabelle** del database e le rimette
 identiche alla fine, o quando premi ⟲. Puoi rilanciarla quante volte vuoi: la
 piattaforma torna sempre nello stato di partenza, senza agenti di prova, post o
 pubblicazioni rimasti in giro.
@@ -130,9 +131,9 @@ davvero, invece di simulare un passaggio che non sarebbe stato possibile:
 
 | Passaggio | Con una chiave collegata | Senza |
 |---|---|---|
-| Test del modello (cap. 5) | dichiara il fornitore attivo | dichiara che non c'è chiave e che i nodi AI verranno bloccati |
+| Test del modello (cap. 5) | dichiara il fornitore attivo | dichiara che non c'è chiave e che i nodi AI useranno la quota di prova, con risposte simulate |
 | Costruzione via chat (cap. 5) | il modello compone il flusso sulla tela | la chat lo dichiara e non genera nulla |
-| Pubblicazione (cap. 7) | modulo, controlli automatici, invio in revisione | mostra il rifiuto della validazione, e il ciclo di revisione prosegue su una pubblicazione reale già presente |
+| Pubblicazione (cap. 7) | modulo, controlli automatici, invio in revisione | il modulo si apre (la quota fa girare il flusso), ma i controlli segnalano che il collaudo è avvenuto solo con risposte simulate |
 
 Il ciclo di revisione — richiesta di modifica, correzione, ripresentazione,
 approvazione — si vede **in entrambi i casi**.
@@ -155,7 +156,7 @@ nessun pulsante aggiunto, nessuna riga di logica toccata. Cancellando la cartell
 |---|---|
 | `demo.html` | il palco: riquadro, faretto, riquadro di narrazione, comandi |
 | `motore.js` | fotografia e ripristino, avanzamento, puntatore, posizionamento |
-| `copione.js` | i 97 passi: cosa fa ognuno, cosa illumina, cosa racconta |
+| `copione.js` | i 101 passi: cosa fa ognuno, cosa illumina, cosa racconta |
 
 Funziona perché pagina e applicazione condividono l'origine: da lì si chiamano
 `go()`, `dbAll()` e le altre funzioni esattamente come farebbe il codice

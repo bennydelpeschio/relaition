@@ -67,6 +67,9 @@ var SCHEMA=[
   "CREATE TABLE IF NOT EXISTS quiz_done (quiz_key TEXT PRIMARY KEY, ts TEXT NOT NULL)",
   "CREATE TABLE IF NOT EXISTS challenges_registered (challenge_id TEXT PRIMARY KEY, ts TEXT NOT NULL)",
   "CREATE TABLE IF NOT EXISTS xp_log (id INTEGER PRIMARY KEY AUTOINCREMENT, amount INTEGER NOT NULL, reason TEXT, ts TEXT NOT NULL)",
+  // Consumo di token per chiamata: chi, per quale agente e nodo, con quale
+  // fornitore, quanti in ingresso e in uscita, e se il numero e' stimato.
+  "CREATE TABLE IF NOT EXISTS consumo_token (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT NOT NULL, agent TEXT, node TEXT, provider TEXT, tokens_in INTEGER NOT NULL DEFAULT 0, tokens_out INTEGER NOT NULL DEFAULT 0, stimato INTEGER NOT NULL DEFAULT 0, ts TEXT NOT NULL)",
 
   // ── Estensione schema (allineamento al capitolo, blocco A1) ──
   // NB: il documento chiama `executions` la tabella delle esecuzioni; nel
@@ -333,7 +336,7 @@ function dbGetOne(sql,params){var r=dbAll(sql,params);return r.length?r[0]:null}
 // Elenco usato da export/import JSON e dal reset: ogni tabella nuova va
 // aggiunta qui, altrimenti resterebbe fuori dal pacchetto di uscita (D6).
 var DB_TABLES=['agents','exec_log','published_agents','my_agents','kb_docs','forum_posts','forum_comments','learn_progress','quiz_done','challenges_registered','xp_log',
-  'agent_versions','kb_chunks','agent_memory','publications','policies','connessioni','execution_events','recensioni','challenge_submissions','challenge_winners','challenge_questions','challenge_votes','challenge_feedback','obiettivi_config','forum_likes','forum_views','identita','profili'];
+  'agent_versions','kb_chunks','agent_memory','publications','policies','connessioni','execution_events','recensioni','challenge_submissions','challenge_winners','challenge_questions','challenge_votes','challenge_feedback','obiettivi_config','forum_likes','forum_views','identita','profili','consumo_token'];
 
 function dbInsertRow(table,row){
   // Le chiavi che iniziano con `_` sono annotazioni del pacchetto di export,

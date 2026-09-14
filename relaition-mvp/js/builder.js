@@ -1688,6 +1688,16 @@ async function runAgent(){
   if(typeof LAST_RUN_FILES!=='undefined')LAST_RUN_FILES.length=0;
   toggleRunControls(true);
   b_render();
+  // Se i nodi AI andranno a quota, lo si dice PRIMA del primo nodo, non
+  // riga per riga soltanto: chi legge il registro deve sapere da subito che
+  // le risposte AI di questa esecuzione sono simulate.
+  window.__esecuzioneAQuota=false;
+  try{
+    if(typeof usaQuota==='function'&&usaQuota()&&B.nodes.some(function(n){return n.type==='ai'||n.type==='sa'})){
+      window.__esecuzioneAQuota=true;
+      addExecEntry('SISTEMA','Nessuna chiave in uso: i nodi AI useranno la quota di prova ('+quotaResidua().toLocaleString('it-IT')+' token residui). Risposte simulate e dichiarate: il flusso mostra la struttura, non il contenuto.','WARN');
+    }
+  }catch(e){}
 
   var res=await executeGraph({
     nodes:B.nodes, edges:B.edges, context:B.context,
@@ -1727,7 +1737,7 @@ function finalizeBuilderRun(res,_t0){
   var execRowId=recordExecution(currentAgentName,res.stepsCount,
     res.status==='error'?'err':inAttesa?'waiting':interrotta?'aborted':'ok',
     res.duration||(Date.now()-_t0),'builder',
-    res.pipeline?String(res.pipeline).substring(0,2000):'',
+    (window.__esecuzioneAQuota?'[quota di prova] ':'')+(res.pipeline?String(res.pipeline).substring(0,2000):''),
     execEntries.slice(),res.trace);
   if(execRowId&&typeof persistExecutionEvents==='function')persistExecutionEvents(execRowId,res.ctx);
 
@@ -2205,7 +2215,12 @@ function validateWorkflow(){
   var nodiAI=nodes.filter(function(n){return n.type==='ai'||n.type==='sa'});
   if(nodiAI.length){
     var pronto=(typeof anyProviderReady==='function')?anyProviderReady():null;
-    if(!pronto){
+    // Con quota di prova disponibile (e fonte che la ammette) il flusso puo'
+    // girare senza chiave: le risposte saranno simulate e DICHIARATE tali in
+    // ogni riga del registro, quindi non c'e' piu' il rischio di scambiarle
+    // per vere. L'avviso lo da' l'esecuzione stessa, prima del primo nodo.
+    var quotaOk=(typeof usaQuota==='function')&&usaQuota();
+    if(!pronto&&!quotaOk){
       errors.push({nodeId:nodiAI[0].id,msg:'Il flusso contiene '+nodiAI.length+' nodo/i che usano l\'AI ma nessun modello è collegato: apri il pannello «Integrazione AI» a sinistra, configura un provider (o un modello in locale) e premi Testa.'});
     }else{
       // Con "Automatico" (predefinito) basta che UN fornitore sia collegato,
@@ -3806,9 +3821,21 @@ function initOrientamento(){
 // il conto di fine mese, su una stesura di testo cambia il risultato.
 function renderSceltaModello(nid,n){
   if(typeof modelliDelProvider!=='function')return '';
-  var ris=(typeof risolviProvider==='function')?risolviProvider(n.config.model):null;
-  var prov=ris&&ris.provider;
-  if(!prov)return '';
+  var scelta=n.config.model||'auto';
+  // A cascata sul fornitore SCELTO, non su quello che lo sostituirebbe in
+  // esecuzione: con «Claude» selezionato e solo OpenAI collegato la tendina
+  // mostrava «GPT-4o mini» sotto l'etichetta Anthropic. Con «Automatico» il
+  // modello segue il fornitore che verra' collegato: la tendina resta
+  // bloccata e lo dice.
+  if(scelta==='auto'){
+    var ris=(typeof risolviProvider==='function')?risolviProvider('auto'):null;
+    var pAuto=ris&&ris.provider;
+    var predef=pAuto?modelloEffettivo(pAuto,null):'';
+    return '<div class="prop-group"><div class="prop-label">Modello</div>'+
+      '<select class="prop-select" disabled><option>'+(pAuto?escHtml(providerLabel(pAuto))+': '+escHtml(predef)+' (predefinito)':'segue il fornitore che collegherai')+'</option></select>'+
+      '<div style="font-size:10px;color:var(--tx4);margin-top:3px;line-height:1.45">Per scegliere un modello preciso, scegli prima il fornitore qui sopra.</div></div>';
+  }
+  var prov=normalizeProviderName(scelta);
 
   var elenco=modelliDelProvider(prov);
   if(!elenco.length){

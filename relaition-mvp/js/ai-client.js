@@ -557,7 +557,10 @@ async function callAIUnaVolta(prompt,systemPrompt,config){
   // rende la piattaforma davvero agnostica — nodi diversi nello stesso
   // workflow possono usare Claude, OpenAI, Gemini o un endpoint open source
   // in parallelo, ciascuno con la propria key testata nel pannello AI.
-  var provider=normalizeProviderName(config&&config.model?config.model:aiConfig.provider);
+  // «auto» (o nessuna scelta) va risolto sul fornitore davvero collegato:
+  // letto alla lettera cercava un fornitore chiamato "auto", e l'aiuto alla
+  // scrittura rispondeva «non configurato» con la chiave collegata.
+  var provider=providerEffettivo(config&&config.model);
   // Modello scelto sul nodo, se valido per questo fornitore. Un identificativo
   // scelto per Claude non può essere inviato a Gemini: risponderebbe 404, e
   // l'errore parlerebbe di modello inesistente invece che di scelta incoerente.
@@ -575,7 +578,7 @@ async function callAIUnaVolta(prompt,systemPrompt,config){
         body:JSON.stringify({model:idModello,max_tokens:(config&&config.maxtokens)||1024,system:systemPrompt||'You are a helpful assistant.',messages:[{role:'user',content:prompt}],temperature:config?config.temperature:0.7})
       });
       var data=await resp.json();
-      if(data.content&&data.content[0])return{text:data.content[0].text,demo:false,truncated:data.stop_reason==='max_tokens'};
+      if(data.content&&data.content[0])return{text:data.content[0].text,demo:false,truncated:data.stop_reason==='max_tokens',usage:usageDa(provider,data),provider:provider};
       return{text:aiErrorHint(resp.status,data,provider).testo,demo:false,error:true};
     }else if(provider==='openai'||provider==='mistral'||provider==='locale'){
       // Stessa forma di richiesta per tutti e tre: cambiano solo l'indirizzo,
@@ -590,7 +593,7 @@ async function callAIUnaVolta(prompt,systemPrompt,config){
         body:JSON.stringify({model:idModello,messages:[{role:'system',content:systemPrompt||'You are a helpful assistant.'},{role:'user',content:prompt}],temperature:config?config.temperature:0.7,max_tokens:(config&&config.maxtokens)||1024})
       });
       var data=await resp.json();
-      if(data.choices&&data.choices[0])return{text:data.choices[0].message.content,demo:false,truncated:data.choices[0].finish_reason==='length'};
+      if(data.choices&&data.choices[0])return{text:data.choices[0].message.content,demo:false,truncated:data.choices[0].finish_reason==='length',usage:usageDa(provider,data),provider:provider};
       return{text:aiErrorHint(resp.status,data,provider).testo,demo:false,error:true};
     }else if(provider==='gemini'){
       var resp=await fetch(geminiUrl(pc.key,idModello),{
@@ -606,7 +609,7 @@ async function callAIUnaVolta(prompt,systemPrompt,config){
         // leggere solo parts[0].text restituiva testo vuoto o parziale.
         var parti=(cand.content&&cand.content.parts)||[];
         var testo=parti.map(function(p){return p.text||''}).join('');
-        return{text:testo,demo:false,truncated:cand.finishReason==='MAX_TOKENS'};
+        return{text:testo,demo:false,truncated:cand.finishReason==='MAX_TOKENS',usage:usageDa(provider,data),provider:provider};
       }
       return{text:aiErrorHint(resp.status,data,provider).testo,demo:false,error:true};
     }
@@ -618,7 +621,7 @@ async function callAIUnaVolta(prompt,systemPrompt,config){
         body:JSON.stringify({model:pc.customModel,messages:[{role:'system',content:systemPrompt||'You are a helpful assistant.'},{role:'user',content:prompt}],temperature:config?config.temperature:0.7,max_tokens:(config&&config.maxtokens)||1024})
       });
       var data=await resp.json();
-      if(data.choices&&data.choices[0])return{text:data.choices[0].message.content,demo:false};
+      if(data.choices&&data.choices[0])return{text:data.choices[0].message.content,demo:false,usage:usageDa(provider,data),provider:provider};
       return{text:'Endpoint custom: '+JSON.stringify(data.error||data).substring(0,200),demo:false,error:true};
     }
   }catch(e){
@@ -702,7 +705,7 @@ async function aiModifySingleNode(nodeId,desc,btn,input,prov){
     'In "config" indica SOLO i campi che cambiano: gli altri vengono conservati. Max 20 caratteri per "n", max 30 per "d".';
   var userPrompt='NODO ATTUALE (tipo "'+node.type+'", nome "'+node.name+'"): '+JSON.stringify({n:node.name,d:node.detail,config:node.config||{}})+
     '\n\nMODIFICA RICHIESTA: '+desc;
-  var result=await callAI(userPrompt,sysPrompt,{temperature:0.2,model:prov});
+  var result=await callAI(userPrompt,sysPrompt,{temperature:0.2,model:prov,consumo:{agente:'(Builder)',nodo:'chat'}});
   delete btn.dataset.busy;btn.disabled=false;btn.textContent='Genera';
 
   if(result.demo){showToast('⚠️ Provider AI non raggiungibile: '+result.text);return}
@@ -840,8 +843,10 @@ function fornitoriDiRiserva(escluso){
   });
 }
 
-async function callAI(prompt,systemPrompt,config){
-  var scelto=normalizeProviderName(config&&config.model?config.model:aiConfig.provider);
+// Il nome pubblico e' `callAI`, definito in js/consumo.js: avvolge questa funzione e
+// registra i token consumati. Qui resta la logica di chiamata e di ripiego.
+async function callAIConRipiego(prompt,systemPrompt,config){
+  var scelto=providerEffettivo(config&&config.model);
   var r=await callAIUnaVolta(prompt,systemPrompt,config);
   if(!ripiegabile(r))return r;
 
@@ -920,4 +925,14 @@ function dimenticaChiaviAI(){
   aiConfig.key='';aiConfig.status='idle';
   if(typeof refreshStatoAI==='function')refreshStatoAI();
   if(typeof showToast==='function')showToast('🔑 Chiavi rimosse da questa sessione');
+}
+
+// Fornitore su cui fare la chiamata: la scelta del nodo se e' un nome
+// preciso, altrimenti («auto», vuoto) quello collegato, come fa
+// risolviProvider per il registro dell'esecuzione.
+function providerEffettivo(scelta){
+  if(scelta&&scelta!=='auto')return normalizeProviderName(scelta);
+  var r=(typeof risolviProvider==='function')?risolviProvider('auto'):null;
+  if(r&&r.provider)return r.provider;
+  return normalizeProviderName(aiConfig.provider);
 }

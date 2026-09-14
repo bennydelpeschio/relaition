@@ -73,6 +73,13 @@ function govStats(){
   // ── MODELLI ──
   s.chiamateAI       = q("SELECT COUNT(*) c FROM execution_events WHERE event_type='node:start' AND payload_json LIKE '%\"tipo\":\"ai\"%'");
   s.degradazioni     = q("SELECT COUNT(*) c FROM execution_events WHERE event_type='capability:degraded'");
+  // Token contati su tutte le chiamate (js/consumo.js): totale, quota stimata,
+  // e per fornitore. Un contatore, non un costo: i listini non stanno qui.
+  try{
+    var ct=dbGetOne('SELECT COALESCE(SUM(tokens_in+tokens_out),0) tot, COALESCE(SUM(CASE WHEN stimato=1 THEN tokens_in+tokens_out ELSE 0 END),0) stim FROM consumo_token');
+    s.tokenTotali=ct?ct.tot:0; s.tokenStimati=ct?ct.stim:0;
+    s.tokenPerFornitore=dbAll('SELECT provider, SUM(tokens_in+tokens_out) t FROM consumo_token GROUP BY provider ORDER BY t DESC');
+  }catch(e){ s.tokenTotali=0; s.tokenStimati=0; s.tokenPerFornitore=[]; }
   s.strumentiInvocati= q("SELECT COUNT(*) c FROM execution_events WHERE event_type='tool:invoked'");
   s.cicliStrumenti   = q("SELECT COUNT(*) c FROM execution_events WHERE event_type='tool:loop'");
   s.providerConfigurati=Object.keys(aiConfig.providers||{}).filter(function(p){
@@ -776,7 +783,9 @@ function renderMonitoraggio(){
       })),
       'Collegati: <strong>'+(s.providerConfigurati.length?s.providerConfigurati.map(providerLabel).join(', '):'nessuno')+
       '</strong> · degradazioni '+s.degradazioni+' · strumenti invocati '+s.strumentiInvocati+
-      (s.cicliStrumenti?' · cicli interrotti '+s.cicliStrumenti:''));
+      (s.cicliStrumenti?' · cicli interrotti '+s.cicliStrumenti:'')+
+      ' · token contati <strong>'+Number(s.tokenTotali||0).toLocaleString('it-IT')+'</strong>'+(s.tokenStimati?' (di cui '+Number(s.tokenStimati).toLocaleString('it-IT')+' stimati)':'')+
+      ((s.tokenPerFornitore||[]).length?': '+s.tokenPerFornitore.map(function(f){return providerLabel(f.provider||'')+' '+Number(f.t||0).toLocaleString('it-IT')}).join(', '):''));
 
   // ── Area 6 · Conoscenza ──
   h+=govArea(6)+
@@ -824,7 +833,7 @@ function renderMonitoraggio(){
      '<div style="font-size:11px;color:var(--tx3);margin-top:4px;line-height:1.6">'+
      'Gli utenti sono ricavati dalle tracce lasciate nei dati, non da un\'anagrafica: in un prototipo che gira in un solo browser il loro numero resta piccolo e le medie vanno lette come indicative. '+
      'Non esiste una segmentazione per reparto né una distinzione fra utente attivo e registrato. '+
-     'Non ci sono costi reali per token, perché le chiavi sono dell\'utente e la piattaforma non le contabilizza. '+
+     'I token consumati sono contati per utente (misurati dove il fornitore li riporta, stimati altrove), ma non tradotti in costo: i listini cambiano e le chiavi sono dell\'utente. '+
      'Tutto il resto qui sopra è calcolato sui dati effettivi, non stimato.</div></div>'+
      '<div style="display:flex;gap:8px;margin-top:14px">'+
        '<button class="tb-btn" onclick="renderMonitoraggio()">🔄 Ricalcola</button>'+

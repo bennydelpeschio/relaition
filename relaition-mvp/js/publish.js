@@ -136,8 +136,12 @@ function pubOverlapCheck(name,desc,tags,excludeId){
 // con esito positivo. Un agente mai eseguito può comunque essere pubblicato,
 // ma il revisore deve saperlo.
 function pubSandboxCheck(agentName){
-  var r=dbGetOne("SELECT COUNT(*) c FROM exec_log WHERE agent=? AND status='ok'",[agentName]);
+  // Un'esecuzione fatta a quota di prova ha risposte AI simulate: non prova
+  // niente sul comportamento reale del flusso, e non vale come collaudo.
+  var r=dbGetOne("SELECT COUNT(*) c FROM exec_log WHERE agent=? AND status='ok' AND (summary IS NULL OR summary NOT LIKE '[quota di prova]%')",[agentName]);
   if(r&&r.c)return [];
+  var q=dbGetOne("SELECT COUNT(*) c FROM exec_log WHERE agent=? AND status='ok' AND summary LIKE '[quota di prova]%'",[agentName]);
+  if(q&&q.c)return ['Eseguito solo con la quota di prova ('+q.c+' volte, risposte AI simulate): nessun collaudo con un modello vero'];
   var tot=dbGetOne('SELECT COUNT(*) c FROM exec_log WHERE agent=?',[agentName]);
   return [(tot&&tot.c)?'Eseguito '+tot.c+' volte ma mai con esito positivo':'Mai eseguito: nessuna prova disponibile'];
 }

@@ -1141,6 +1141,8 @@ function renderProfileWork(s){
 function renderProfileGovernance(s){
   var ob=document.getElementById('profile-obiettivi');
   if(ob&&typeof renderObiettiviProfilo==='function')ob.innerHTML=renderObiettiviProfilo();
+  var cons=document.getElementById('profile-consumo');
+  if(cons&&typeof consumoCardHTML==='function')cons.innerHTML=consumoCardHTML();
   var el=document.getElementById('profile-governance');if(!el)return;
   var tipi=Object.keys(s.tipiControllo);
   var html='<div style="display:flex;gap:8px;margin-bottom:12px">'+
@@ -1170,17 +1172,20 @@ function addAct(text){
   if(activities.length>20)activities.pop();
 }
 
+// Attivita' recente nel profilo. Prima, se in questa sessione non era successo
+// niente, mostrava cinque righe inventate («Raggiunto Livello 12»): chi non
+// ha fatto nulla vedeva una storia di qualcun altro. Ora: prima le azioni di
+// questa sessione (le piu' fresche, tenute in memoria), poi quelle ricavate
+// dal database per la persona connessa; se non c'e' niente, lo dice.
 function renderProfileActivity(){
   var el=document.getElementById('profile-activity');
   if(!el)return;
   var colors=['#10B981','#6366F1','#F59E0B','#EF4444','#8B5CF6'];
-  el.innerHTML=(activities.length?activities:
-    [{text:'Salvato agente: Lead Qualifier',time:'14:30'},{text:'Completata lezione: LLM basics',time:'13:15'},
-     {text:'Installato agente: Invoice Extractor',time:'11:45'},{text:'Pubblicato post nel forum',time:'ieri'},
-     {text:'Raggiunto Livello 12',time:'ieri'}]
-  ).slice(0,8).map(function(a,i){
-    return '<div class="activity-item"><div class="activity-dot" style="background:'+colors[i%colors.length]+'"></div><div><div class="activity-text">'+a.text+'</div><div class="activity-time">'+a.time+'</div></div></div>';
+  var sessione=activities.slice(0,4).map(function(a,i){
+    return '<div class="activity-item"><div class="activity-dot" style="background:'+colors[i%colors.length]+'"></div><div><div class="activity-text">'+escHtml(a.text)+'</div><div class="activity-time">oggi, '+escHtml(a.time)+'</div></div></div>';
   }).join('');
+  var storico=(typeof dashAttivitaRecenteHTML==='function')?dashAttivitaRecenteHTML():'';
+  el.innerHTML=sessione+(sessione&&storico?storico:storico);
 }
 
 // ── DASHBOARD ──
@@ -1621,23 +1626,14 @@ function loadPersistedContent(){
 function renderDashboard(){
   updateStatCards();
   // Popular agents
-  var pop=[{name:'Lead Qualifier Pro',runs:42,icon:'🎯',trend:'+12%'},{name:'Invoice Extractor',runs:35,icon:'🧾',trend:'+8%'},{name:'Meeting Summarizer',runs:28,icon:'🎙️',trend:'+15%'},{name:'Support Ticket Triage',runs:23,icon:'🎧',trend:'+5%'}];
-  document.getElementById('dash-popular').innerHTML=pop.map(function(a,i){
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bg2);cursor:pointer" onclick="go(\'marketplace\')"><span style="font-size:14px;font-weight:800;color:var(--tx4);width:20px">'+(i+1)+'</span><span style="font-size:18px">'+a.icon+'</span><span style="font-size:12px;font-weight:600;flex:1">'+a.name+'</span><span class="badge badge-g" style="font-size:10px">'+a.trend+'</span><span style="font-size:11px;color:var(--ac);font-weight:700">'+a.runs+' run</span></div>';
-  }).join('');
-
-  // Activity
-  var dActs=[
-    {text:'Eseguito Lead Qualifier Pro: 3 lead qualificati',time:'10 min fa',dot:'#10B981',action:'go(\'myagents\')'},
-    {text:'Completata lezione: Loop e iterazioni (+50 XP)',time:'1 ora fa',dot:'#6366F1',action:'go(\'learning\')'},
-    {text:'Installato Invoice Extractor dal marketplace',time:'2 ore fa',dot:'#F59E0B',action:'go(\'myagents\')'},
-    {text:'Nuovo commento di Andrea L. al tuo post',time:'3 ore fa',dot:'#8B5CF6',action:'go(\'community\')'},
-    {text:'Badge «Costanza»: 5 giorni consecutivi di attività 🔥',time:'ieri',dot:'#EF4444',action:'go(\'profile\')'}
-  ];
-  document.getElementById('dash-activity').innerHTML=dActs.map(function(a){
-    return '<div class="activity-item" style="cursor:pointer" onclick="'+a.action+'"><div class="activity-dot" style="background:'+a.dot+'"></div><div><div class="activity-text">'+a.text+'</div><div class="activity-time">'+a.time+'</div></div></div>';
-  }).join('');
-
+  // Agenti più usati e attività recente erano scritti nel codice: Sara, che
+  // non ha mai eseguito niente, vedeva 42 esecuzioni di «Lead Qualifier Pro» e
+  // un commento a un post che non ha scritto. Ora sono calcolati sulle righe
+  // di CHI e' connesso, come le quattro schede in alto. Consigli e novita'
+  // restano comuni: sono cio' che la piattaforma propone, non cio' che la
+  // persona ha fatto.
+  document.getElementById('dash-popular').innerHTML=dashAgentiPiuUsatiHTML();
+  document.getElementById('dash-activity').innerHTML=dashAttivitaRecenteHTML();
   // Chart — render execution trend
   renderDashChart();
 
@@ -1667,17 +1663,8 @@ function renderDashboard(){
 }
 
 
-function renderDashChart(){
-  var card=document.querySelector('#page-dashboard .card.mt-20');
-  if(!card)return;
-  var chartData=[{label:'Lun',val:18},{label:'Mar',val:24},{label:'Mer',val:31},{label:'Gio',val:22},{label:'Ven',val:35},{label:'Sab',val:12},{label:'Dom',val:6}];
-  var maxVal=Math.max.apply(null,chartData.map(function(d){return d.val}));
-  card.innerHTML='<div class="card-header"><div class="card-title">Esecuzioni questa settimana</div><span class="badge badge-g">148 totali</span></div>'+
-    '<div class="mini-chart">'+chartData.map(function(d){
-      var h=Math.round(d.val/maxVal*100);
-      return '<div class="mini-bar" style="height:'+h+'%" title="'+d.label+': '+d.val+' esecuzioni"><span class="mini-bar-val">'+d.val+'</span><span class="mini-bar-label">'+d.label+'</span></div>';
-    }).join('')+'</div>';
-}
+// renderDashChart, dashAgentiPiuUsatiHTML e dashAttivitaRecenteHTML stanno in
+// js/dashboard-utente.js: calcolati su chi e' connesso.
 
 // ══════════════════════════════════════════
 // ENHANCED PROFILE — Editable + Notifications

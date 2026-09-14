@@ -207,7 +207,10 @@ async function composePlan(desc,isModify,prov){
   // stretto la risposta arrivava valida ma tagliata a metà, e il parsing
   // falliva riportando "richiesta non compresa" — un errore che indicava
   // all'utente la causa sbagliata.
-  var result=await callAI(usr,sys,{temperature:0.2,model:prov,maxtokens:8000});
+  var result=await callAI(usr,sys,{temperature:0.2,model:prov,maxtokens:8000,consumo:{agente:'(Builder)',nodo:'chat'}});
+  // La quota di prova da' risposte simulate: buone per far girare un flusso,
+  // non per comporne uno. Qui serve un modello vero, e si dice.
+  if(result.quota)return {error:'La costruzione via chat ha bisogno di un modello collegato: la quota di prova non compone flussi, restituisce risposte simulate. Collega la tua chiave nel pannello Integrazione AI.'};
   if(result.demo)return {error:'Provider AI non raggiungibile: '+result.text};
   // Un errore del fornitore va riportato testualmente. Prima arrivava qui come
   // testo normale, il parsing falliva e l'utente leggeva "richiesta non

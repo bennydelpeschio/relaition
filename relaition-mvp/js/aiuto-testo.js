@@ -24,12 +24,13 @@ function aiutoTestoHTML(id,tipo,nid,chiave){
   return '<div class="aiuto-testo" id="aiuto_'+id+'">'+
     '<button type="button" class="aiuto-testo-apri" onclick="aiutoTestoAlterna(\''+id+'\')">Aiutami a scriverlo</button>'+
     '<div class="aiuto-testo-corpo" style="display:none">'+
-      '<textarea class="prop-input" id="aiutoRichiesta_'+id+'" rows="2" placeholder="'+escHtml(domanda)+'"></textarea>'+
+      '<textarea class="prop-input" id="aiutoRichiesta_'+id+'" rows="2" placeholder="'+escHtml(domanda)+'" onkeydown="aiutoTestoTasto(event,\''+id+'\',\''+tipo+'\','+(nid==null?'null':nid)+',\''+(chiave||'')+'\')"></textarea>'+
       '<div class="aiuto-testo-azioni">'+
         '<button type="button" class="tb-btn" onclick="aiutoTestoGenera(\''+id+'\',\''+tipo+'\','+(nid==null?'null':nid)+',\''+(chiave||'')+'\',false)">Scrivi da zero</button>'+
         '<button type="button" class="tb-btn" onclick="aiutoTestoGenera(\''+id+'\',\''+tipo+'\','+(nid==null?'null':nid)+',\''+(chiave||'')+'\',true)">Migliora quello che c\'è</button>'+
         '<span class="aiuto-testo-stato" id="aiutoStato_'+id+'"></span>'+
       '</div>'+
+      '<div class="aiuto-testo-nota">Il modello collegato riscrive il campo qui sopra; il testo precedente si può ripristinare. Ctrl+Invio per inviare.</div>'+
     '</div>'+
   '</div>';
 }
@@ -90,7 +91,8 @@ async function aiutoTestoGenera(id,tipo,nid,chiave,migliora){
     (richiesta?('Obiettivo: '+richiesta):'Migliora il testo attuale mantenendone l\'intento.');
   if(stato)stato.textContent='Sto scrivendo…';
   try{
-    var r=await callAI(utente,istruzioni,{temperature:0.4,model:'auto'});
+    var r=await callAI(utente,istruzioni,{temperature:0.4,model:'auto',consumo:{agente:'(Builder)',nodo:'aiuto alla scrittura'}});
+    if(r&&r.quota){ if(stato)stato.textContent='La quota di prova non scrive testi: le sue risposte sono simulate. Collega la tua chiave per farlo scrivere davvero.'; return }
     if(r&&r.demo){ if(stato)stato.textContent='Il modello non ha risposto: '+String(r.text||'').substring(0,90); return }
     var testo=(r&&r.text?String(r.text):'').trim();
     // Il modello a volte incornicia la risposta: si toglie la cornice, non il
@@ -103,7 +105,10 @@ async function aiutoTestoGenera(id,tipo,nid,chiave,migliora){
     // La configurazione del nodo si aggiorna da `onchange`, che non scatta
     // per un valore assegnato da codice: si chiama a mano.
     if(nid!=null&&chiave&&typeof updConfig==='function')updConfig(nid,chiave,testo);
-    if(stato)stato.innerHTML='Fatto ('+(r.provider?providerLabel(r.provider):'modello')+'). <span class="aiuto-testo-link" onclick="aiutoTestoRipristina(\''+id+'\','+(nid==null?'null':nid)+',\''+(chiave||'')+'\')">Ripristina il precedente</span>';
+    // updConfig ridisegna il pannello delle proprieta': il blocco dell'aiuto
+    // tornava chiuso e vuoto, e chi aveva appena premuto il pulsante non
+    // vedeva ne' l'esito ne' il modo per ripristinare. Si riapre e si riscrive.
+    aiutoTestoMostraEsito(id,richiesta,'Fatto ('+(r.provider?providerLabel(r.provider):'modello')+'). <span class="aiuto-testo-link" onclick="aiutoTestoRipristina(\''+id+'\','+(nid==null?'null':nid)+',\''+(chiave||'')+'\')">Ripristina il precedente</span>');
   }catch(e){
     if(stato)stato.textContent='Non ci sono riuscito: '+String(e&&e.message||e).substring(0,90);
   }
@@ -116,7 +121,26 @@ function aiutoTestoRipristina(id,nid,chiave){
   campo.value=prec;
   if(typeof adattaAltezza==='function'&&campo.style.maxHeight)adattaAltezza(campo);
   if(nid!=null&&chiave&&typeof updConfig==='function')updConfig(nid,chiave,prec);
-  var stato=document.getElementById('aiutoStato_'+id);
-  if(stato)stato.textContent='Ripristinato.';
+  aiutoTestoMostraEsito(id,null,'Ripristinato.');
   delete AIUTO_TESTO_PRECEDENTE[id];
+}
+
+// Ctrl+Invio nella riga della richiesta: se il campo ha gia' un testo lo
+// migliora, altrimenti scrive da zero. Un tasto in meno da cercare.
+function aiutoTestoTasto(ev,id,tipo,nid,chiave){
+  if(!(ev&&ev.key==='Enter'&&(ev.ctrlKey||ev.metaKey)))return;
+  ev.preventDefault();
+  var campo=document.getElementById(id);
+  aiutoTestoGenera(id,tipo,nid,chiave,!!(campo&&(campo.value||'').trim()));
+}
+
+// Dopo un ridisegno del pannello: riapre il blocco, rimette la richiesta
+// scritta e mostra l'esito sull'elemento nuovo.
+function aiutoTestoMostraEsito(id,richiesta,html){
+  var box=document.getElementById('aiuto_'+id);
+  if(box){ var corpo=box.querySelector('.aiuto-testo-corpo'); if(corpo)corpo.style.display='block'; }
+  var r=document.getElementById('aiutoRichiesta_'+id);
+  if(r&&richiesta!=null&&!r.value)r.value=richiesta;
+  var stato=document.getElementById('aiutoStato_'+id);
+  if(stato)stato.innerHTML=html;
 }
