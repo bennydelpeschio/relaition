@@ -513,7 +513,11 @@ function _preparaPonteTocco(){
     try{
       if(typeof B!=='undefined'&&(B.conn||B.reconnect)){
         var daId=B.conn?B.conn.from:(B.edges[B.reconnect.edgeIdx]||{}).from;
-        var p=_portaVicina(t.clientX,t.clientY,44,null,function(el){
+        // Se il dito e' DENTRO un nodo, decide il builder (collega al suo
+        // ingresso): una porta "vicina" potrebbe essere di un altro nodo.
+        var sotto=document.elementFromPoint(t.clientX,t.clientY);
+        var dentroNodo=!!(sotto&&sotto.closest&&sotto.closest('.b-node'));
+        var p=dentroNodo?null:_portaVicina(t.clientX,t.clientY,44,null,function(el){
           // Non si collega un nodo a se' stesso, e un'uscita va verso un ingresso.
           if(parseInt(el.getAttribute('data-nid'),10)===daId)return false;
           return B.conn?el.getAttribute('data-port')==='in':true;

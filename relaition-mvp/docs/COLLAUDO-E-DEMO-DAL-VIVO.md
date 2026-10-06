@@ -14,7 +14,7 @@ telefono, falla anche dal telefono: sono due collaudi diversi.
 ## 0 · Partenza pulita (5 min)
 
 1. Chiudi tutte le schede di RelAItion e l'app installata, se c'è.
-2. Riapri, **Ctrl+Shift+R**. In fondo al menu deve leggersi **v115**.
+2. Riapri, **Ctrl+Shift+R**. In fondo al menu deve leggersi **v131**.
 3. F12 → Console: nessun errore rosso al caricamento.
 4. Giro veloce: Dashboard → Marketplace → Builder → I miei agenti → Log
    Esecuzioni → Monitoraggio → Learning Hub → Sfide → Community → Profilo.
@@ -89,6 +89,34 @@ Questo è il percorso che mostrerai. Deve funzionare tre volte di fila.
     così alla demo la piattaforma è nello stato pulito.
 31. Ricarica una volta e rifai il punto 5: il flusso di esempio deve
     completarsi.
+
+## 7 · Le correzioni dell'ultimo giro (10 min)
+
+Cose cambiate negli ultimi giorni e che prima non c'erano nel collaudo.
+
+a. **Bozza e chiusura.** Builder → «Nuovo» → trascina due blocchi e
+   collegali. La testata dice **«bozza non salvata»** in arancione. Attendi
+   due secondi: in «I miei agenti» **non** deve comparire niente. Prova a
+   chiudere la scheda: il browser deve **fermarti**. Premi 💾, salva, chiudi di
+   nuovo: ora si chiude libera. Modificando il flusso salvato più volte non
+   devono nascere altri agenti.
+b. **Collegare i nodi.** Tira una freccia dall'uscita di un nodo e rilascia
+   **sul testo del nodo di destinazione**, non sulla porta: il collegamento si
+   crea. Rilasciando nel vuoto non succede niente, e su sé stesso neanche.
+c. **Trascinamento.** Sposta un nodo selezionato: il movimento deve restare
+   fluido anche con un flusso da una dozzina di nodi.
+d. **Ricerca nei documenti.** Knowledge Base → «Carica/gestisci documenti» →
+   scrivi nel campo di ricerca: la digitazione non deve scattare, nemmeno col
+   documento grande.
+e. **Telefono (dal tuo telefono vero).** Tocca un nodo una volta: si seleziona
+   e **non** sale il pannello; doppio tocco: sale. Trascina un nodo col dito.
+   Tira una freccia fino dentro un altro nodo: si collega. Il pannello
+   «Integrazione AI» è chiuso di default e si apre toccando il titolo. In alto
+   ci sono 🔍 (ricerca), «+» (nuovo agente) e «⋯», con le icone centrate. Login
+   scorrevole, anche in orizzontale.
+f. **Profilo.** Accanto a «Modifica profilo» c'è **Esci** (anche su desktop).
+g. **Dashboard.** Il grafico della settimana ha le date sotto i giorni e
+   «oggi» evidenziato.
 
 ---
 

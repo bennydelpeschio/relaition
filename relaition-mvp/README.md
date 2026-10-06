@@ -154,7 +154,7 @@ senza dover creare un connettore dedicato per ogni servizio.
 
 ### Validazione del workflow
 
-Prima di **Esegui / Salva / Esporta JSON / Genera codice / Pubblica**, il builder
+Prima di **Esegui / Esporta JSON / Genera codice / Pubblica** (il salvataggio no: un flusso incompleto è comunque lavoro fatto), il builder
 esegue `validateWorkflow()` (`js/builder.js`) che controlla:
 
 - presenza di almeno un nodo Trigger;
@@ -187,6 +187,36 @@ Quando invece il flusso **parte e poi si rompe**, il registro riporta tutto riga
 riga e si apre `mostraErroriEsecuzione()`: la finestra gemella di quella della
 validazione, con il nodo coinvolto, il tipo di guasto e il rimedio (§5.183). La riga
 «🔎 Dove si è rotto» nel registro la riapre.
+
+### Salvataggio, bozze e chiusura
+
+Un flusso **mai salvato non crea una riga nel database**: è una *bozza*. Vive nella
+copia di lavoro in `localStorage` (una per utente, sovrascritta a ogni modifica,
+ripristinata alla riapertura), quindi non si perde ma non compare in «I miei
+agenti». La riga nasce quando si preme 💾 o si mette il flusso in produzione.
+Dopo, l'autosave (`autosaveAgentToDB`, `js/storage.js`) aggiorna **quella riga sul
+posto**: nessuna versione in più. Prima ogni prova lasciava un «Nuovo agente (2)».
+
+Con una bozza non salvata nel Builder, chiudere o ricaricare la scheda viene
+fermato dal browser (`builderNonSalvato()`, evento `beforeunload`); il browser non
+consente pulsanti personalizzati in quella finestra, quindi resta 💾 a un clic. La
+testata mostra «bozza non salvata» in arancione. Dettagli: `ARCHITECTURE.md` §5.194.
+
+### Collegare i nodi
+
+Si trascina dalla porta di uscita e si **rilascia ovunque dentro il nodo di
+destinazione** (`bDestinazioneRilascio`, `js/builder.js`): la destinazione si cerca
+con la posizione del puntatore, non con l'elemento colpito. Vale per mouse e dito.
+Non si collega un nodo a sé stesso e non nascono archi identici (§5.195).
+
+### Telefono e tablet
+
+`css/mobile.css` + `js/mobile.js` adattano l'interfaccia sotto i 768 px. Il tocco è
+tradotto in eventi mouse da un ponte (`_preparaPonteTocco`) che ascolta
+sull'elemento toccato — perché il Builder ridisegna il nodo toccato e l'elemento
+originale esce dal documento (§5.192). Un tocco seleziona; **doppio tocco** o il
+pulsante «⚙️» in basso aprono le proprietà (§5.187). La testata ha ricerca (🔍),
+«+» e menu «⋯»; il pannello «Integrazione AI» è richiudibile.
 
 ### Modificare/eliminare le connessioni
 

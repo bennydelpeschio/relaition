@@ -788,18 +788,24 @@ function onCanvasMouseUp(e){
     B.marquee=null;
     var mEl=document.getElementById('marqueeBox');if(mEl)mEl.remove();
   }
-  if(B.conn&&e.target.classList&&e.target.classList.contains('b-port')){
-    var toId=parseInt(e.target.dataset.nid);
-    var toPort=e.target.dataset.port;
-    if(toId!==B.conn.from){
+  // Il rilascio vale se cade SU una porta oppure DENTRO un nodo: mirare a una
+  // porta di 12 px non e' un gesto da fare con precisione, e col dito e'
+  // impossibile. Dentro il nodo si collega al suo ingresso (o, riagganciando
+  // l'inizio di una freccia, alla sua uscita).
+  var _dest=bDestinazioneRilascio(e);
+  if(B.conn&&_dest){
+    var toId=_dest.nid;
+    var toPort=_dest.porta||'in';
+    var _gia=B.edges.some(function(x){return x.from===B.conn.from&&x.fp===B.conn.port&&x.to===toId&&(x.tp||'in')===toPort});
+    if(toId!==B.conn.from&&!_gia){
       pushUndo('nuova connessione');
       b_addEdge(B.conn.from,B.conn.port,toId,toPort,'');
     }
   }
-  if(B.reconnect&&e.target.classList&&e.target.classList.contains('b-port')){
+  if(B.reconnect&&_dest){
     var re=B.edges[B.reconnect.edgeIdx];
-    var newNid=parseInt(e.target.dataset.nid);
-    var newPort=e.target.dataset.port;
+    var newNid=_dest.nid;
+    var newPort=_dest.porta||(B.reconnect.end==='to'?'in':bPortaUscita(newNid));
     if(re){
       if(B.reconnect.end==='to'){
         if(newNid!==re.from){pushUndo('riaggancio connessione');re.to=newNid;re.tp=newPort;clearInvalidNodes();showToast('🔗 Connessione ricollegata')}
@@ -4815,4 +4821,26 @@ function bCompilaObbligatori(){
   if(typeof showToast==='function')
     showToast(toccati?('🧩 '+toccati+' campi compilati con i valori predefiniti'):'🧩 Nessun campo da compilare');
   if(typeof checkWorkflow==='function')setTimeout(checkWorkflow,220);
+}
+
+// ── Dove cade il rilascio di una freccia ────────────────────────
+// Restituisce {nid, porta} se il puntatore e' su una porta (porta esatta) o
+// dentro un nodo (porta null: la sceglie chi chiama). Il nodo si cerca con la
+// posizione e non con `e.target`: col dito il ponte rilascia sul documento, e
+// anche col mouse il bersaglio e' spesso il testo dentro il nodo.
+function bDestinazioneRilascio(e){
+  var t=e.target;
+  if(t&&t.classList&&t.classList.contains('b-port'))
+    return {nid:parseInt(t.dataset.nid,10),porta:t.dataset.port};
+  var el=document.elementFromPoint(e.clientX,e.clientY);
+  if(el&&el.classList&&el.classList.contains('b-port'))
+    return {nid:parseInt(el.dataset.nid,10),porta:el.dataset.port};
+  var nd=el&&el.closest?el.closest('.b-node'):null;
+  if(nd)return {nid:parseInt(nd.getAttribute('data-nid'),10),porta:null};
+  return null;
+}
+// Porta d'uscita di un nodo: le condizioni ne hanno due, il resto una.
+function bPortaUscita(nid){
+  var n=B.nodes.find(function(x){return x.id===nid});
+  return (n&&n.type==='cd')?'true':'out';
 }

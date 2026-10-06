@@ -8,7 +8,7 @@ funzioni.
 
 **Tempo**: 25 minuti la parte 1, 30 minuti la parte 2.
 **Prima di cominciare**: Ctrl+Shift+R, e in fondo al menu deve leggersi
-**v112**. Tieni F12 aperto sulla Console: alla fine non devono esserci errori
+**v131**. Tieni F12 aperto sulla Console: alla fine non devono esserci errori
 rossi nuovi.
 
 ---
@@ -190,7 +190,7 @@ mano. L'agente classifica, protegge i dati personali e instrada.
     fondo **«Workflow completato»**.
 12. Premi **«Perché questo risultato»**: ricostruisce fonti, decisioni e
     controlli intervenuti.
-13. **Salva** con il nome `Smistamento richieste`.
+13. **Salva** con il nome `Smistamento richieste`. Finché non lo fai la testata dice **«bozza non salvata»** in arancione e il flusso **non compare** in «I miei agenti»: è una bozza locale, non una riga del database.
 
 ### Cosa hai dimostrato
 Costruzione senza codice · governance in mezzo al flusso · output strutturato

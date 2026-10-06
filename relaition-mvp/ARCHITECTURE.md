@@ -5069,3 +5069,15 @@ l'utente ha toccato qualcosa (non è l'esempio né una bozza ripristinata e
 intatta) e non si è in sandbox. Il browser non lascia personalizzare la finestra
 di `beforeunload`, quindi l'avviso ferma la chiusura e basta; il salvataggio
 vero resta il pulsante 💾, e la testata lo segnala in arancione.
+
+### 5.195 Il rilascio di una freccia vale dentro il nodo
+
+Il builder accettava un collegamento solo se `e.target` del rilascio era una
+porta, cioè un cerchio di 12 px (3 px a zoom basso). Col mouse richiedeva mira,
+col dito era impossibile. Ora la destinazione si cerca con la **posizione**
+(`bDestinazioneRilascio`, `document.elementFromPoint`) e non con il bersaglio
+dell'evento: se il puntatore è su una porta vale quella; se è dentro un nodo,
+qualunque punto, si collega al suo ingresso (riagganciando l'inizio di una
+freccia, alla sua uscita). Il ponte tocco rilascia sul documento, per cui il
+bersaglio dell'evento non diceva niente: la posizione sì. Restano esclusi
+l'autocollegamento e gli archi identici a uno già presente.

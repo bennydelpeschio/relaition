@@ -58,7 +58,7 @@ dove si controlla cosa è successo. Al termine il canvas torna com'era.
 **Cosa dire:** dieci categorie, 79 componenti. La categoria che conta è
 **Controlli**: è quella che separa un semplice tool da uno strumento aziendale.
 
-**Cosa si vede:** i nodi si collegano trascinando dai pallini; la freccia si
+**Cosa si vede:** i nodi si collegano trascinando dalla porta e rilasciando ovunque dentro il nodo di destinazione; la freccia si
 seleziona con un click e si cancella con Canc.
 
 ### 1.3 Costruire parlando

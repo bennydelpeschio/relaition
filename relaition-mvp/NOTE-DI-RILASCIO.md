@@ -1,6 +1,6 @@
 # RelAItion, note di rilascio
 
-**Versione del 5 ottobre 2026**
+**Versione del 6 ottobre 2026 (v131)**
 
 Rilascio preparato per la presentazione: la piattaforma si usa dal telefono
 (verrà aperta da QR code davanti alla commissione), la demo breve copre tutte
@@ -615,3 +615,11 @@ discorso di presentazione e i minutaggi nelle domande attese.
   tocco vicino a una porta tira la freccia (raggio proporzionato al nodo, così il
   corpo resta trascinabile), e al rilascio si aggancia l'ingresso più vicino
   entro 44 px.
+
+## Collegare i nodi: basta entrare nel nodo (v131)
+
+- **Su desktop e su telefono**, tirando una freccia il collegamento si crea
+  rilasciando **ovunque dentro il nodo di destinazione**, non solo sulla porta di
+  12 px. Si collega al suo ingresso. Vale anche riagganciando una freccia già
+  esistente. Non si collega un nodo a sé stesso e non nascono archi doppi
+  identici; rilasciando nel vuoto non succede niente.

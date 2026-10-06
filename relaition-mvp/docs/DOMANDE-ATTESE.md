@@ -650,6 +650,18 @@ aprendo il codice: ogni funzione citata esiste con quel nome.
 > mattino senza lasciare traccia sarebbe un silenzio indistinguibile da «tutto a
 > posto».
 
+**«Se chiudo senza salvare, perdo il lavoro?»**
+> No, ma non compare fra i miei agenti. Un flusso nuovo è una **bozza**: vive in
+> una copia di lavoro sul dispositivo, una per utente, sovrascritta a ogni
+> modifica e ripristinata alla riapertura. La riga nel database nasce quando lo
+> si salva. Chiudere la scheda con una bozza non salvata viene fermato dal
+> browser, e la testata lo segnala in arancione.
+>
+> L'avevamo fatto al contrario — ogni modifica creava una riga — e il risultato
+> erano «Nuovo agente (2), (3)…» da distinguere a mano. Salvare è una scelta di
+> chi costruisce; non perdere il lavoro è una garanzia della piattaforma: sono
+> due cose, e ora hanno due meccanismi.
+
 **«Un agente può chiamarne un altro?»**
 > Sì: il blocco «Chiamata agente» (`rtRunSubAgent`). È l'orchestrazione
 > multi-agente del capitolo 2, nella forma minima: un agente delega a un altro
