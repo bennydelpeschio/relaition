@@ -1,8 +1,232 @@
 # RelAItion, note di rilascio
 
-**Versione del 14 settembre 2026**
+**Versione del 5 ottobre 2026**
 
-Un rilascio di chiusura: ciò che restava dai test, più le pulizie prima della consegna.
+Rilascio preparato per la presentazione: la piattaforma si usa dal telefono
+(verrà aperta da QR code davanti alla commissione), la demo breve copre tutte
+le sezioni in sei minuti, un flusso che non parte si ripara da solo, e
+l'esecuzione ora si ferma quando non ha i dati per andare avanti invece di
+dichiarare fatto un lavoro mai fatto.
+
+## Esecuzione dei flussi
+
+- **Quando qualcosa si rompe, si vede dove.** A fine esecuzione si apre una
+  finestra con l'elenco dei nodi che hanno avuto problemi — gemella di quella
+  della validazione: stessi gesti, stessi nodi evidenziati sulla tela, un clic
+  per saltare al nodo. Ogni riga porta il **rimedio**, e dove il caso lo
+  consente il comando che lo risolve: «Compila» per i campi vuoti, «Apri il
+  sotto-agente» per una delega fallita, «Riprova». Se il flusso era partito, la
+  finestra si chiude ma non si perde: nel registro resta la riga «🔎 Dove si è
+  rotto» che la riapre. Prima c'era solo un avviso che spariva in tre secondi e
+  una riga rossa in mezzo a quaranta righe verdi.
+- **Se il flusso non è partito, il registro resta vuoto e lo storico non
+  registra niente.** Un tentativo mai cominciato non è un'esecuzione: nessun
+  nodo è stato toccato, nessuna chiamata è uscita. Scriverci righe rosse faceva
+  sembrare che qualcosa fosse stato tentato, e contarlo nello storico falsava i
+  tassi di successo del Monitoraggio. Cosa manca e dove lo dice la finestra.
+  Unica eccezione voluta: in esecuzione **pianificata** la riga si scrive lo
+  stesso — una pianificata che non parte alle sette del mattino, senza traccia,
+  sarebbe un silenzio indistinguibile da «tutto a posto».
+- **Il registro scrive davvero tutto.** Alcune righe — il pre-volo, i nodi
+  esclusi, i nodi saltati, l'interruzione — finivano nello storico ma **non**
+  nel pannello a schermo: l'esecuzione si fermava e il pannello restava muto.
+  Ora si vedono mentre succedono.
+- **Gli errori dentro un sotto-agente risalgono all'orchestratore**, con il
+  nome del flusso da cui vengono: la finestra non dice più soltanto «la delega
+  è fallita», dice quale nodo del sotto-agente si è rotto e perché.
+- **In esecuzione automatica** lo stesso elenco finisce nel registro salvato:
+  senza, il giorno dopo si troverebbe una riga rossa senza spiegazione.
+- **Convalida output: due regole su una riga sola.** `punteggio >= 0, punteggio
+  <= 100` veniva letto come una regola unica e falliva **sempre**, segnalando
+  come non rispettata una regola che il valore rispettava.
+- **Un flusso senza i dati necessari non parte.** Se un connettore o un trigger
+  ha un campo obbligatorio vuoto, l'esecuzione si ferma *prima* di eseguire
+  qualunque nodo, e il registro dice quale campo manca su quale nodo. Vale per
+  tutte le strade: il pulsante Esegui, la pianificazione, la scheda nel
+  marketplace e la delega da un orchestratore. Prima il controllo esisteva solo
+  nel Builder: da ogni altra strada il nodo partiva con il destinatario vuoto e
+  l'esecuzione si chiudeva «conclusa» senza aver spedito niente a nessuno.
+- **Lo stesso vale a metà corsa.** Se un campo obbligatorio risulta vuoto al
+  momento della chiamata — una connessione cancellata, un segnaposto che non si
+  risolve — il nodo interrompe il flusso invece di passare a valle l'input di un
+  passaggio mai avvenuto.
+- **All'importazione si dice cosa è stato riempito.** I campi obbligatori vuoti
+  continuano a ricevere il predefinito del connettore, ma ora il messaggio dice
+  quanti sono: sono valori messi dalla piattaforma, non scelti da chi ha scritto
+  il flusso.
+
+## Sotto-agenti
+
+- **Si entra nel sotto-agente.** Dal pannello del nodo di delega si apre il
+  flusso delegato nel Builder, e una riga in testa riporta all'orchestratore,
+  sul nodo esatto da cui si era partiti. Il pannello mostra anche quanti nodi ha
+  il sotto-agente, se è in produzione, e segnala in rosso un agente non più
+  salvato.
+- **L'esito della delega è l'ingresso del nodo a valle**, e il registro scrive
+  quanti caratteri passano. Se il sotto-agente fallisce, il flusso si interrompe
+  invece di proseguire sull'input non trasformato spacciato per risultato.
+- **L'approvazione umana attraversa la delega.** Un sotto-agente che si ferma su
+  un controllo umano sospende anche l'orchestratore; autorizzando, riprende
+  prima il sotto-agente e poi il flusso chiamante. Prima la sospensione passava
+  inosservata e i nodi a valle lavoravano su un testo che non era il risultato
+  della delega.
+
+## Esecuzione senza chiave collegata
+
+- **La risposta simulata rispetta la forma chiesta dal prompt.** Un nodo che
+  chiede «Rispondi SOLO JSON: {punteggio, motivazione}» riceve un oggetto con
+  quei campi, così un nodo «Convalida output» a valle può fare il suo lavoro
+  invece di respingere sempre. I valori restano dichiaratamente finti:
+  `simulato:true` e la nota viaggiano dentro il JSON.
+- **Lo strumento simulato viene invocato una volta sola**, come era previsto: il
+  contrassegno si perdeva fra un'iterazione e l'altra, il ciclo si riapriva, e
+  l'output del nodo finiva per essere la narrazione della chiamata invece della
+  risposta.
+- Effetto pratico: tutti e cinque gli agenti di esempio e tutti e quattro i
+  flussi in `esempi/` arrivano in fondo senza collegare una chiave, compreso
+  l'orchestratore che delega a tre sotto-agenti.
+
+## Interfaccia
+
+- **Dal telefono, toccare un nodo non apre più le proprietà.** Il pannello
+  saliva a coprire mezza tela a ogni tocco, e costruire un flusso era una lotta:
+  ogni spostamento di un nodo lo faceva ricomparire. Ora la selezione seleziona
+  e basta; le proprietà si aprono col **doppio tocco** o col pulsante in basso,
+  che intanto porta il nome del nodo selezionato e si colora.
+- **Pannello «Integrazione AI»**: il pulsante «🔄 Modelli» finiva fuori dal
+  pannello — invisibile e non cliccabile — già alla larghezza predefinita della
+  palette. Ora la riga va a capo: il campo della chiave prende la prima riga e i
+  due pulsanti si dividono la seconda, e tornano affiancati quando la palette è
+  abbastanza larga. Verificato con palette stretta, larga e sul telefono, su
+  tutti i fornitori.
+
+## Prima della presentazione
+
+- **Un blocco fuori palette si ripara in un clic.** La verifica non dice più
+  soltanto che «Webhook CRM» non esiste: propone «Webhook» e lo sostituisce,
+  icona e descrizione comprese. Con più blocchi da sistemare c'è un comando
+  solo. Accanto, «Compila» riempie i campi obbligatori rimasti vuoti con i
+  predefiniti del connettore: un flusso importato rotto passa da sei errori a
+  zero in due clic.
+- **Chiave del fornitore sbagliato.** Incollando una chiave Anthropic avendo
+  selezionato OpenAI, la piattaforma lo dice prima di chiamare l'API, invece
+  di restituire un «chiave non valida» che fa pensare a una chiave scaduta.
+- **Knowledge Base navigabile**: ricerca sul nome e filtro per business unit
+  sopra l'elenco dei documenti.
+- **Tablet in orizzontale**: palette e proprietà più strette, così al canvas
+  del Builder resta spazio utile.
+- **Schermata di accesso**: dice che è un ambiente dimostrativo con profili di
+  esempio, senza entrare in dettagli che non riguardano quello che il
+  prototipo dimostra.
+
+## Accesso
+
+- **«Crea un account»**: registra una persona nel database SQLite, con nome,
+  ruolo e organizzazione. Da lì in avanti è un utente come gli altri — profilo
+  proprio, dati separati, dashboard che parte da zero.
+- **«Password dimenticata»**: modulo di recupero. Non finge di inviare
+  un'email che non può inviare: dice che l'ambiente è locale e la nuova
+  password si imposta sul dispositivo. Su un'email sconosciuta la risposta non
+  conferma né smentisce che l'account esista.
+- I **quattro profili dimostrativi restano invariati**: un clic sulla scheda e
+  si entra.
+
+## Rifiniture prima della presentazione
+
+- **Le connessioni dicono prima cosa si può provare**: «provabile dal
+  browser», «serve il servizio locale», «non su questo browser». Prima lo si
+  scopriva premendo Prova e leggendo l'errore, che in una dimostrazione sembra
+  un guasto invece di una condizione mancante.
+- **La Knowledge Base si cerca anche dentro i documenti**, non solo nei nomi, e
+  mostra la riga in cui trova la parola. In una KB vera il nome del file è
+  l'ultima cosa che si ricorda.
+- **L'elenco dei modelli rilevati dal fornitore sopravvive al ricaricamento**, e
+  la tendina del nodo dice se sta mostrando l'elenco predefinito o quello
+  rilevato.
+
+## Demo breve: copre tutto il percorso
+
+- **43 passi, circa 6 minuti e 50 secondi.** Rispetto alla versione
+  precedente aggiunge: installazione di un agente con configurazione del
+  modello ed esecuzione; la Knowledge Base navigata davvero (filtro
+  dell'elenco, dettaglio di un documento con la sua segmentazione); un flusso
+  rotto che viene riparato in due gesti; le certificazioni del Learning Hub;
+  la finestra delle connessioni.
+- **Secondo giro sul telefono**: barra superiore che non perde le azioni sui
+  titoli lunghi, i dieci pulsanti del pannello proprietà che stanno su una
+  riga ciascuno, tendine dei connettori che non escono dal pannello, nodi più
+  stretti sulla tela, tendine alte abbastanza per il pollice.
+
+## Modelli AI
+
+- **«Altro modello…»** in fondo alla tendina di ogni fornitore: si incolla
+  l'identificativo esatto preso dalla documentazione del fornitore e viene
+  inviato così com'è. Serve a usare un modello uscito dopo questa versione
+  senza aspettare un aggiornamento del codice, e senza il rischio di una lista
+  scritta a mano che contiene identificativi inesistenti.
+
+## Demo breve, terza revisione
+
+- **38 passi, circa 6 minuti** misurati, con i tempi di lettura al 72%: la
+  versione precedente stava in 4:39 ma correva troppo per essere letta.
+- **Chiude con il tema scuro**, che si vede da lontano e dice «prodotto
+  finito» meglio di una frase.
+- **Learning Hub, Sfide e Community passano da tre a nove passi**: lezione,
+  quiz, sandbox, una sfida, un contributo scritto e pubblicato. È la parte che
+  distingue una piattaforma da un editor di flussi.
+- **Niente rientro con un altro account**: costava due passi e si racconta a
+  voce in dieci secondi.
+- **Testi rivisti per un pubblico non tecnico.**
+
+## Telefono e tablet
+
+- **Impaginazione per schermi stretti.** Sotto i 768px il menu diventa un
+  pannello a scomparsa, la barra superiore tiene i comandi che servono e mette
+  gli altri dietro «⋯», i due pannelli del Builder salgono dal basso quando li
+  chiami, le finestre diventano fogli ancorati in basso, tabelle e linguette
+  scorrono invece di andare a capo. Sopra i 768px non cambia niente.
+- **Il Builder si usa col dito.** Trascinare un nodo, collegare due porte,
+  spostare la vista e selezionare funzionano al tocco; due dita ingrandiscono.
+  Il trascinamento dalla palette, che su telefono non esiste, è sostituito dal
+  tocco: il blocco viene aggiunto al centro della vista.
+- **La demo guidata resta da scrivania** e lo dice, invece di aprirsi
+  sovrapposta: vuole due aree affiancate.
+
+## Cose che non funzionavano e ora sì
+
+- **Le virgolette nei nomi.** Chiamando un nodo `Analisi "urgente"`, il nome
+  si troncava alla prima virgoletta appena si riapriva il pannello, e il resto
+  era perso. Valeva per il nome e la descrizione dei nodi, i campi dei
+  connettori, il nome del profilo, il titolo di un post e il nome di una
+  connessione. Ora il testo arriva intero.
+- **Il flusso di esempio si bloccava da solo.** Aprendo il Builder la prima
+  volta, il primo Esegui rispondeva «workflow non valido (3 problemi)»: i nodi
+  di quell'esempio avevano nomi che nella palette non esistevano. Ora si apre,
+  valida ed esegue.
+- **Due avvisi falsi su ogni nodo AI.** Senza modello collegato il registro
+  dichiarava a ogni esecuzione che l'output vincolato «non è supportato da
+  auto». `auto` non è un fornitore, è la scelta «usa quello collegato»: gli
+  avvisi erano infondati e il nome, illeggibile.
+- **Il riquadro della guida usciva dallo schermo** sui telefoni stretti.
+
+## Demo, versione da cinque minuti
+
+- **34 passi, 4 minuti e 39 secondi** misurati, contro i 101 della completa.
+  Passa da tutte e dieci le pagine. Si apre con `demo.html?breve` o dal
+  pulsante «breve» nella barra dei comandi.
+- **Costruisce un agente e poi esegue quello.** Prima ne costruiva uno a mano
+  e ne eseguiva un altro già pronto: ora parte il flusso appena costruito —
+  trigger, mascheramento dei dati, nodo AI con il suo prompt, uscita.
+- **Due passi mancanti che rompevano la sequenza**: il nodo AI non veniva
+  aggiunto prima di scrivergli il prompt, e il riquadro dell'anteprima della
+  chat non veniva chiuso, così la finestra di pianificazione ci si apriva
+  sopra.
+- **Copione per la voce fuori campo** in `demo/VOCE-DEMO-BREVE.md`, con i
+  tempi presi dalla registrazione vera e le note per il montaggio.
+- **Testi rivisti.** Una dozzina di passi erano scritti in negativo — «non è
+  un pulsante finto», «non nodi che le somigliano», «che i giocattoli non
+  hanno». Dette una volta sono retorica, dette dodici sembrano una difesa da
+  un'accusa che nessuno ha fatto. Ora dicono la stessa cosa in positivo.
 
 ## Builder
 
@@ -49,6 +273,12 @@ Un rilascio di chiusura: ciò che restava dai test, più le pulizie prima della 
 - **Tendina del modello a cascata.** Elenca i modelli del fornitore scelto
   sul nodo (prima poteva mostrare quelli di un altro fornitore); con
   «Automatico» resta bloccata finché non si sceglie il fornitore.
+
+## Demo
+
+- **Versione breve.** `demo.html?breve` o il pulsante «breve» nella barra:
+  47 passi scelti dalla demo completa, tempi di lettura all'80%, otto minuti
+  misurati. La versione completa resta com'è.
 
 ## Ingressi e aspetto
 
@@ -272,3 +502,12 @@ I dati locali (agenti, progressi, cronologia) restano dove sono.
 ---
 
 Grazie a chi ha provato la piattaforma e ha scritto cosa non tornava. Quasi tutto quello che c'è qui sopra viene da lì.
+
+## Dashboard
+
+- **Il grafico della settimana porta le date.** I soli nomi dei giorni si
+  ripetono ogni settimana: chi rientra dopo un po' vedeva «Mar, Mer, Gio…» senza
+  sapere di quale martedì si parlasse. Ora sotto ogni giorno c'è la data, in
+  testa al riquadro c'è l'intervallo («30 set – 6 ott»), l'ultima barra dice
+  **oggi** ed è evidenziata, e il suggerimento del mouse porta la data per
+  esteso.

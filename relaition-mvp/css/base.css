@@ -339,3 +339,10 @@ html[data-theme="dark"] .badge-p{background:#2E1F5E;color:#C4B5FD}
 /* Versione in esecuzione, in fondo al menu: piccola, letta dal service worker */
 .versione-app{font-size:9px;color:rgba(148,163,184,.45);text-align:right;padding:4px 6px 0;letter-spacing:.04em;min-height:12px}
 .sidebar.compatta .versione-app{display:none}
+
+/* Riga di un agente pianificato (Log Esecuzioni): il blocco del testo prende
+   lo spazio che avanza e può rimpicciolirsi. Stava fra gli stili in linea, ma
+   da lì nessun foglio può cambiarlo senza `!important`, e su schermo stretto
+   la riga deve andare a capo. */
+.riga-pianificata .rp-testo{flex:1;min-width:0}
+.riga-esecuzione .re-testo{flex:1;min-width:0}

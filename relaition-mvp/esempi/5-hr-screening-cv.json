@@ -1,0 +1,52 @@
+{
+  "name": "Screening CV con tutela del candidato (HR)",
+  "context": "Il CV arriva come file. Prima di qualunque elaborazione i dati personali vengono mascherati: il modello valuta le competenze, non chi è il candidato. Il punteggio viene convalidato contro uno schema, poi il flusso si dirama: sopra soglia si prenota il colloquio e si avvisa il responsabile, sotto soglia si registra l'esito con la motivazione. Entrambi i rami chiudono su un output tracciato, perché una selezione deve poter essere spiegata a distanza di mesi.",
+  "nextId": 11,
+  "nodes": [
+    {"id":1,"type":"tr","icon":"📝","name":"Form submit","detail":"Candidatura dal portale carriere","x":420,"y":40,
+     "config":{"formid":"carriere-candidature","campi":"nome, email, posizione, cv_testo","redirect":"/grazie"}},
+
+    {"id":2,"type":"gr","icon":"🎭","name":"Mascheramento dati","detail":"Nome, contatti e identificativi via prima del modello","x":420,"y":170,
+     "config":{"entities":"Tutti","restore":"Sì"}},
+
+    {"id":3,"type":"ai","icon":"🏷️","name":"Valutazione competenze","detail":"Punteggio 0-100 su schema vincolato","x":420,"y":300,
+     "config":{"model":"auto","temperature":0.2,"maxtokens":900,"outformat":"json",
+       "prompt":"Valuti un curriculum per una posizione di Analista di processo. Rispondi SOLO con un oggetto JSON:\n{\"punteggio\": numero 0-100, \"anni_esperienza\": numero, \"competenze\": [stringhe], \"motivazione\": stringa, \"segnali_attenzione\": [stringhe]}\nRegole vincolanti: valuti ESCLUSIVAMENTE competenze, esperienza e risultati dichiarati. Non consideri, non deduci e non commenti dati anagrafici, genere, età, nazionalità, stato civile o fotografia: se compaiono, li ignori. Se un'informazione non è presente nel testo, non la inventi: lasci il campo vuoto o l'array vuoto. La motivazione è una frase sola e cita solo elementi presenti nel CV."}},
+
+    {"id":4,"type":"gr","icon":"📐","name":"Convalida output","detail":"Schema e intervalli","x":420,"y":430,
+     "config":{"required":"punteggio, motivazione","rules":"punteggio >= 0, punteggio <= 100","onfail":"Segnala e prosegui"}},
+
+    {"id":5,"type":"cd","icon":"🔀","name":"Punteggio >= 70?","detail":"Soglia di avanzamento","x":420,"y":560,
+     "config":{"condition":"punteggio >= 70 e nessun segnale di attenzione bloccante"}},
+
+    {"id":6,"type":"ac","icon":"✅","name":"Asana","detail":"Attività: fissare il colloquio","x":180,"y":700,
+     "config":{"project":"Selezioni HR","section":"Da contattare","taskname":"Colloquio conoscitivo - Analista di processo","notes":"Profilo sopra soglia. Esito della valutazione in allegato al flusso.","assignee":"selezioni.it","duedate":"+5g"}},
+
+    {"id":7,"type":"ac","icon":"📧","name":"Invia email","detail":"Avviso al responsabile della selezione","x":180,"y":830,
+     "config":{"to":"selezioni@azienda.it","cc":"","subject":"Candidatura in avanzamento: colloquio da fissare",
+       "body":"Il profilo ha superato la soglia di valutazione.\n\nEsito completo:\n{{result}}\n\nIl mascheramento dei dati personali è stato applicato prima della valutazione: il punteggio è stato assegnato sulle sole competenze.",
+       "bodytype":"Testo","attach":"No"}},
+
+    {"id":8,"type":"ac","icon":"🗃️","name":"PostgreSQL","detail":"Esito registrato con la motivazione","x":660,"y":700,
+     "config":{"host":"db-hr.interno:5432","query":"INSERT INTO valutazioni_cv (punteggio, motivazione, esito, ts) VALUES (:punteggio, :motivazione, 'non in avanzamento', now())"}},
+
+    {"id":9,"type":"gr","icon":"✋","name":"Approvazione umana","detail":"Nessuno viene scartato da una macchina","x":660,"y":830,
+     "config":{"approver":"responsabile.selezione@azienda.it",
+       "message":"Valutazione sotto soglia: confermi l'esclusione o chiedi una seconda lettura?","timeout":"48"}},
+
+    {"id":10,"type":"ou","icon":"📊","name":"Output","detail":"Traccia completa per audit","x":420,"y":960,
+     "config":{"format":"JSON","destination":"Log esecuzioni"}}
+  ],
+  "edges": [
+    {"from":1,"fp":"out","to":2,"tp":"in","label":""},
+    {"from":2,"fp":"out","to":3,"tp":"in","label":"dati mascherati"},
+    {"from":3,"fp":"out","to":4,"tp":"in","label":""},
+    {"from":4,"fp":"out","to":5,"tp":"in","label":""},
+    {"from":5,"fp":"true","to":6,"tp":"in","label":"in avanzamento"},
+    {"from":5,"fp":"false","to":8,"tp":"in","label":"non in avanzamento"},
+    {"from":6,"fp":"out","to":7,"tp":"in","label":""},
+    {"from":7,"fp":"out","to":10,"tp":"in","label":""},
+    {"from":8,"fp":"out","to":9,"tp":"in","label":""},
+    {"from":9,"fp":"out","to":10,"tp":"in","label":"decisione registrata"}
+  ]
+}

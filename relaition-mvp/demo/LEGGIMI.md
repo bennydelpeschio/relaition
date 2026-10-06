@@ -5,13 +5,73 @@ l'elemento di cui parla, compie le azioni e racconta cosa sta facendo, passo per
 passo. Serve per registrare un video da mostrare a una commissione o a un
 investitore senza dover guidare il mouse a mano.
 
-**101 passi in 10 capitoli.** La sola narrazione somma 15 minuti; in riproduzione
+**109 passi in 10 capitoli.** La sola narrazione somma 17 minuti; in riproduzione
 automatica le azioni — esecuzioni, scrittura a macchina, attese — si aggiungono,
 quindi conviene contare qualcosa in più. Il peso sta sul Builder: costruzione a
 mano, costruzione conversazionale, dettaglio dei nodi, esecuzione e
 pianificazione occupano da soli quattro capitoli; il capitolo 8 — Learning Hub,
 Sfide, Community — è il più lungo con 22 passi, e il capitolo 10 chiude uscendo
 e rientrando **con un altro account**, per mostrare che i dati sono per persona.
+
+## Versione breve: 6 minuti e 41 secondi
+
+Per una presentazione commerciale o per un video c'è la **versione breve**:
+
+```
+http://localhost:8099/demo/demo.html?breve
+```
+
+oppure il pulsante **breve** nella barra dei comandi (che diventa
+**completa** per tornare indietro). Sono **43 passi**, gli stessi della demo
+completa, con i tempi di lettura al 70%: **6 minuti e 41 secondi** in
+riproduzione automatica a 1×, senza chiave collegata — cronometrati su un giro
+intero, non stimati. Chiude con le connessioni e il tema scuro acceso e spento.
+
+Passa da **tutte e dieci le voci del menu** — una demo che salta una pagina
+lascia il dubbio che quella pagina non esista — e soprattutto **costruisce un
+agente completo e poi esegue quello**, invece di costruirne uno ed eseguirne
+un altro già pronto: trigger, mascheramento dei dati, nodo AI con il suo
+prompt, uscita.
+
+Tiene per intero le tre catene che hanno bisogno l'una dell'altra, e sono
+segnate nel codice: la costruzione a mano (chi ne toglie un passo si ritrova a
+scrivere un prompt in un pannello vuoto), descrivo/genera/applica nella chat
+(senza «Applica» il riquadro dell'anteprima resta aperto e la finestra
+successiva gli si apre sopra), propongo/invio/approvo nella revisione.
+
+Il capitolo 8 — Learning Hub, Sfide, Community — qui rallenta invece di
+correre: una lezione aperta davvero, un quiz a cui si risponde, la sandbox,
+una sfida e un contributo scritto e pubblicato. È la parte che il documento
+mette sullo stesso piano della tecnologia, e in una presentazione commerciale
+è quella che distingue una piattaforma da un editor di flussi.
+
+Non si esce e non si rientra con un altro account: in sei minuti il cambio di
+utente costa due passi e aggiunge una cosa sola, che si può raccontare a voce.
+
+Restano nella versione completa: ricerca e filtri del catalogo, recensioni,
+palette e annullamento, ciclo e tetto di sicurezza, validazione, modifica via
+chat, allegati alla mail, interruzione a metà, flusso con Knowledge Base,
+richiesta di modifica in revisione, candidatura a una sfida, badge e obiettivi
+del profilo, e il rientro con un altro account.
+
+L'elenco dei passi, con il criterio di scelta scritto sopra, è
+`COPIONE_BREVE_PASSI` in fondo a `copione.js`.
+
+### Voce fuori campo
+
+`VOCE-DEMO-BREVE.md`, in questa cartella, è il copione parlato da registrare
+sopra la versione breve: tempi presi dalla registrazione vera, tono da
+presentazione di prodotto, e le note per il montaggio. La regola principale è
+che la voce **non legge** il riquadro di narrazione: quello dice cosa si sta
+vedendo, la voce dice perché conta.
+
+### Dal telefono non si apre
+
+La demo guida l'applicazione dentro un riquadro e le disegna accanto il
+riquadro di narrazione: servono due aree affiancate, e su un telefono non ci
+stanno. Sotto gli 820px la pagina lo dichiara e offre il collegamento alla
+piattaforma, che invece dal telefono funziona.
+
 
 ## Con un modello AI vero
 
@@ -84,6 +144,7 @@ finito di parlare su un passaggio.
 | **P** | avvia o mette in pausa la riproduzione automatica |
 | **I** | apre l'indice dei capitoli, per saltare dove serve |
 | **H** | nasconde la barra dei comandi; per riaverla muovi il mouse e clicca «⌃ comandi», oppure ripremi H |
+| **breve / completa** | passa alla versione breve (43 passi, 6 minuti e 41 secondi) o a quella completa (109 passi) |
 
 Nella barra ci sono anche la **velocità** (1× → 1,5× → 2× → 0,75×) e il tasto
 **⟲** che ricomincia da capo ripristinando lo stato.
@@ -156,7 +217,7 @@ nessun pulsante aggiunto, nessuna riga di logica toccata. Cancellando la cartell
 |---|---|
 | `demo.html` | il palco: riquadro, faretto, riquadro di narrazione, comandi |
 | `motore.js` | fotografia e ripristino, avanzamento, puntatore, posizionamento |
-| `copione.js` | i 101 passi: cosa fa ognuno, cosa illumina, cosa racconta |
+| `copione.js` | i 109 passi: cosa fa ognuno, cosa illumina, cosa racconta |
 
 Funziona perché pagina e applicazione condividono l'origine: da lì si chiamano
 `go()`, `dbAll()` e le altre funzioni esattamente come farebbe il codice

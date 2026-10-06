@@ -211,3 +211,35 @@
   #loginScreen{transition:none}
   .mkt-hero,.learn-hero{animation:none!important}
 }
+
+/* Pulsante di sostituzione dentro una riga della verifica: sta a destra, non
+   si allarga e non eredita il cursore della riga, che porta al nodo. */
+.validation-item .vi-fix{margin-left:auto;flex-shrink:0;height:26px;font-size:11px;padding:0 10px}
+
+/* Riga che dice se la prova di una connessione è possibile qui e ora. */
+.conn-capacita{font-size:10.5px;font-weight:600;margin:6px 0 2px;letter-spacing:.01em}
+
+/* La schermata di accesso sta a z-index 10000, le finestre a 200: i moduli
+   «Crea un account» e «Password dimenticata», che si aprono proprio da lì,
+   finivano dietro e sembravano non aprirsi affatto. Una finestra è sempre una
+   richiesta esplicita di chi la apre, quindi sta sopra tutto. */
+.modal-overlay{z-index:10050}
+
+/* ── Finestra degli errori di esecuzione ──
+   Riusa .validation-item perche' i due elenchi si leggono allo stesso modo:
+   una riga, un nodo, un clic per andarci. Qui pero' la riga ha due piani — il
+   problema e il rimedio — quindi l'allineamento verticale passa in alto,
+   altrimenti l'icona galleggia a meta' di un testo su tre righe. */
+.validation-item .vi-msg{display:block}
+.validation-list .validation-item{align-items:flex-start}
+.validation-item .vi-tag{display:inline-block;margin-left:7px;padding:1px 7px;
+  border:1px solid;border-radius:999px;font-size:9.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.03em;vertical-align:1px}
+.validation-item .vi-rimedio{display:inline-block;margin-top:5px;color:var(--tx3);
+  font-size:11px;line-height:1.45}
+/* Un problema nato dentro un sotto-agente non ha un nodo su questa tela:
+   niente puntatore, niente promessa di un salto che non puo' avvenire. */
+.validation-item.vi-no-salto{cursor:default;opacity:.92}
+.validation-item.vi-no-salto:hover{background:#FEF2F2}
+html[data-theme="dark"] .validation-item.vi-no-salto:hover{background:#3A1418}
+html[data-theme="dark"] .validation-item .vi-rimedio{color:#FCA5A5}

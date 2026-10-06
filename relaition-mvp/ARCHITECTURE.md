@@ -4200,3 +4200,753 @@ restano campo libero). Con «Automatico» la tendina è bloccata e dice quale
 predefinito seguirà, o che seguirà il fornitore che si collegherà: il modello
 non si può scegliere prima del fornitore. La sostituzione in esecuzione resta
 quella di prima, dichiarata nel registro.
+
+### 5.160 La demo in otto minuti
+
+La demo completa somma un quarto d'ora di sola narrazione, e una commissione
+ne concede dieci. Invece di una seconda demo da tenere allineata, la versione
+breve è una **selezione della stessa**: `COPIONE_BREVE_TITOLI` in fondo a
+`demo/copione.js` elenca 47 titoli; con `demo.html?breve` (o il pulsante
+«breve» nella barra) il copione viene filtrato su quei titoli e il motore
+applica ai tempi di lettura una scala dell'80% (`COPIONE_BREVE_SCALA`). I
+passi erano già scritti per reggersi da soli, perché l'indice permette di
+saltare a un capitolo qualsiasi: ognuno carica il flusso, apre la finestra o
+seleziona il nodo di cui ha bisogno se non lo trova. È ciò che rende la
+selezione possibile senza riscrivere nulla. Misurata in riproduzione
+automatica senza chiave: 7 minuti e 55 secondi, stato ripristinato a fine
+demo. Un titolo che non esiste più nel copione viene segnalato in console,
+non ignorato in silenzio.
+
+### 5.161 La piattaforma su un telefono
+
+Il capitolo 2 del documento mette «l'interfaccia web e mobile» nel primo
+livello dell'architettura, e la POC è pubblicata su un indirizzo che si apre
+anche dal telefono: quello che si apre deve funzionare. Fino alla v107 non
+funzionava. Il menu occupava 240px fissi su 360 di larghezza, il Builder
+affiancava tre pannelli su uno schermo che ne regge uno, le finestre erano
+centrate al 90% di una larghezza che su un telefono vale nulla, e soprattutto
+**il canvas non rispondeva al tocco**: nodi, collegamenti, spostamento della
+vista erano scritti per `mousedown`/`mousemove`, e la palette usava il
+trascinamento HTML5, che su iOS e Android non esiste. Si poteva guardare un
+flusso e non toccarlo.
+
+Due file nuovi, che si aggiungono senza riscrivere niente: togliendoli, la
+versione da scrivania resta identica.
+
+`css/mobile.css` arriva dopo gli altri fogli e ha due soglie. A **1024px**
+solo spazi: meno padding, ricerca più corta, finestre più larghe. A **768px**
+l'impaginazione cambia: il menu esce dal flusso e diventa un pannello a
+scomparsa con velo (e le dodici regole della «colonna compatta» vanno spente
+tutte, non solo la larghezza, o il pannello si apre con le voci centrate e i
+gruppi ridotti a trattini); la barra superiore tiene menu, titolo, notifiche e
+«+», e mette gli altri tre comandi dietro un «⋯» invece di nasconderli; i due
+pannelli del Builder salgono dal basso come fogli; le finestre diventano fogli
+ancorati in basso; tabelle e file di linguette scorrono in orizzontale invece
+di andare a capo; i campi passano a 16px, che è l'unico modo di impedire a iOS
+di ingrandire la pagina al primo tocco senza disattivare anche il pizzico.
+L'altezza usa `dvh`, perché `100vh` resta fissa mentre la barra degli
+indirizzi entra e esce e il fondo della pagina finiva sotto il bordo.
+
+`js/mobile.js` fa quello che il foglio di stile non può. Il pezzo centrale è
+un **ponte fra tocco e mouse** sul canvas: un dito diventa
+`mousedown`/`mousemove`/`mouseup` sugli stessi elementi, due dita diventano
+pizzico per ingrandire. La scelta è deliberata: riscrivere il canvas per i
+puntatori avrebbe significato rimettere mano a trascinamento dei nodi,
+collegamento delle porte, selezione a riquadro, spostamento della vista e
+ricollegamento delle frecce — cinque comportamenti collaudati — per ottenere
+esattamente quello che già fanno. La palette, che il ponte non può salvare
+perché il trascinamento HTML5 non emette eventi di mouse, riceve un
+**tocco = aggiungi al centro della vista**, con scostamento in diagonale se
+quel punto è occupato. Selezionando un nodo il foglio delle proprietà sale da
+solo, agganciandosi a `renderProps` invece di modificarla.
+
+La pagina della demo resta fuori: guida l'applicazione dentro un riquadro e le
+disegna accanto la narrazione, e due aree affiancate su 360px non esistono.
+Sotto 820px dichiara che vuole uno schermo grande e offre il collegamento alla
+piattaforma, invece di mostrare qualcosa di rotto.
+
+### 5.162 Le virgolette in un attributo: `escAttr`
+
+`escHtml()` passa da `textContent`, che protegge `&`, `<` e `>` ma **non** le
+virgolette: dentro il testo di un elemento non servono. Erano però usate in
+una quarantina di punti dentro attributi fra virgolette doppie — il nome di un
+nodo, la descrizione, i campi di configurazione, il nome del profilo, il
+titolo di un post, il nome di una connessione. Lì la prima virgoletta del
+contenuto **chiude l'attributo**, e il resto diventa markup.
+
+Il difetto si riproduce in tre gesti: nel Builder si chiama un nodo
+`Analisi "urgente" del ticket`, si seleziona un altro nodo, si torna indietro.
+Il campo Nome contiene `Analisi ` e basta; salvando, il nome perso è perso.
+Non un caso di laboratorio: le virgolette in un nome di nodo o in un prompt
+sono normali.
+
+`escAttr()` (in `js/modals.js`, accanto a `escHtml`) aggiunge `&quot;`, ed è
+ora usata in tutti i punti in cui il valore finisce dentro un attributo. Il
+testo dentro un elemento continua a usare `escHtml`: sono due contesti
+diversi, e confonderli è esattamente come nasce questa classe di difetti.
+
+### 5.163 «Non supportato da auto»
+
+`auto` non è un fornitore: è la scelta «usa quello collegato». Quando nessuno
+era collegato, `risolviProvider()` restituiva un fornitore nullo e il ripiego
+su `cfg.model` faceva finire nel registro la parola `auto`. Si leggevano righe
+come «Capacità "structuredOutput" non supportata da auto» e «Output vincolato
+non supportato da "auto"», che non vogliono dire niente. Peggio: la stessa
+variabile alimentava `providerCapabilities()`, che su `auto` non trova nulla e
+risponde «non supportato» a qualunque domanda — quindi **ogni nodo AI
+riportava due avvisi falsi** di capacità degradata, a ogni esecuzione.
+
+Tre correzioni: `provRisolto` in `js/agent-runtime.js` ricade sul predefinito
+invece che sulla scelta, come fa già la chiamata vera dopo il §5.157;
+`providerLabel()` dà a `auto` un'etichetta sua, come rete di sicurezza per
+qualunque altro punto che ce lo faccia arrivare; e il messaggio in
+`js/builder.js` passa dalla chiave interna all'etichetta, così nel registro non
+compare più `openai` al posto di `OpenAI`.
+
+### 5.164 Il flusso di esempio non passava la propria validazione
+
+Aprendo il Builder la prima volta si trova un flusso già sulla tela. I suoi
+nodi si chiamavano `Webhook CRM`, `Email alert` e `Update CRM`: nomi di
+fantasia, che nella palette non esistono. La validazione controlla che ogni
+nodo corrisponda a un blocco vero, quindi il primo Esegui di chiunque apra il
+Builder rispondeva **«Esecuzione bloccata: workflow non valido (3 problemi)»**,
+e uno dei tre era il ramo dell'email che non si chiudeva su un output.
+
+Il primo gesto di chi apre lo strumento non può essere un errore in un flusso
+che gli abbiamo messo noi sulla tela. I nomi sono ora quelli della palette
+(`Webhook`, `Invia email`, `Output`) — cosa fa ogni nodo lo dice la
+descrizione, che è libera — e il ramo dell'email confluisce sull'output. Il
+flusso di esempio si apre, valida e **completa**.
+
+### 5.165 La demo in quattro minuti e mezzo
+
+La versione breve del §5.160 stava in otto minuti, che e la misura giusta per
+una commissione ma non per un video commerciale: una presentazione di prodotto
+sta in quattro o cinque minuti.
+
+La prima riduzione a 34 passi (5:15) aveva pero due difetti che filtrare per
+titolo, e basta, non poteva evitare: alcuni passi sono **anelli di una catena**
+e da soli non hanno senso. «Scrivo il prompt» scriveva in un pannello vuoto,
+perche il passo che AGGIUNGE il nodo AI era stato tolto; e «Genera» mostrava
+l'anteprima della chat senza il passo che la CHIUDE, quindi il riquadro
+restava a video e la finestra di pianificazione gli si apriva sopra,
+sovrapposta. Le catene sono ora segnate nel codice, una per una, con la
+ragione per cui non vanno spezzate.
+
+La terza correzione e di sostanza: si costruiva un agente a mano e poi se ne
+eseguiva un **altro**, gia pronto. Il momento piu convincente di una
+dimostrazione di prodotto e vedere partire quello che si e appena costruito,
+quindi i passi dell'esecuzione seguono ora direttamente la costruzione —
+«Eseguo» preme Esegui su quello che c'e sulla tela, che a quel punto e il
+flusso fatto a mano: trigger, mascheramento, nodo AI con il suo prompt,
+uscita. Quattro nodi, esecuzione completata.
+
+Per ottenerlo la selezione non puo piu essere un filtro: `COPIONE_BREVE_PASSI`
+e una lista **ordinata**, e una voce puo essere `[titolo, capitolo]` quando il
+passo va mostrato sotto un capitolo diverso da quello che ha nella demo
+completa — senza, il contatore dei capitoli tornerebbe indietro a meta demo.
+La copia del passo e superficiale e fatta su una copia dell'oggetto: scrivere
+il capitolo sull'originale altererebbe anche la versione completa, che
+condivide lo stesso array.
+
+Risultato: 34 passi, scala dei tempi 0,62, **4 minuti e 39 secondi** misurati,
+con tutte e dieci le voci del menu attraversate.
+
+Accanto c'e `demo/VOCE-DEMO-BREVE.md`: il copione per la voce fuori campo, con
+i tempi presi dalla registrazione vera. La regola scritta in testa e che la
+voce **non legge** il riquadro di narrazione — quello dice cosa si vede, la
+voce dice perche conta.
+
+### 5.166 Un blocco fuori palette ora si ripara da solo
+
+La validazione sapeva dire che «Webhook CRM» non corrisponde a nessun blocco
+della palette (§5.164), e si fermava lì. Chi leggeva doveva aprire la palette,
+scorrere settantotto voci e indovinare il ricambio — su un flusso importato o
+arrivato da un esempio, significa farlo cinque volte.
+
+`bPaletteSimile(nome,tipo)` calcola il candidato fra i blocchi **dello stesso
+tipo**, con un punteggio deliberatamente semplice: contenimento di una stringa
+nell'altra (il caso più frequente e più affidabile: «Webhook CRM» → «Webhook»),
+parole in comune, prefissi di almeno quattro lettere. Niente distanza di
+Levenshtein: su nomi di due parole produce accostamenti che sembrano casuali, e
+un suggerimento sbagliato è peggio di nessun suggerimento. Sotto la soglia non
+propone niente.
+
+Il ricambio diventa un pulsante sulla riga dell'errore, e un «sostituisci
+tutti» quando sono più di uno. Non rinomina soltanto: rimette anche icona e
+descrizione del blocco vero, perché l'applicazione risale ai parametri dal
+nome, ma chi guarda la tela riconosce l'icona.
+
+Accanto, lo stesso trattamento per i **campi obbligatori vuoti**:
+`fillRequiredDefaults()` esisteva già ed era chiamata all'importazione e alla
+pubblicazione, ma non dalla finestra di verifica — proprio dove la mancanza si
+vede. Ora c'è un «Compila» che li riempie con i predefiniti del connettore.
+Un flusso importato rotto passa da sei errori a zero in due clic.
+
+### 5.167 La chiave del fornitore sbagliato
+
+Il pannello ha un campo solo e quattro fornitori: incollare la chiave di uno
+avendone selezionato un altro è l'errore più facile da fare, e produceva un
+401 «invalid api key». Chi legge conclude che la chiave è scaduta e va a
+generarne un'altra, che fallirà uguale.
+
+`chiaveNonCoerente(provider,key)` riconosce i prefissi documentati —
+`sk-ant-`, `sk-proj-`, `AIza` — e se la chiave è di un **altro** fornitore fra
+quelli integrati lo dice prima di chiamare. Il controllo è volutamente
+permissivo: in caso di dubbio lascia passare. Un controllo severo
+invecchierebbe male, perché i fornitori cambiano i formati, e bloccare una
+chiave buona è un danno peggiore di un 401 spiegato male.
+
+### 5.168 Knowledge Base: filtro invece di elenco
+
+L'elenco dei documenti era piatto e ordinato per data. Con sei documenti si
+scorre; con sessanta, che è il caso vero in azienda, non si naviga. Sopra
+l'elenco ci sono ora un campo di ricerca e un filtro per business unit, e il
+conteggio dice «N di M» quando il filtro è attivo.
+
+Non introduce concetti nuovi: nome, business unit e riservatezza sono già i
+metadati che il documento di progetto assegna a ogni documento della Knowledge
+Base. I filtri vivono fuori dalla funzione di disegno, perché l'elenco si
+ridisegna a ogni caricamento e a ogni cancellazione: tenendoli dentro, ogni
+ridisegno avrebbe azzerato quello che si stava cercando.
+
+### 5.169 La demo breve in sei minuti, senza cambio utente
+
+La versione del §5.165 stava in 4:39 ma risultava **affrettata**: i tempi al
+62% non lasciano leggere il riquadro mentre la voce racconta, e un passo che
+sparisce prima di essere letto vale meno di un passo in meno. Inoltre
+sacrificava proprio la parte che il documento mette sullo stesso piano della
+tecnologia — Learning Hub, Sfide, Community — riducendola a tre passi di
+passaggio.
+
+Ora sono **37 passi a scala 0,72: 5 minuti e 59 secondi** misurati. Il
+capitolo 8 passa da tre a nove passi e rallenta: una lezione aperta davvero, un
+quiz a cui si risponde, la sandbox, una sfida, un contributo scritto e
+pubblicato. In cambio sparisce il **rientro con un altro account**: in sei
+minuti costa due passi e dimostra una cosa sola, che si racconta a voce in
+dieci secondi.
+
+I testi dei passi inclusi sono stati rivisti per un pubblico non tecnico:
+«output vincolato in JSON» è diventato «la risposta arriva in un formato fisso
+invece che in prosa», «calcolate sulle righe reali del database locale» è
+diventato «sono i miei, non una media», e il pulsante di spiegazione ora si
+presenta con la domanda a cui risponde — «va bene, ma come ci è arrivato?» —
+invece che con la parola «audit».
+
+### 5.170 Mobile: tablet in orizzontale
+
+Il §5.161 aveva coperto il telefono (≤768px) e lasciato tutto il resto alla
+versione da scrivania. Fra i 769 e i 1100px, però, tornano i tre pannelli
+affiancati del Builder alle larghezze originali, e su un tablet in orizzontale
+al canvas restavano poco più di duecento pixel: si vedeva un nodo e mezzo. Una
+fascia intermedia stringe palette e proprietà e toglie la riga di descrizione
+dalle voci della palette; il canvas passa da 224 a 316px a 1024 di larghezza.
+
+### 5.171 Un modello che non è nell'elenco
+
+`AI_MODELLI_DISPONIBILI` è scritto nel codice, e questo lo fa invecchiare: ogni
+volta che un fornitore pubblica un modello nuovo, chi usa la piattaforma deve
+aspettare che qualcuno aggiorni quell'array. In una dimostrazione fatta sei
+mesi dopo il rilascio, significa un elenco che sembra vecchio.
+
+La scorciatoia sarebbe scrivere a mano gli identificativi dei modelli
+annunciati di recente. È però il modo più sicuro di rompere tutto: un
+identificativo sbagliato di una lettera non dà un avviso, dà un 404 al primo
+Esegui, e lo dà davanti a chi guarda. Gli identificativi veri li pubblica il
+fornitore, cambiano, e questo codice non può verificarli.
+
+Ogni fornitore ha quindi in fondo alla tendina **«Altro modello…»**, che apre
+un campo libero dove si incolla l'identificativo esatto. Viene inviato così
+com'è, con il prefisso `libero:` a distinguerlo nella configurazione del nodo.
+È la stessa soluzione già adottata per i modelli locali e per l'endpoint
+custom — che il documento descrive come «configurabile dall'utente» — estesa
+ai quattro fornitori principali: l'elenco resta una comodità, non un limite,
+e la tabella 3.F del documento continua a descrivere i modelli predefiniti.
+
+### 5.172 Entrare e uscire da telefono
+
+Uscendo dall'applicazione, i pannelli a scomparsa del Builder restavano
+aperti dietro la schermata di accesso: rientrando ci si ritrovava le proprietà
+di un nodo sollevate sopra la dashboard. E all'accesso il Builder ridisegna le
+proprietà del nodo che era selezionato l'ultima volta, il che faceva salire il
+pannello da solo — un gesto che nessuno aveva fatto.
+
+Due correzioni in `js/mobile.js`, entrambe agganciate alle funzioni esistenti
+invece di modificarle: i pannelli si chiudono insieme alla sessione, e
+l'apertura automatica delle proprietà ignora le chiamate che arrivano entro
+1,8 secondi da un cambio di contesto — accesso, uscita, cambio pagina. Una
+selezione fatta col dito arriva sempre dopo quella finestra; un ridisegno
+automatico, sempre dentro.
+
+### 5.173 La demo breve copre tutto il percorso, in sette minuti
+
+La versione del §5.169 (38 passi, 6:01) mostrava la costruzione ma non il
+percorso completo che un'organizzazione fa davvero. Mancavano quattro cose che
+in una presentazione commerciale pesano più di quanto costino:
+
+- **installare un agente, configurarlo ed eseguirlo**: il percorso più breve
+  fra «non ho niente» e «ho qualcosa che funziona», che è la risposta alla
+  barriera del tempo. Due passi nuovi — si cambia il modello sul nodo e si
+  esegue — dopo l'installazione dal catalogo;
+- **un flusso che non parte, e come si rimette in piedi**: il caso realistico
+  non è il flusso perfetto. Due passi nuovi caricano un flusso con nomi fuori
+  palette e campi vuoti, e mostrano la riparazione del §5.166. È la domanda
+  che un tecnico farebbe comunque, e conviene rispondere mostrando;
+- **la Knowledge Base navigata davvero**: non solo «esiste», ma si filtra
+  l'elenco, si entra in un documento e si vede come è stato segmentato. Due
+  passi nuovi, più quello del recupero che c'era già;
+- **certificazioni e connessioni**: due passi nuovi che chiudono la parte di
+  adozione e quella di governabilità lato IT.
+
+Un difetto trovato montandola, della stessa famiglia del §5.169: togliendo «La
+palette: si cerca, non si scorre» dalla selezione breve spariva anche l'unico
+punto che azzera la tela e battezza l'agente, quindi i nodi costruiti a mano
+finivano sulla tela dell'agente installato poco prima e l'esecuzione veniva
+registrata col nome di quello. La correzione non è rimettere il passo: è
+rendere «Primo nodo sulla tela» autosufficiente, che è la regola della demo
+— ogni passo si deve reggere da solo, anche saltandoci dentro dall'indice.
+
+Risultato: **43 passi, scala 0,70, 6 minuti e 41 secondi cronometrati**. Fuori restano
+il rientro con un altro account e i passi puramente descrittivi.
+
+### 5.174 Seconda passata sul telefono: testi e icone che ci stanno
+
+La prima passata (§5.161) aveva reso la piattaforma utilizzabile; questa la
+rende comoda. I punti dolenti erano quattro, tutti dello stesso tipo —
+controlli pensati per una barra larga 1200px infilati in 360:
+
+- la **barra superiore** perdeva le azioni su titoli lunghi («Monitoraggio
+  della piattaforma»): il titolo ora si tronca al 38% della larghezza;
+- i **dieci pulsanti del pannello proprietà** andavano a capo dentro sé stessi,
+  raddoppiando l'altezza della griglia: altezza fissa, testo su una riga,
+  taglio con i puntini;
+- le **tendine dei connettori** con etichette lunghe uscivano dal pannello;
+- l'**intestazione del registro** aveva cinque controlli che si sovrapponevano.
+
+In più: nodi più stretti sulla tela (150px invece di 180), perché a uno zoom
+del 60% un nodo largo metà schermo diventa illeggibile; tendine alte almeno
+38px, che sotto i 32 sono difficili da centrare col pollice; e le file di
+pulsanti dentro le finestre che vanno a capo invece di comprimersi. La fascia
+769–1100px riceve lo stesso trattamento sui contenuti, non solo sulle
+larghezze.
+
+### 5.175 Le connessioni dicono prima cosa si può provare
+
+Le prove delle connessioni sono tutte reali — scrittura vera in una cartella,
+chiamata vera a un endpoint, handshake TCP vero verso host e porta, invio vero
+di un'email — ma non tutte sono possibili ovunque: la cartella vuole la File
+System Access API (Chrome ed Edge da scrivania, non Safari, non telefono), e
+database, SMTP e webhook vogliono il servizio locale avviato.
+
+Finora lo si scopriva **premendo Prova e leggendo l'errore**, che durante una
+dimostrazione sembra un guasto della piattaforma invece di una condizione
+mancante. Ogni scheda ora dichiara prima: «provabile dal browser», «serve il
+servizio locale», «non su questo browser», con la spiegazione nel titolo. Una
+prova impossibile annunciata è informazione; la stessa prova che fallisce dopo
+il clic sembra un difetto.
+
+Un difetto trovato scrivendolo: `sondaDisponibile()` restituisce l'indirizzo
+del servizio **oppure `null`**, e usare quel valore direttamente confondeva
+«verificato e assente» con «non ancora verificato» — la scheda sarebbe rimasta
+per sempre su «verifico». Si converte in booleano.
+
+### 5.176 La Knowledge Base si cerca anche dentro
+
+Il filtro del §5.168 guardava nome, business unit e riservatezza. In una
+Knowledge Base vera il nome del file è l'ultima cosa che si ricorda: «dov'era
+scritta la penale per il recesso?» non contiene la parola «contratto».
+
+La ricerca guarda ora anche nel **contenuto**, e quando la corrispondenza è lì
+mostra l'estratto con la riga in cui compare — tagliato ai confini di parola.
+Senza quell'estratto, un documento che appare nei risultati senza che il nome
+c'entri sembra un errore del filtro.
+
+### 5.177 L'elenco dei modelli rilevati sopravvive al ricaricamento
+
+Il §5.171 aveva aggiunto «Altro modello…» e il rilevamento dal fornitore. Il
+rilevamento però viveva in `aiConfig`, quindi spariva al primo ricaricamento
+insieme alla chiave: si rilevava una volta e il giorno dopo si tornava
+all'elenco scritto nel codice.
+
+La chiave resta in `sessionStorage` — è una scelta di sicurezza e non cambia —
+ma l'elenco dei modelli non è un segreto: sono nomi pubblici. Va in
+`localStorage`, quindi si rileva una volta e le tendine dei nodi restano
+aggiornate anche prima di reincollare la chiave. In più la tendina del nodo
+dice **quale dei due elenchi sta mostrando**: «elenco predefinito, premi 🔄
+Modelli» oppure «✓ elenco rilevato da OpenAI». Sapere se quello che si sta
+guardando è aggiornato conta quanto l'elenco stesso.
+
+### 5.178 Registrazione e recupero password
+
+La schermata di accesso aveva il modulo e i quattro profili dimostrativi, e
+mancavano le due voci che chiunque si aspetta sotto un campo password: «non la
+ricordo» e «non ho un account». La loro assenza si nota — una schermata di
+accesso senza quelle due righe si legge come un mockup.
+
+Gli account creati da «Crea un account» vivono nella tabella
+`utenti_registrati` del database SQLite: stesso posto di agenti, esecuzioni e
+documenti, stesso export, stessa cancellazione. `utenteDaEmail()` li
+restituisce insieme ai profili scritti nel codice, quindi da lì in avanti sono
+utenti come gli altri — profilo, attribuzione del lavoro, separazione dei dati.
+I quattro dimostrativi restano nel codice: servono a far entrare chi apre il
+link senza chiedere niente.
+
+**Sul recupero password.** Un'applicazione che gira solo nel browser non può
+inviare email. La strada disonesta sarebbe mostrare «ti abbiamo inviato le
+istruzioni» e non inviare niente: funziona finché nessuno controlla la casella.
+Qui si dice come stanno le cose — in un'installazione vera il collegamento
+arriva per posta, qui l'ambiente è locale e la nuova password si imposta sul
+dispositivo. Su un'email sconosciuta la risposta resta quella non
+enumerante («se esiste un account…»), perché un modulo che conferma o smentisce
+l'esistenza di un indirizzo regala l'elenco degli iscritti a chiunque provi.
+Sui profili dimostrativi la password non si cambia: sono scritti nel codice e
+devono restare gli stessi per chiunque apra il link.
+
+Due difetti trovati collaudando, entrambi di conseguenza:
+
+- avendo esteso `utenteDaEmail()` agli account registrati, il controllo «è un
+  profilo dimostrativo?» li catturava, e il recupero si rifiutava di cambiare
+  la password di un account vero. Serviva una funzione separata,
+  `profiloDimostrativo()`, che guarda solo l'elenco nel codice;
+- la schermata di accesso sta a z-index 10000 e le finestre a 200: i due
+  moduli, che si aprono proprio da lì, finivano **dietro** e sembravano non
+  aprirsi. Le finestre salgono sopra tutto, perché sono sempre una richiesta
+  esplicita di chi le apre.
+
+### 5.179 Il flusso non parte se un connettore non ha i dati per lavorare
+
+Il controllo sui campi obbligatori viveva solo in `validateWorkflow()`, cioè nel
+Builder. Chi faceva partire un flusso da un'altra strada — la pianificazione, la
+scheda di un agente nel marketplace, la ripresa di un'esecuzione sospesa, o un
+sotto-agente chiamato da un orchestratore — non passava di lì: il nodo partiva
+con il destinatario vuoto, l'adattatore riceveva una stringa vuota, e
+l'esecuzione si chiudeva «done» avendo in realtà spedito niente a nessuno. È la
+bugia peggiore che questo registro possa raccontare, perché è indistinguibile da
+un successo.
+
+Il controllo si è spostato nel motore, in `rtPrevolo()` (`js/agent-runtime.js`),
+dove passa **qualsiasi** esecuzione. Se un nodo non ha i dati per fare il suo
+lavoro il flusso **non parte affatto**: nessun nodo eseguito, nessun messaggio
+spedito, e il registro dice quale campo manca su quale nodo. Non «parte e
+fallisce al terzo nodo»: un invio parziale lascia metà del lavoro fatto e metà
+no, e quello stato non sarebbe descrivibile.
+
+Il pre-volo guarda:
+
+- i campi obbligatori dei connettori **Action** e dei **trigger**, con la stessa
+  regola della validazione nel Builder (un campo fornito da una connessione non
+  è vuoto: è compilato altrove, e chiederlo di nuovo bloccherebbe un flusso
+  valido);
+- i nodi **Sotto-agente** che non indicano quale agente chiamare, o che indicano
+  un agente non più salvato: a valle arriverebbe l'input non trasformato senza
+  che nulla dicesse che la delega non è avvenuta.
+
+Un secondo controllo vive all'inizio di `rtRunConnector()`, dopo che la
+connessione ha fatto la sua parte: il pre-volo guarda la configurazione del
+nodo, questo guarda quello che l'adattatore riceverà davvero. Serve quando i due
+differiscono — una connessione cancellata fra il pre-volo e l'esecuzione, o un
+segnaposto che a questo giro risolve a vuoto. Lì il nodo **interrompe** il
+flusso invece di proseguire: un guasto di rete lascia proseguire, perché a valle
+può esserci un controllo che lo assorbe, ma una configurazione incompleta non è
+un guasto, e lasciar proseguire significherebbe passare al nodo successivo
+l'input di un passaggio mai avvenuto spacciandolo per il suo risultato.
+
+Resta `fillRequiredDefaults()` all'importazione, che riempie i campi obbligatori
+vuoti con il valore predefinito del connettore: senza, un flusso valido quando è
+stato esportato non ripartirebbe dove quei campi sono stati aggiunti dopo. Ma
+non è più silenzioso: l'importazione dice quanti campi ha riempito, perché sono
+valori messi dalla piattaforma e non dall'autore del flusso.
+
+### 5.180 Si entra nel sotto-agente, e si torna indietro
+
+Un nodo di delega nominava l'agente chiamato senza dare modo di aprirlo: per
+guardare come fosse fatto bisognava cercarlo in «I miei agenti» e poi tornare
+all'orchestratore a memoria. Dal pannello del nodo ora si apre direttamente
+(`bApriSottoAgente()`), e in testa al Builder compare una briciola — «sei dentro
+un sotto-agente delegato da X · torna all'orchestratore» — che riporta indietro
+sul nodo esatto da cui si era partiti, con la sua delega già aperta nel
+pannello.
+
+Due cautele: il flusso aperto e non ancora salvato viene salvato prima di
+cambiare canvas, chiedendolo, perché perdere il lavoro per aver cliccato un
+pulsante di navigazione non è accettabile; e la briciola si azzera aprendo un
+altro agente dalla lista o svuotando il canvas, altrimenti indicherebbe un
+ritorno verso un flusso da cui non si è arrivati.
+
+Il pannello mostra anche quanti nodi ha il sotto-agente e se è in produzione, e
+segnala in rosso un agente che non è più fra quelli salvati — la stessa
+condizione che il pre-volo usa per non far partire il flusso.
+
+### 5.181 L'esito del sotto-agente è l'ingresso del nodo a valle
+
+Il nodo Sotto-agente restituiva `sub.pipeline || ctx.pipeline`. La seconda metà
+di quell'`||` è il problema: quando la delega **non** produceva un risultato — un
+errore, un'interruzione — al nodo a valle arrivava l'input che il sotto-agente
+aveva *ricevuto*, presentato come il risultato che non aveva prodotto, e il nodo
+successivo lavorava su quel testo senza che niente nel registro facesse
+sospettare lo scambio.
+
+Ora l'esito della delega è l'esito della delega, e basta. Se il sotto-agente
+termina in errore, il flusso dell'orchestratore si **interrompe** invece di
+proseguire su un testo che non è il suo. Se termina senza produrre testo, lo
+dice. Se termina bene, il registro scrive quanti caratteri passano al nodo
+collegato a valle, così il travaso è verificabile dal registro e non per fiducia.
+
+**La sospensione attraversa la delega.** Un sotto-agente che incontra
+un'approvazione umana non è un guasto e non è una fine: l'orchestratore si
+sospende *insieme a lui*, ricordando quale esecuzione delegata riprendere
+(`ctx.waiting.subExecId`). All'autorizzazione, `resumeSuspendedRun()` riprende
+prima il sotto-agente; solo quando questo ha finito il suo esito diventa
+l'output del nodo di delega e il flusso dell'orchestratore riparte. Trattare la
+sospensione come un errore avrebbe reso inservibile qualunque orchestratore che
+deleghi a un agente con un controllo umano, cioè proprio i casi per cui la
+delega esiste. Un rifiuto chiude anche la delega sospesa, perché
+un'autorizzazione negata è una decisione, non un'attesa.
+
+Collaudando si è trovato anche che la ripresa riportava sempre `0` nodi
+eseguiti: contava `s.ctx.waiting` dopo averlo azzerato.
+
+### 5.182 La risposta simulata ha la forma che il prompt ha chiesto
+
+Due difetti rendevano impossibile portare a termine un flusso senza una chiave,
+ed entrambi si vedevano solo in fondo:
+
+1. **Lo strumento simulato veniva riproposto a ogni iterazione.** Il contrassegno
+   «la chiamata simulata è già stata fatta» finiva su `cfgRun`, che il motore
+   ricostruisce a ogni giro del ciclo: la simulazione sceglieva sempre lo stesso
+   strumento, il controllo anti-ciclo lo intercettava, e l'output del nodo
+   diventava la *narrazione della chiamata* invece della risposta chiesta dal
+   prompt. Ora lo stato vive in un oggetto passato per riferimento
+   (`cfg._toolSim`), che sopravvive alle iterazioni senza sporcare la
+   configurazione salvata del nodo.
+2. **La risposta simulata ignorava il prompt.** Un nodo che chiede
+   «Rispondi SOLO JSON: {punteggio, motivazione}» riceveva un oggetto con i soli
+   campi della simulazione, e un nodo «Convalida output» a valle lo respingeva
+   *sempre*: il blocco non diceva niente sul flusso, diceva solo che la
+   simulazione non leggeva il prompt. Ora `rispostaQuota()` ricava le chiavi
+   richieste dal prompt di sistema e dal messaggio
+   (`chiaviRichiesteDalPrompt()`), e produce un oggetto che ha **quella forma**,
+   con valori scelti dal nome del campo e deterministici, così due esecuzioni
+   della stessa prova sono confrontabili.
+
+I valori restano dichiaratamente finti: `simulato:true` e la nota viaggiano
+dentro il JSON, quindi chiunque lo legga — in un file, in una mail, nel
+registro — sa che la forma è quella chiesta e il contenuto no. È la distinzione
+che tiene: la simulazione serve a mostrare che il flusso regge, non a far
+credere che il contenuto sia vero.
+
+Con queste tre correzioni, tutti e cinque gli agenti di esempio e tutti e
+quattro i flussi in `esempi/` arrivano in fondo senza una chiave collegata,
+compreso l'orchestratore che delega a un sotto-agente con approvazione umana.
+
+### 5.183 Dove si è rotto: la finestra degli errori di esecuzione
+
+Quando la **validazione** falliva si apriva una finestra con l'elenco dei
+problemi, ciascuno cliccabile per saltare al nodo. Quando falliva
+l'**esecuzione** non si apriva niente: un avviso che spariva in tre secondi
+(«⚠️ Workflow con errori») e una riga rossa in mezzo a quaranta righe verdi nel
+registro. Su un flusso di dodici nodi, trovare dove si fosse rotto era lavoro
+dell'utente — cioè esattamente il lavoro che la piattaforma esiste per togliere.
+
+Due pezzi, uno nel motore e uno nell'interfaccia.
+
+**Nel motore.** `ctx.problemi` raccoglie, man mano che succedono, i guasti in
+forma strutturata: nodo, tipo, messaggio e **rimedio**. Il rimedio non è una
+ripetizione del problema con altre parole, è la cosa concreta da fare, e cambia
+con la natura del guasto:
+
+| `kind` | Cos'è successo | Cosa si fa |
+|---|---|---|
+| `campo-obbligatorio` | il nodo non ha i dati per lavorare | si compila, o si usa «Compila» |
+| `controllo` | un guardrail ha bloccato | si corregge l'output a monte, o si rivede la severità del controllo |
+| `delega` | il sotto-agente non è arrivato a termine | si apre il sotto-agente e lo si esegue da solo |
+| `azione` | un sistema esterno non ha risposto | si controlla la connessione; un gestore eccezioni a valle può assorbirlo |
+| `eccezione` | errore imprevisto dentro il nodo | console del browser, e si segnala |
+| `autorizzazione` | approvazione negata | non è un difetto: è una decisione |
+
+I problemi nati **dentro un sotto-agente** risalgono all'orchestratore con il
+prefisso «dentro «X»», perché la causa vera sta lì: senza, la finestra avrebbe
+detto «la delega è fallita» e si sarebbe fermata lì, lasciando da ricostruire a
+mano quale nodo del sotto-agente si fosse rotto. Quelle righe non sono
+cliccabili — il nodo non è su questa tela — e si vede, invece di promettere un
+salto che non può avvenire.
+
+**Nell'interfaccia.** `mostraErroriEsecuzione()` è la gemella di
+`showValidationErrors()`: stessa forma, stessi gesti, stessi nodi evidenziati
+sulla tela. Il titolo distingue due situazioni che hanno conseguenze diverse —
+«Il flusso non è partito» (zero nodi eseguiti, **niente spedito a nessuno**) e
+«Esecuzione con errori» (si è fermata dopo N nodi, oppure è arrivata in fondo
+con segnalazioni). Dove il caso lo consente la finestra porta il comando che lo
+risolve: «Compila» per i campi vuoti, «Apri il sotto-agente» per una delega
+fallita, «Riprova» per rieseguire.
+
+Quando il flusso **è partito** e poi si è rotto, la finestra si chiude ma non si
+perde: nel registro resta la riga **«🔎 Dove si è rotto»** che la riapre. Quando
+non è partito affatto il registro resta vuoto di proposito (§5.185) e la
+finestra si riapre premendo di nuovo Esegui, che non esegue nulla. In esecuzione
+automatica, dove non c'è nessuno davanti allo schermo, lo stesso elenco finisce
+nel registro salvato — altrimenti domani mattina si troverebbe una riga rossa
+senza spiegazione.
+
+**Un difetto che questo lavoro ha scoperto.** Il motore in più punti scriveva
+direttamente in `ctx.steps`: quelle righe finivano nello storico ma **non** nel
+registro a schermo, che si popola dagli eventi. Il risultato era il peggiore
+possibile — l'esecuzione si fermava, il pannello restava muto, e il motivo
+compariva solo riaprendo l'esecuzione dallo storico. Era il caso del pre-volo
+(§5.179), dei nodi esclusi, dei nodi saltati e dell'interruzione. Ora passano
+tutte da `rtPushSistema()` / `rtPush()`, e si vedono mentre succedono.
+
+### 5.184 Due regole su una riga sola
+
+Il pannello del controllo «Convalida output» dice «una per riga», ma
+`punteggio >= 0, punteggio <= 100` su una riga sola è la cosa che chiunque
+scrive. Il risultato era peggiore di un errore: la riga intera veniva letta come
+**una** regola, il valore atteso diventava il testo `0, punteggio <= 100`, e il
+confronto falliva **sempre** — segnalando come non rispettata una regola che il
+valore rispettava.
+
+Ora una riga si divide quando ci si riconoscono due o più forme
+`campo operatore valore`; se ce n'è una sola, resta intera, così un valore che
+contiene una virgola (`stato == in corso, attesa`) non viene spezzato.
+
+### 5.185 Un viaggio mai cominciato non ha un diario di bordo
+
+La prima versione della finestra degli errori scriveva nel registro anche
+quando il flusso **non era partito**: tre righe rosse che dicevano cosa
+mancava, più la riga finale «Workflow terminato con errori: 0 nodi», più una
+riga nello storico delle esecuzioni. Sembrava utile — c'è un problema, lo
+scriviamo — ed era sbagliato in due modi.
+
+**Il registro di esecuzione racconta cosa è successo mentre il flusso girava.**
+Se il flusso non è partito non è successo niente: nessun nodo è stato toccato,
+nessuna chiamata è uscita, nessun sistema esterno sa che esistiamo. Riempirlo di
+righe rosse fa sembrare che qualcosa sia stato *tentato*, e chi legge deve
+fermarsi a capire se un messaggio sia stato spedito o no. La diagnosi — cosa
+manca e dove — è un'altra cosa dal diario di bordo, e sta nella finestra.
+
+**Lo storico conta le esecuzioni.** Il Monitoraggio calcola i tassi di successo
+su quelle righe, e un tentativo mai partito registrato come «fallito» avrebbe
+dichiarato fallimenti che non sono avvenuti: lo stesso difetto che questa
+versione ha tolto dal motore, ripetuto nelle statistiche.
+
+Quindi: pre-volo bloccato, o validazione bloccante nel Builder → **registro
+vuoto («0 voci»), storico invariato, finestra aperta**. Il risultato porta
+`nonPartito: true`, che è il contrario di un dettaglio: distingue «non è
+partito» da «si è fermato dopo quattro nodi», e sono due situazioni con
+conseguenze diverse per chi deve decidere cosa fare dopo.
+
+**Un'eccezione, voluta.** In esecuzione *pianificata* la riga si scrive lo
+stesso, anche quando il flusso non parte. Premendo Esegui si ha la finestra
+davanti e non serve altro; una pianificata che non parte alle sette del mattino,
+se non lasciasse traccia, sarebbe un silenzio indistinguibile da «tutto a
+posto». Lì la riga dice esattamente questo: *esecuzione pianificata NON partita,
+nessun nodo eseguito, niente è stato spedito*.
+
+### 5.186 Il pannello «Integrazione AI» sta dentro la sua colonna
+
+Il pulsante «🔄 Modelli» aggiunto accanto a «Test» non ci stava: la riga della
+chiave era un flex senza ritorno a capo, traboccava di una settantina di pixel e
+il pulsante finiva **fuori dal pannello**, invisibile e non cliccabile, già alla
+larghezza predefinita della palette. Un comando che esiste ma non si può premere
+è peggio di un comando che non c'è.
+
+Il pannello vive dentro la palette, che è una colonna **ridimensionabile a
+mano**: non c'è una larghezza su cui tarare, c'è quella che l'utente decide in
+quel momento. Quindi niente soglie, solo flessibilità:
+
+- `flex-wrap` sulla riga, e `min-width:0` sul campo — un input ha una larghezza
+  minima propria che `flex:1` da solo non supera, e senza quella riga a
+  traboccare sono gli altri elementi invece del campo;
+- i due pulsanti vanno a capo **insieme**, raccolti in un contenitore proprio:
+  separandoli si otteneva «Test» accanto al campo e «Modelli» da solo sulla
+  riga sotto, che è il disordine peggiore dei due. Quando finiscono sulla riga
+  sotto la occupano tutta, perché due pulsanti stretti a sinistra con mezza riga
+  vuota sembrano un errore di impaginazione e non una scelta;
+- i pulsanti non si stringono mai sotto il proprio testo: un «Test» tagliato a
+  metà è peggio di un pulsante che va a capo.
+
+La stessa forma l'aveva la riga del modello locale (tendina + 🔄), che ora usa
+la stessa classe. Verificato con palette stretta (233px), larga (313px) e sul
+telefono a 375px, su tutti e tre i fornitori che aprono campi propri — locale,
+endpoint personalizzato e OpenAI col campo del proxy: niente esce dal pannello e
+la pagina non scorre in orizzontale.
+
+### 5.187 Il tocco sul telefono seleziona, non configura
+
+Su schermo stretto bastava toccare un nodo perché il foglio delle proprietà
+salisse a coprire mezza tela. Sembrava comodo — selezioni, vedi i parametri — ed
+era insopportabile mentre si costruisce: ogni spostamento di un nodo, ogni tocco
+per collegarne due, ogni selezione per riorientare la vista faceva salire il
+pannello, che poi andava richiuso a mano per vedere di nuovo il flusso.
+
+Il gesto più frequente nel Builder non è «configura questo nodo», è «metti
+questo nodo qui»: far pagare a quello il costo dell'altro era il verso
+sbagliato. Ora la selezione seleziona e basta, e le proprietà si aprono con un
+gesto esplicito — **doppio tocco** sul nodo, o il pulsante in basso, che intanto
+porta il nome del nodo selezionato e si colora. Senza quel pulsante parlante la
+selezione sarebbe diventata invisibile: tolta l'apertura automatica, serviva un
+segno che dicesse «la selezione c'è, e i parametri sono qui», e un pulsante che
+cambia costa un colpo d'occhio invece di mezza tela coperta. Alla prima
+selezione, una volta sola per sessione, un avviso lo dice a parole.
+
+**Dove il doppio tocco si rileva, e perché non dove sembrerebbe ovvio.** Non
+sugli eventi del nodo: toccando un nodo il Builder ridisegna la tela, l'elemento
+toccato viene sostituito, e il `touchend` arriva a un elemento che non è più nel
+documento — o non risale a nessuno, o il browser lo riassegna alla tela e il
+nodo non si riconosce più. Il conteggio sta quindi sul `touchstart`, che è uno
+per tocco ed è l'unico momento in cui l'elemento toccato è ancora quello vero.
+Non sta nemmeno nel gancio su `renderProps`: un solo tocco fa ridisegnare le
+proprietà **due volte** — una alla selezione, una al rilascio — e contando
+quelle chiamate un tocco solo passava per due, aprendo il pannello esattamente
+come prima.
+
+Il dito che si sposta di più di dieci pixel annulla tutto: stava trascinando, e
+due trascinamenti di seguito sullo stesso nodo somigliano a un doppio tocco
+senza esserlo.
+
+### 5.188 La finestra degli errori non si apre dentro la dimostrazione
+
+La dimostrazione guidata apre l'applicazione in un iframe e la pilota da fuori.
+Una finestra che si apre da sola a metà di un passo coprirebbe proprio quello
+che il passo sta mostrando, e chi guarda non saprebbe se fa parte del copione.
+Dentro la demo la finestra degli errori non si apre da sola: il registro
+continua a dire tutto e la riga «Dove si è rotto» resta cliccabile per chi la
+vuole aprire.
+
+È l'unico posto del prototipo in cui si guarda `window.parent`, e vale la pena
+dirlo: non è un controllo di sicurezza, è il riconoscimento di un contesto in
+cui l'applicazione non è in mano a chi la guarda.
+
+### 5.189 Sette etichette che si ripetono non sono un'ascissa
+
+Il grafico «Le tue esecuzioni, ultimi sette giorni» etichettava le barre con il
+solo nome del giorno: Mar, Mer, Gio. Si legge bene finché si è eseguito qualcosa
+di recente, e smette di funzionare esattamente nel caso in cui servirebbe —
+tornando dopo due settimane, «martedì» può essere quello di ieri o quello di un
+mese fa, e sette nomi che si ripetono ogni settimana non distinguono fra i due.
+
+Tre aggiunte, tutte calcolate dalla stessa data su cui si contano le barre:
+
+- la **data sotto il giorno** (`30/9`), che è l'informazione che mancava;
+- l'**intervallo in testa al riquadro** (`30 set – 6 ott`), che risponde a
+  «quali sette giorni?» senza costringere a leggere la prima e l'ultima barra.
+  L'anno compare solo quando la settimana lo attraversa: scriverlo sempre è
+  rumore, ometterlo a cavallo di capodanno è ambiguo;
+- **oggi** al posto della data sull'ultima barra, evidenziata, perché è il punto
+  da cui si contano all'indietro tutte le altre.
+
+Il suggerimento del mouse porta la data per esteso — «lunedì 6 ottobre 2026
+(oggi): 19 esecuzioni» — perché lì lo spazio non manca e il plurale si può
+accordare.
+
+Il grafico e' anche un po' piu' alto (124px invece di 100) e l'etichetta si
+ancora al bordo INFERIORE della barra invece che al basso del proprio blocco:
+posizionata dal basso funzionava per caso con una riga sola, perche' con due il
+blocco cresce verso l'alto e la prima riga finiva addosso alla barra. Ancorando
+il bordo superiore, lo spazio fra barra ed etichetta resta quello scelto, quante
+che siano le righe. Stesso trattamento al valore sopra la barra.
+
+Il riquadro ha ora una seconda riga di etichette, quindi serve spazio sotto il
+grafico: la classe `.con-date` lo aggiunge solo dove le date ci sono, invece di
+allargare ogni grafico della piattaforma per un caso solo. Sotto i 560px le due
+righe restano, in corpo più piccolo, e l'intervallo va a capo sotto il titolo.

@@ -334,7 +334,7 @@ var COPIONE=[
 },
 {
   capitolo:1, titolo:'La dashboard risponde a «come sto andando»',
-  testo:'Quattro numeri: quanti agenti ho, quante volte sono stati eseguiti, a che punto sono con la formazione, quanta esperienza ho accumulato. Sono <strong>i miei</strong>, non una media: ogni persona entra e vede il proprio lavoro. Solo i consigli e le novità della piattaforma sono uguali per tutti.',
+  testo:'Quattro metriche principali: agenti, esecuzioni, corsi, esperienza. Sono <strong>calcolate sulle righe reali del database locale</strong> e filtrate sull\'utente corrente. I dati riflettono l\'attività effettiva: agenti creati, installati, e le esecuzioni della settimana. Solo consigli e novità sono uguali per tutti.',
   pagina:'dashboard', sel:'.stats-row', pos:'bottom', durata:8000
 },
 {
@@ -388,7 +388,7 @@ var COPIONE=[
 },
 {
   pagina:'marketplace', capitolo:2, titolo:'La scheda dell\'agente',
-  testo:'Cosa fa, chi l\'ha scritto, quante volte è stato installato e come è stato giudicato. Le stelle sono la media delle recensioni vere lasciate da chi lo usa, e la distribuzione dice se tutti sono d\'accordo o se i pareri si dividono.',
+  testo:'Descrizione, categoria, autore, installazioni e <strong>valutazione</strong>. Le stelle rappresentano la media delle recensioni autentiche, indicando il livello reale di soddisfazione e segnalando se il voto è unanime o polarizzato.',
   azione:function(fine){
     var inp=Q('#globalSearch'); if(inp)inp.value='';
     var c=perTesto('.agent-card','Invoice Extractor') || QQ('#mkt-grid .agent-card')[0];
@@ -430,47 +430,6 @@ var COPIONE=[
   capitolo:2, titolo:'Eccolo sulla tela',
   testo:'L\'agente del marketplace è ora un flusso modificabile: stessi nodi, stessi collegamenti, aperti nel Builder. Posso aggiungere un controllo, cambiare il modello, e salvarlo come <strong>mio</strong> senza toccare l\'originale del catalogo.',
   sel:'#canvasArea', pos:'left', durata:7500
-},
-{
-  capitolo:2, titolo:'Lo configuro per me',
-  testo:'Installato non vuol dire «da usare così com\'è». Cambio il <strong>modello</strong> sul nodo AI: la scelta è per singolo blocco, perché classificare e scrivere non costano uguale. Qui un agente del catalogo diventa <em>il mio</em>.',
-  pagina:'builder',
-  azione:function(fine){
-    var w=W();
-    try{
-      var ai=(w.B&&w.B.nodes||[]).filter(function(n){return n.type==='ai'})[0];
-      if(ai){
-        selezionaNodo(w,ai.id);
-        // Si apre la tendina dei modelli e se ne sceglie uno diverso dal
-        // predefinito: il gesto deve vedersi, non essere raccontato.
-        setTimeout(function(){
-          try{
-            var sel=QQ('#propsBody select').filter(function(s){
-              return /bScegliModello/.test(s.getAttribute('onchange')||'');
-            })[0];
-            if(sel && sel.options.length>1){
-              sel.selectedIndex=Math.min(1,sel.options.length-2);
-              scatena(sel,'change');
-            }
-          }catch(e){}
-        },700);
-      }
-    }catch(e){}
-    setTimeout(fine,1700);
-  },
-  sel:'#propsBody', pos:'left', durata:9000
-},
-{
-  capitolo:2, titolo:'E lo eseguo subito',
-  testo:'Dall\'installazione all\'esecuzione senza passare da nessuno: nessun ticket all\'IT. Il registro sotto scrive cosa succede, nodo per nodo, <em>mentre</em> succede.',
-  pagina:'builder',
-  azione:function(fine){
-    apriRegistro(200);
-    var b=Q('#btnRun');
-    if(b)clicca(b);
-    setTimeout(fine,5200);
-  },
-  sel:'#canvasArea', pos:'left', durata:9000
 },
 {
   capitolo:2, titolo:'È fra i miei agenti',
@@ -543,61 +502,6 @@ var COPIONE=[
   sel:'#modalContent', pos:'left', durata:10000
 },
 {
-  capitolo:3, titolo:'Cerco un documento fra tanti',
-  testo:function(){
-    var n=quanti('SELECT COUNT(*) c FROM kb_docs');
-    return 'Con '+(n||'pochi')+' documenti si scorre; in azienda sono centinaia. La ricerca guarda <strong>anche dentro i documenti</strong>, non solo nei nomi — «dov\'era scritta la penale per il recesso?» non contiene la parola «contratto» — e mostra la riga in cui la trova.';
-  },
-  azione:function(fine){
-    var w=W();
-    // L'elenco dei documenti vive nella finestra «Carica/gestisci documenti»,
-    // che e' un'altra rispetto a quella del passo precedente: va aperta qui,
-    // altrimenti il campo di ricerca non esiste e il passo non fa niente.
-    try{ if(typeof w.openKBDocsModal==='function')w.openKBDocsModal() }catch(e){}
-    setTimeout(function(){
-      try{
-        // Si cerca una parola che sta nel TESTO di un documento e non nel suo
-        // nome: è il caso che la ricerca per nome non risolve, ed è quello che
-        // il testo del passo racconta. Si verifica che esista davvero prima di
-        // usarla, altrimenti il giorno in cui il seme cambia il passo mostra
-        // un elenco vuoto mentre la narrazione dice il contrario.
-        var parola='recesso';
-        var prova=w.dbGetOne("SELECT id FROM kb_docs WHERE lower(content) LIKE '%recesso%' LIMIT 1");
-        if(!prova){
-          var d=w.dbGetOne('SELECT name FROM kb_docs ORDER BY id LIMIT 1');
-          parola=d&&d.name?String(d.name).replace(/\.[a-z]+$/i,'').split(/[-_\s]/)[0]:'';
-        }
-        var campo=Q('#kbDocsList input');
-        if(campo&&parola){ scrivi(campo,parola,function(){ setTimeout(fine,800) }); return }
-      }catch(e){}
-      setTimeout(fine,800);
-    },1200);
-  },
-  tieniAperto:true, sel:'#kbDocsList', pos:'left', durata:9500
-},
-{
-  capitolo:3, titolo:'Dentro un documento: come è stato tagliato',
-  testo:function(){
-    var p=window.__kbPorzioni;
-    return 'Apro un documento e vedo <strong>come è stato segmentato</strong>'+
-      (p?(': <em>'+p+' porzioni</em>'):'')+
-      '. Non tagli a lunghezza fissa: una normativa si taglia per articolo, un contratto per clausola, una procedura per passo. È la differenza fra una porzione che ha senso da sola e una che si interrompe a metà frase.';
-  },
-  azione:function(fine){
-    var w=W();
-    try{
-      var d=w.dbGetOne('SELECT id FROM kb_docs ORDER BY id LIMIT 1');
-      if(d){
-        var c=w.dbGetOne('SELECT COUNT(*) c FROM kb_chunks WHERE doc_id=?',[d.id]);
-        window.__kbPorzioni=c?c.c:0;
-        if(typeof w.previewKBDoc==='function')w.previewKBDoc(d.id);
-      }
-    }catch(e){}
-    setTimeout(fine,1500);
-  },
-  sel:'#modalContent', pos:'left', durata:10000
-},
-{
   capitolo:3, titolo:'Chiudo e comincio a costruire',
   testo:'I documenti restano lì, disponibili a ogni flusso. Torno alla tela: adesso costruisco un agente <strong>a mano</strong>, trascinando i blocchi.',
   azione:function(fine){
@@ -613,7 +517,7 @@ var COPIONE=[
 // che si vede nascere pezzo per pezzo si', e la complessita' si aggiunge dopo.
 {
   capitolo:4, titolo:'La palette: si cerca, non si scorre',
-  testo:'Dieci categorie e settantotto blocchi. Il campo di ricerca in cima li filtra mentre scrivo: digito <em>email</em> e restano quelli che mi servono.',
+  testo:'Dieci categorie e settantotto blocchi: scorrerli tutti sarebbe assurdo. C\'è un campo di ricerca. Scrivo <em>email</em> e resta quello che mi serve.',
   pagina:'builder',
   azione:function(fine){
     var w=W();
@@ -644,19 +548,10 @@ var COPIONE=[
     var w=W();
     try{
       var campo=Q('#paletteSearch'); if(campo){ campo.value=''; scatena(campo,'input') }
-      // Primo anello della catena: azzera la tela e battezza l'agente. Stava
-      // nel passo della ricerca in palette, che nella versione breve non c'e':
-      // senza, i nodi costruiti a mano finivano sulla tela dell'agente
-      // installato poco prima, e l'esecuzione veniva registrata col nome di
-      // quello. Ogni passo si deve reggere da solo, anche saltandoci dentro
-      // dall'indice.
-      if(F.trigger===undefined){
-        try{ w.resetCanvasForNewAgent(); w.currentAgentName='Smistamento richieste'; F={} }catch(e){}
-      }
       creaNodo(w,'trigger','tr','📧','Email trigger','Richiesta in arrivo',200,80);
       w.b_render();
     }catch(e){}
-    setTimeout(fine,1100);
+    setTimeout(fine,1000);
   },
   sel:'#canvasArea', pos:'left', durata:8000
 },
@@ -687,7 +582,7 @@ var COPIONE=[
 },
 {
   capitolo:4, titolo:'Scrivo il prompt, lettera per lettera',
-  testo:'Qui si scrive, in italiano, cosa deve fare il modello. È la parte che decide la qualità del risultato, e la scrive chi conosce il processo. Chiedo anche che <strong>la risposta arrivi in un formato fisso</strong> invece che in prosa: il blocco successivo deve poterla leggere come un dato, senza interpretarla.',
+  testo:'Il prompt è la parte che decide la qualità del risultato, e lo scrive chi conosce il processo. Chiedo anche <strong>output vincolato in JSON</strong>: il nodo successivo deve leggerlo come dato, non come racconto.',
   azione:function(fine){
     var w=W();
     var campo=QQ('#propsBody textarea')[0];
@@ -772,7 +667,7 @@ var COPIONE=[
 },
 {
   capitolo:4, titolo:'E quando gli elementi sono tanti: il ciclo',
-  testo:'Il caso concreto: <em>«analizza tutti i documenti della cartella, uno per uno»</em>. Aggiungo un nodo <strong>Loop</strong>: non ripete un numero fisso di volte, <strong>conta gli elementi che i nodi a monte hanno davvero prodotto</strong> e ripercorre i nodi a valle una volta per ciascuno.',
+  testo:'Il caso che serve sempre e che quasi nessuno mostra: <em>«analizza tutti i documenti della cartella, uno per uno»</em>. Aggiungo un nodo <strong>Loop</strong>: non ripete un numero fisso di volte, <strong>conta gli elementi che i nodi a monte hanno davvero prodotto</strong> e ripercorre i nodi a valle una volta per ciascuno.',
   pagina:'builder',
   azione:function(fine){
     var w=W();
@@ -870,74 +765,10 @@ var COPIONE=[
   sel:'#canvasArea', pos:'left', durata:10000
 },
 
-// ── Un flusso che non parte, e come si rimette in piedi ────────
-// Il caso realistico non e' il flusso perfetto: e' quello importato da un
-// collega, o arrivato da un esempio, che alla prima esecuzione si blocca.
-// Mostrarlo e' piu' convincente di nasconderlo, a patto di mostrare anche
-// quanto costa rimetterlo in piedi.
-{
-  capitolo:5, titolo:'E quando un flusso non parte?',
-  testo:function(){
-    var n=window.__rotto&&window.__rotto.n;
-    return 'Il caso vero non è il flusso perfetto: è quello che arriva da un collega e alla prima esecuzione si ferma. Ne carico uno con dei problemi veri'+
-      (n?(': la verifica ne trova <strong>'+n+'</strong>'):'')+
-      ' — blocchi che non corrispondono a nessuna voce della palette e campi obbligatori vuoti. Senza quei nomi, i nodi <em>non hanno parametri</em>: un flusso così <strong>non parte affatto</strong>, e il motore lo dice prima di eseguire un solo nodo invece di chiudersi «completato» senza aver spedito niente a nessuno.';
-  },
-  pagina:'builder',
-  azione:function(fine){
-    var w=W();
-    chiudiFinestre();
-    try{
-      w.resetCanvasForNewAgent();
-      w.currentAgentName='Flusso importato';
-      // Nomi di fantasia: e' esattamente come arriva un flusso scritto a mano
-      // o esportato da un altro strumento.
-      var a=w.b_addNode('tr','📥','Webhook CRM','Lead in arrivo',200,70);
-      var b=w.b_addNode('ac','📧','Email alert','Avviso al commerciale',200,230);
-      var c=w.b_addNode('ou','📊','Output','Esito',200,390);
-      w.b_addEdge(a,'out',b,'in','');
-      w.b_addEdge(b,'out',c,'in','');
-      w.b_render();
-      if(typeof w.bFitView==='function')w.bFitView();
-      var err=w.validateWorkflow();
-      window.__rotto={n:err.length};
-      setTimeout(function(){ try{ w.checkWorkflow() }catch(e){} setTimeout(fine,900) },700);
-      return;
-    }catch(e){}
-    setTimeout(fine,900);
-  },
-  sel:'#modalContent', pos:'left', durata:10500
-},
-{
-  capitolo:5, titolo:'La piattaforma propone il ricambio',
-  testo:'Non dice solo che c\'è un errore: propone <strong>il blocco giusto</strong> e lo sostituisce, poi riempie i campi obbligatori. <strong>Da sei problemi a zero in due gesti</strong>: la differenza fra uno strumento che segnala e uno che aiuta.',
-  pagina:'builder',
-  azione:function(fine){
-    var w=W();
-    try{
-      if(typeof w.bApplicaTuttiIRicambi==='function')w.bApplicaTuttiIRicambi();
-      setTimeout(function(){
-        try{ if(typeof w.bCompilaObbligatori==='function')w.bCompilaObbligatori() }catch(e){}
-        setTimeout(function(){
-          try{
-            window.__riparato=w.validateWorkflow().length;
-            w.closeModal();
-            if(typeof w.bFitView==='function')w.bFitView();
-          }catch(e){}
-          setTimeout(fine,700);
-        },1100);
-      },1100);
-      return;
-    }catch(e){}
-    setTimeout(fine,900);
-  },
-  sel:'#canvasArea', pos:'left', durata:11000
-},
-
 // ── Costruzione conversazionale ────────────────────────────────
 {
   capitolo:5, titolo:'Costruire parlando, invece che trascinando',
-  testo:'Sopra la tela c\'è il <strong>Builder conversazionale</strong>: si descrive l\'agente a parole e lui lo compone. I suggerimenti qui sotto sono <em>letti dal flusso che hai sulla tela</em>: cambiano man mano che lo costruisci, e propongono il passo che manca.',
+  testo:'Sopra la tela c\'è il <strong>Builder conversazionale</strong>: si descrive l\'agente a parole e lui lo compone. I suggerimenti sotto non sono decorativi: sono <em>letti dal flusso che hai sulla tela</em>, quindi cambiano man mano che lo costruisci.',
   pagina:'builder',
   azione:function(fine){
     var w=W();
@@ -994,7 +825,7 @@ var COPIONE=[
   pos:'bottom', durata:11000
 },
 {
-  capitolo:5, titolo:'Gli stessi nodi della palette',
+  capitolo:5, titolo:'Gli stessi nodi della palette, non nodi che le somigliano',
   testo:function(){
     var w=W(), quanti=0, nomi=[];
     try{
@@ -1141,13 +972,13 @@ var COPIONE=[
 },
 {
   capitolo:6, titolo:'E si può fermare a metà',
-  testo:'Accanto a Esegui c\'è <strong>Interrompi</strong>: ferma l\'esecuzione al nodo corrente, e il registro la conserva con esito <em>«interrotta»</em>. Su un agente che scrive su sistemi aziendali veri, poterlo fermare a metà conta quanto poterlo avviare.',
+  testo:'Accanto a Esegui c\'è <strong>Interrompi</strong>, e non è un pulsante finto: ferma davvero l\'esecuzione al nodo corrente. Il registro lo <em>dichiara</em>: l\'esecuzione resta come «interrotta», non sparisce e non finge di essere riuscita. Su un agente che scrive su sistemi veri, poterlo fermare è più importante che farlo partire.',
   pagina:'builder',
   sel:'#btnStop', pos:'top', durata:10000
 },
 {
   capitolo:6, titolo:'Perché questo risultato',
-  testo:'Questo pulsante risponde alla domanda che blocca più progetti di AI in azienda: <em>«va bene, ma come c\'è arrivato?»</em>. Ricostruisce <strong>quali informazioni ha usato, quali decisioni ha preso e quali controlli sono intervenuti</strong>. Niente scatola nera: ogni passaggio resta verificabile.',
+  testo:'Questo è il pulsante fondamentale per l\'audit: ricostruisce <strong>quali fonti sono state usate, le decisioni prese e i controlli intervenuti</strong>. Elimina l\'effetto "scatola nera" e garantisce tracciabilità aziendale.',
   azione:function(fine){
     var b=perTesto('#execLogBody a','Perché') || perTesto('#execLogBody span','Perché');
     if(b)clicca(b);
@@ -1330,7 +1161,7 @@ var COPIONE=[
   pagina:'learning', sel:'.page-pad', pos:'bottom', durata:9000
 },
 {
-  capitolo:8, titolo:'Il livello si conquista completando i percorsi',
+  capitolo:8, titolo:'Il livello si conquista, non si dichiara',
   testo:function(){
     var r=(typeof W().livelloRaggiunto==='function')?W().livelloRaggiunto():0;
     return 'Un livello si ottiene completando <strong>tutti</strong> i percorsi fino a quel punto, non una percentuale complessiva: finire solo i percorsi facili non porta in cima. '+
@@ -1404,26 +1235,6 @@ var COPIONE=[
   sel:'#learn-detail', pos:'left', durata:9000
 },
 {
-  capitolo:8, titolo:'Le certificazioni, e perché non si regalano',
-  testo:function(){
-    var w=W(), r=0;
-    try{ r=(typeof w.livelloRaggiunto==='function')?w.livelloRaggiunto():0 }catch(e){}
-    return 'Quattro livelli, da <em>AI Aspirant</em> ad <em>AI Ambassador</em>. Un livello si ottiene completando <strong>tutti</strong> i percorsi fino a quel punto, non una percentuale complessiva: finire solo i facili non porta avanti. '+
-      (r?('Qui il livello raggiunto è il <strong>'+r+'°</strong>, e l\'attestato si scarica — con nome, data e un codice di verifica.')
-        :'Raggiunto un livello compare il pulsante per scaricare l\'attestato, con nome, data e un codice di verifica.');
-  },
-  pagina:'learning',
-  azione:function(fine){
-    var w=W();
-    try{
-      var tab=QQ('#page-learning .tab').filter(function(t){return /Certificaz/i.test(t.textContent)})[0];
-      if(tab&&typeof w.setLearnTab==='function')w.setLearnTab('certs',tab);
-    }catch(e){}
-    setTimeout(fine,1200);
-  },
-  sel:'#learn-tab-content', pos:'left', durata:10000
-},
-{
   capitolo:8, titolo:'La sandbox: sbagliare senza conseguenze',
   testo:function(){
     var w=W(), n=0; try{ n=w.PALETTE.length }catch(e){}
@@ -1461,7 +1272,7 @@ var COPIONE=[
   sel:'#challenges-content', pos:'bottom', durata:8000
 },
 {
-  capitolo:8, titolo:'Tre formati, ciascuno con le sue regole',
+  capitolo:8, titolo:'Tre formati, non sette copie della stessa scheda',
   testo:function(){
     var s=W().SFIDE||[];
     var n=function(t){ return s.filter(function(x){return x.tipo===t}).length };
@@ -1605,7 +1416,7 @@ var COPIONE=[
   pagina:'challenges', sel:'#modalContent', pos:'left', durata:11000
 },
 {
-  capitolo:8, titolo:'Il punteggio lo calcolano le esecuzioni',
+  capitolo:8, titolo:'Il punteggio lo fanno le esecuzioni, non le promesse',
   testo:function(){
     var w=W(), s=sfidaDaCandidare()||{}, mio='';
     try{
@@ -1669,7 +1480,7 @@ var COPIONE=[
 },
 {
   capitolo:8, titolo:'Un post con dentro un agente',
-  testo:'Questo porta un <strong>flusso esportato in JSON</strong>: si scarica, oppure si apre direttamente nel Builder. Il contributo è quindi riutilizzabile, non solo leggibile.',
+  testo:'Questo porta un <strong>flusso esportato in JSON</strong>: si scarica, oppure si apre direttamente nel Builder. È ciò che distingue un racconto da un contributo utilizzabile.',
   azione:function(fine){
     var w=W();
     try{
@@ -1705,7 +1516,7 @@ var COPIONE=[
 },
 {
   capitolo:8, titolo:'Scrivo io un contributo',
-  testo:'Titolo, tipo, tag, testo e fino a <strong>cinque allegati</strong>. Il tipo distingue una <em>domanda</em> da una <em>soluzione</em> da un <em>tutorial</em>, e permette di cercare per intenzione oltre che per parole.',
+  testo:'Titolo, tipo, tag, testo e fino a <strong>cinque allegati</strong>. Il tipo non è decorativo: distingue una <em>domanda</em> da una <em>soluzione</em> da un <em>tutorial</em>, ed è quello che permette di cercare per intenzione e non solo per parole.',
   pagina:'community',
   azione:function(fine){
     var w=W();
@@ -1771,7 +1582,7 @@ var COPIONE=[
 },
 {
   capitolo:8, titolo:'I riconoscimenti si vedono da fuori',
-  testo:'La classifica permette di accedere ai <strong>profili pubblici</strong>. I badge sono basati sull\'attività reale: agenti creati, controlli di sicurezza usati, log. Certificano una competenza dimostrata sull\'uso reale della piattaforma.',
+  testo:'La classifica permette di accedere ai <strong>profili pubblici</strong>. I badge sono basati sull\'attività reale: agenti creati, controlli di sicurezza usati, log. Certificano una competenza dimostrata, non sono un semplice attestato.',
   azione:function(fine){
     var w=W();
     try{
@@ -1789,7 +1600,7 @@ var COPIONE=[
 // ── CAPITOLO 9 · Profilo e monitoraggio ────────────────────────
 {
   capitolo:9, titolo:'Il profilo',
-  testo:'Il lavoro fatto, i controlli applicati ai propri flussi, i riconoscimenti ottenuti e gli <em>obiettivi</em> ancora aperti. I numeri in alto e il dettaglio sotto raccontano la stessa cosa, perché vengono dallo stesso posto.',
+  testo:'Visualizza il lavoro svolto, la governance applicata ai propri flussi, i badge e gli <em>obiettivi pratici</em>. I numeri dell\'intestazione rispecchiano fedelmente il dettaglio del corpo, essendo alimentati dalla stessa base dati.',
   pagina:'profile', sel:'.page-pad', pos:'bottom', durata:8500
 },
 {
@@ -1862,17 +1673,6 @@ var COPIONE=[
   sel:'#monitoraggio-body', pos:'top', durata:9000
 },
 {
-  capitolo:9, titolo:'Le connessioni si provano una volta sola',
-  testo:'Cartelle, endpoint, database, posta: si configurano <strong>una volta</strong> e più agenti li riusano, così una credenziale non finisce dentro la definizione di un flusso. Ogni scheda dichiara <em>cosa si può provare davvero da qui</em>: la cartella si verifica scrivendoci un file, il database vuole il servizio locale. Dirlo prima è più onesto che farlo fallire dopo.',
-  azione:function(fine){
-    var w=W();
-    chiudiFinestre();
-    try{ if(typeof w.openConnessioni==='function')w.openConnessioni() }catch(e){}
-    setTimeout(fine,1600);
-  },
-  sel:'#modalContent', pos:'left', durata:10000
-},
-{
   capitolo:9, titolo:'Anche al buio',
   testo:'Un interruttore in alto e la piattaforma passa al <strong>tema scuro</strong>: tutti i colori vengono dalle stesse variabili, quindi cambia la tavolozza e non un componente per volta. La scelta resta nel browser. Lo rimetto chiaro: gli screenshot e questa dimostrazione devono venire uguali su ogni macchina.',
   pagina:'monitoraggio',
@@ -1920,7 +1720,7 @@ var COPIONE=[
       var g=(w.UTENTI||[]).filter(function(u){return /giulia/i.test(u.email)})[0];
       if(g)r=' <em>'+escapaTitolo(g.role)+'</em>, '+escapaTitolo(g.org)+'.';
     }catch(e){}
-    return 'Le quattro schede sotto il modulo sono <strong>account veri</strong>, ciascuno con i propri dati.'+r+
+    return 'Le quattro schede sotto il modulo non sono decorazione: sono <strong>account veri</strong>, con dati propri.'+r+
       ' Nessuna password da leggere a voce: la scheda compila il modulo e accede.';
   },
   azione:function(fine){
@@ -2008,178 +1808,31 @@ var COPIONE=[
 // ══════════════════════════════════════════
 // VERSIONE BREVE
 // ══════════════════════════════════════════
-// La demo completa dura un quarto d'ora di sola narrazione, e non tutte le
-// occasioni lo concedono: una presentazione commerciale sta in quattro o
-// cinque minuti, e un video piu' lungo non lo guarda nessuno fino in fondo.
-// La versione breve e' una SELEZIONE della stessa demo — stessi passi, stesso
-// codice — con i tempi di lettura piu' stretti. Si attiva con
-// `demo.html?breve` o con il pulsante nella barra dei comandi; la versione
-// completa resta intatta.
-//
-// ── Cosa si e' imparato dalla prima versione breve ──────────────
-// Filtrare per titolo, e basta, non funziona: alcuni passi sono anelli di una
-// CATENA e da soli non hanno senso. La prima selezione ne aveva rotte due.
-//   · «Scrivo il prompt» scriveva in un pannello vuoto, perche' il passo che
-//     AGGIUNGE il nodo AI era stato tolto: si vedeva un suggerimento per un
-//     prompt senza nessun nodo AI a cui darlo;
-//   · «Genera» mostrava l'anteprima della chat e il passo che la CHIUDE non
-//     c'era: il riquadro restava a video e la finestra di pianificazione si
-//     apriva sopra, sovrapposta.
-// Da qui le due regole di questa lista: le catene si tengono intere, e chi la
-// modifica deve sapere quali sono. Sono segnate qui sotto con «catena».
-//
-// ── L'altra correzione: il flusso costruito a mano si esegue ────
-// Nella prima versione si costruiva un agente a mano e poi se ne eseguiva un
-// ALTRO, gia' pronto. Il momento piu' convincente di una dimostrazione di
-// prodotto e' vedere partire quello che si e' appena costruito, quindi ora i
-// tre passi dell'esecuzione seguono direttamente la costruzione: «Eseguo»
-// preme Esegui su quello che c'e' sulla tela, che a quel punto e' il flusso
-// fatto a mano — trigger, mascheramento, nodo AI con il suo prompt, output.
-// Per questo la lista e' ORDINATA e alcuni passi cambiano capitolo: senza, il
-// contatore dei capitoli tornerebbe indietro a meta' demo.
-//
-// ── Cosa resta fuori ────────────────────────────────────────────
-// Ricerca e filtri del catalogo, recensioni, palette e annullamento, ciclo e
-// tetto di sicurezza, aiuto alla scrittura, validazione, modifica via chat,
-// allegati alla mail, interruzione a meta', flusso con Knowledge Base,
-// richiesta di modifica in revisione, sandbox didattica, dettaglio di sfide e
-// community, badge e obiettivi, tema scuro. Tutto nella versione completa,
-// che resta la dimostrazione vera.
-//
-// Ogni voce e' il titolo del passo, oppure [titolo, capitolo] quando il passo
-// va mostrato sotto un capitolo diverso da quello che ha nella demo completa.
-var COPIONE_BREVE_PASSI=[
-  // ── 1 · Accesso e panoramica
-  'RelAItion in una frase',
-  'Entro come Mario',
-  'La dashboard risponde a «come sto andando»',
-
-  // ── 2 · Dal catalogo a un agente che gira
-  // CATENA: si installa, si configura il modello sul nodo, si esegue. È il
-  // percorso più breve fra «non ho niente» e «ho un agente che funziona», e
-  // va mostrato per intero: installare e basta non dimostra niente.
-  // «Installa nel Builder» apre da solo la scheda dell'agente partendo dal
-  // catalogo: il passo di presentazione del catalogo era un doppione.
-  'Installa nel Builder',
-  'Lo configuro per me',
-  'E lo eseguo subito',
-  'È fra i miei agenti',
-
-  // ── 3 · La conoscenza aziendale
-  // Non solo «esiste»: si cerca un documento, ci si entra dentro, e si prova
-  // il recupero. Dire che c'è un RAG senza aprirlo non convince nessuno.
-  'La Knowledge Base aziendale',
-  'Cerco un documento fra tanti',
-  'Dentro un documento: come è stato tagliato',
-  'Il recupero si prova prima di fidarsi',
-
-  // ── 4 · Costruisco a mano e eseguo
-  // CATENA COMPLETA, da non spezzare: azzera la tela, aggiunge il trigger,
-  // aggiunge e seleziona il nodo AI, gli scrive il prompt, inserisce il
-  // controllo fra i due, chiude con l'output. Togliendone uno, i successivi
-  // lavorano su un nodo che non c'è.
-  'Primo nodo sulla tela',
-  'Il nodo che capisce di cosa si tratta',
-  'Scrivo il prompt, lettera per lettera',
-  'Un nodo di controllo, essenziale per la Governance',
-  'Chiudo con l\'output',
-  ['Eseguo',4],
-  ['Perché questo risultato',4],
-
-  // ── 5 · Un flusso rotto, e come si rimette in piedi
-  // CATENA: si carica un flusso con problemi veri e lo si ripara. È la
-  // domanda che un tecnico in commissione farà comunque — «e se non parte?» —
-  // ed è meglio rispondere mostrando che aspettando.
-  'E quando un flusso non parte?',
-  'La piattaforma propone il ricambio',
-
-  // ── 6 · Costruire a parole, e mettere in produzione
-  // CATENA: azzera la tela e apre la chat, scrive la richiesta, genera
-  // l'anteprima, la applica CHIUDENDO il riquadro, e solo dopo si apre la
-  // pianificazione. Senza «Applica» il riquadro resta aperto e la finestra
-  // successiva gli si apre sopra.
-  ['Costruire parlando, invece che trascinando',5],
-  ['Descrivo l\'agente a parole',5],
-  ['Genera, ma prima mostra un\'anteprima',5],
-  ['Applica, oppure annulla',5],
-  ['Un agente non deve essere lanciato a mano',5],
-
-  // ── 7 · Storico, pubblicazione, revisione
-  // CATENA: si propone, si invia in revisione, si approva. Senza l'invio non
-  // c'è niente in coda da approvare.
-  ['Lo storico delle esecuzioni',6],
-  'Propongo il mio agente al Marketplace',
-  'Scelgo l\'ambito e invio',
-  'Il revisore approva',
-
-  // ── 8 · Adozione: formazione, sfide, community
-  // È la parte che il documento mette sullo stesso piano della tecnologia, e
-  // in una presentazione commerciale è quella che distingue una piattaforma
-  // da un editor di flussi. Qui la demo rallenta invece di correre.
-  'Learning Hub',
-  'Apro una lezione',
-  'Rispondo al quiz',
-  'Le certificazioni, e perché non si regalano',
-  'La sandbox: sbagliare senza conseguenze',
-  'Sfide ed eventi',
-  'Entro in una sfida',
-  'Community',
-  'Scrivo io un contributo',
-  'Pubblicato, e il conto torna',
-
-  // ── 9 · Profilo, consumo, connessioni, tema
-  // «Quanto costa un uso reale» sta gia' sulla pagina del profilo: il passo
-  // di presentazione era un doppione, e il consumo di token dice di piu'.
-  'Quanto costa un uso reale',
-  'Monitoraggio: sette aree',
-  'Le connessioni si provano una volta sola',
-  // Chiude con il tema scuro: è un dettaglio, ma è il genere di dettaglio che
-  // in una presentazione dice «è un prodotto finito». Dura dieci secondi e si
-  // vede da lontano.
-  'Anche al buio'
+// La demo completa dura un quarto d'ora di sola narrazione. Per una
+// commissione che concede dieci minuti serve una selezione, non un'altra
+// demo: gli stessi passi, scelti fra quelli che si reggono da soli, con i
+// tempi di lettura un po' piu' stretti. Si attiva con `demo.html?breve` o
+// con il pulsante nella barra dei comandi. La versione completa non cambia.
+var COPIONE_BREVE_TITOLI=[
+  'RelAItion in una frase','Entro come Mario','La dashboard risponde a «come sto andando»',
+  'Il catalogo','La scheda dell\'agente','Installa nel Builder',
+  'Il Builder','La Knowledge Base aziendale','Chiudo e comincio a costruire',
+  'Primo nodo sulla tela','Il nodo che capisce di cosa si tratta','Scrivo il prompt, lettera per lettera','Un nodo di controllo, essenziale per la Governance',
+  'Collegare un modello','Provo il collegamento','La scelta del modello sta sul nodo','La validazione, prima di eseguire',
+  'Costruire parlando, invece che trascinando','Descrivo l\'agente a parole','Genera, ma prima mostra un\'anteprima','Applica, oppure annulla',
+  'Un agente non deve essere lanciato a mano','Chiudo e passo a eseguire',
+  'Un flusso completo, già pronto','Eseguo','Il registro, riga per riga','Perché questo risultato',
+  'Propongo il mio agente al Marketplace','Scelgo l\'ambito e invio','Ora cambio cappello: sono il revisore','Il revisore approva',
+  'Learning Hub','Apro una lezione','Rispondo al quiz','La sandbox: sbagliare senza conseguenze',
+  'Sfide ed eventi','Community','Scrivo io un contributo','Pubblicato, e il conto torna',
+  'Il profilo','Quanto costa un uso reale','Monitoraggio: sette aree','Anche al buio',
+  'Esco','Entro come Giulia','Gli stessi riquadri, altri numeri','Fine'
 ];
-
-// Nome del capitolo 4 nella versione breve: qui dentro non si costruisce
-// soltanto, si esegue anche.
-var COPIONE_BREVE_CAPITOLI={ 4:'Costruisco un agente e lo eseguo' };
-
-// Tempi di lettura al 72%. La versione precedente stava al 62% e risultava
-// affrettata: chi guarda deve poter leggere il riquadro mentre la voce
-// racconta, e un passo che sparisce prima di essere letto vale meno di un
-// passo in meno. Il motore applica questa scala a ogni passo.
-var COPIONE_BREVE_SCALA=0.70;
+var COPIONE_BREVE_SCALA=0.8;   // tempi di lettura all' 80%, applicati dal motore
 var DEMO_BREVE=/[?&]breve\b/.test(location.search);
 
-// Quanti passi ha la versione completa, letto prima che la breve sostituisca
-// COPIONE. Serve al pulsante «completa», che prima dichiarava un numero scritto
-// a mano e rimasto indietro di otto passi: un numero mostrato dev'essere
-// calcolato, non dichiarato.
-var COPIONE_COMPLETO=COPIONE;
-
 if(DEMO_BREVE){
-  var _titolo=function(v){ return (v instanceof Array)?v[0]:v };
-  var _capitolo=function(v){ return (v instanceof Array)?v[1]:null };
-  var _perTitolo={};
-  COPIONE.forEach(function(s){ if(!_perTitolo[s.titolo])_perTitolo[s.titolo]=s });
-
-  var _mancanti=COPIONE_BREVE_PASSI.filter(function(v){ return !_perTitolo[_titolo(v)] });
-  if(_mancanti.length)console.warn('Demo breve: passi non trovati nel copione', _mancanti.map(_titolo));
-
-  // Si costruisce nell'ordine della lista, non in quello del copione: e'
-  // l'ordine che sposta l'esecuzione subito dopo la costruzione.
-  COPIONE=COPIONE_BREVE_PASSI.map(function(v){
-    var s=_perTitolo[_titolo(v)];
-    if(!s)return null;
-    var c=_capitolo(v);
-    if(c==null)return s;
-    // Copia superficiale: cambiare il capitolo sull'oggetto originale
-    // altererebbe anche la versione completa, che condivide questo array.
-    var copia={}; for(var k in s)copia[k]=s[k];
-    copia.capitolo=c;
-    return copia;
-  }).filter(Boolean);
-
-  Object.keys(COPIONE_BREVE_CAPITOLI).forEach(function(k){
-    if(COPIONE_CAPITOLI[k])COPIONE_CAPITOLI[k]={n:COPIONE_CAPITOLI[k].n,t:COPIONE_BREVE_CAPITOLI[k]};
-  });
+  var _mancanti=COPIONE_BREVE_TITOLI.filter(function(t){ return !COPIONE.some(function(s){ return s.titolo===t }) });
+  if(_mancanti.length)console.warn('Demo breve: titoli non trovati nel copione', _mancanti);
+  COPIONE=COPIONE.filter(function(s){ return COPIONE_BREVE_TITOLI.indexOf(s.titolo)>=0 });
 }

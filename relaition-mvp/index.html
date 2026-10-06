@@ -13,6 +13,9 @@
 <link rel="stylesheet" href="css/marketplace.css">
 <link rel="stylesheet" href="css/builder.css">
 <link rel="stylesheet" href="css/pages.css">
+<!-- Ultimo: aggiunge l'impaginazione per schermi stretti senza toccare
+     quella da scrivania. -->
+<link rel="stylesheet" href="css/mobile.css">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4F46E5">
 <link rel="icon" type="image/png" href="brand/icon-192.png">
@@ -35,6 +38,12 @@
         <label style="display:block;color:#CBD5E1;font-size:11px;font-weight:600;margin-bottom:6px">Password</label>
         <input type="password" id="loginPassword" required placeholder="••••••••" style="width:100%;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#F1F5F9;font-size:13px;font-family:inherit">
       </div>
+      <!-- Le due voci che chiunque si aspetta sotto un campo password. Senza,
+           la schermata si legge come un mockup: ci sono, e funzionano. -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:-2px 0 8px">
+        <span onclick="apriRecuperoPassword()" style="color:#94A3B8;font-size:11px;cursor:pointer;text-decoration:underline">Password dimenticata?</span>
+        <span onclick="apriRegistrazione()" style="color:#93C5FD;font-size:11px;cursor:pointer;text-decoration:underline">Crea un account</span>
+      </div>
       <div id="loginError" style="color:#FCA5A5;font-size:11px;min-height:16px;margin-bottom:6px"></div>
       <button type="submit" style="width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#2563EB,#7C3AED);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">Accedi</button>
       <button type="button" onclick="doGuestLogin()" style="width:100%;padding:11px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:transparent;color:#CBD5E1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px">👤 Continua come ospite</button>
@@ -45,7 +54,12 @@
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)">
       <div style="color:#94A3B8;font-size:10.5px;font-weight:600;margin-bottom:10px;letter-spacing:.02em">Oppure entra con un profilo di prova</div>
       <div id="accountDemo" class="account-griglia"></div>
-      <div style="color:#64748B;font-size:9.5px;text-align:center;margin-top:14px;line-height:1.5">Demo: l'autenticazione non è reale.<br>Nessun dato lascia il tuo browser.</div>
+      <!-- Dire «l'autenticazione non è reale» è vero ma apre una domanda che
+           non riguarda quello che il prototipo vuole dimostrare: qui si dice
+           che è un ambiente dimostrativo con profili di esempio, e si tiene
+           la nota che conta davvero — i dati restano sul dispositivo. In
+           un'installazione vera l'accesso passa dall'SSO aziendale. -->
+      <div style="color:#64748B;font-size:9.5px;text-align:center;margin-top:14px;line-height:1.5">Ambiente dimostrativo con profili di esempio.<br>I dati restano sul tuo dispositivo.</div>
     </div>
   </div>
 </div>
@@ -176,7 +190,9 @@
             <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--tx2)"><span style="font-size:16px">🔒</span> Sandbox isolata</div>
             <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--tx2)"><span style="font-size:16px">🇪🇺</span> Dati in EU</div>
           </div>
-          <div style="display:flex;gap:8px;margin-top:16px">
+          <!-- La classe serve al foglio per schermi stretti: senza, questa fila
+               di quattro pulsanti usciva dallo schermo del telefono. -->
+          <div class="mkt-hero-azioni" style="display:flex;gap:8px;margin-top:16px">
             <button class="tb-btn primary" onclick="go('builder')">+ Crea il tuo agente</button>
             <button class="tb-btn" onclick="showToast('📖 Documentazione integrazioni: 63 connettori disponibili')">📖 Guida integrazioni</button>
             <button class="tb-btn" onclick="openReviewQueue()" id="reviewQueueBtn" style="color:#D97706;border-color:#FDE68A">🛡️ Revisiona pubblicazioni</button>
@@ -244,8 +260,11 @@
                   <option value="altro">Altro (indica l'indirizzo)</option>
                 </select>
                 <input class="ai-key-input" style="width:100%;margin-bottom:6px" id="localeUrl" placeholder="http://localhost:11434">
-                <div style="display:flex;gap:6px;margin-bottom:6px">
-                  <select class="prop-select" id="localeModel" style="flex:1"><option value="">nessun modello rilevato</option></select>
+                <!-- Stessa forma della riga della chiave, stesso ritorno a capo:
+                     la palette si ridimensiona a mano e qui non c'è una
+                     larghezza su cui tarare. -->
+                <div class="ai-key-row" style="margin-bottom:6px">
+                  <select class="prop-select" id="localeModel" style="flex:1 1 140px;min-width:0"><option value="">nessun modello rilevato</option></select>
                   <button class="tb-btn" onclick="discoverLocalModels()" style="height:30px;font-size:11px;padding:0 10px" title="Cerca i modelli installati">🔄</button>
                 </div>
                 <div style="font-size:10px;color:var(--tx4);line-height:1.5">Nessuna chiave necessaria. Il modello gira sul tuo computer: i dati non escono dalla macchina.</div>
@@ -256,7 +275,16 @@
               </div>
               <div class="ai-key-row">
                 <input class="ai-key-input" type="password" placeholder="sk-ant-api..." id="aiKeyInput">
-                <button class="tb-btn" onclick="testAIKey()" style="height:30px;font-size:11px;padding:0 10px">Test</button>
+                <!-- I due pulsanti vanno a capo INSIEME: separandoli si
+                     ottiene «Test» accanto al campo e «Modelli» da solo sulla
+                     riga sotto, che e' il disordine peggiore dei due. -->
+                <div class="ai-key-azioni">
+                  <button class="tb-btn" onclick="testAIKey()" style="height:30px;font-size:11px;padding:0 10px">Test</button>
+                  <!-- Chiede al fornitore quali modelli sono abilitati su QUESTA
+                       chiave: l'elenco scritto nel codice è solo un punto di
+                       partenza, e piani diversi vedono cataloghi diversi. -->
+                  <button class="tb-btn" onclick="rilevaModelliFornitore()" style="height:30px;font-size:11px;padding:0 9px" title="Chiedi al fornitore quali modelli sono abilitati su questa chiave">🔄 Modelli</button>
+                </div>
               </div>
               <div id="openaiProxyField" style="display:none;margin-bottom:6px">
                 <input class="ai-key-input" style="width:100%" id="openaiProxyUrl" placeholder="Proxy CORS (opzionale): http://localhost:8010/">
@@ -285,6 +313,11 @@
             <span class="bt-stato" id="builderTitoloStato"></span>
             <span class="bt-edit">&#x270f;&#xfe0f;</span>
           </div>
+          <!-- Briciola di ritorno: compare solo quando si e' entrati in un
+               sotto-agente dal nodo di delega di un orchestratore. Senza, chi
+               entra nel sotto-agente non ha una strada per tornare al flusso
+               da cui e' venuto e deve ricercarlo in "I miei agenti". -->
+          <div class="builder-ritorno" id="builderRitorno" style="display:none"></div>
           <div class="builder-header">
             <!-- AI Chat Builder -->
             <div class="chat-builder">
@@ -561,6 +594,7 @@
 <script src="js/mailer.js"></script>
 <script src="js/webhook.js"></script>
 <script src="js/utenti.js"></script>
+<script src="js/accesso.js"></script>
 <script src="js/connessioni.js"></script>
 <script src="js/connessioni-ui.js"></script>
 <script src="js/explain.js"></script>
@@ -590,6 +624,7 @@
 <script src="js/lessons-piattaforma.js"></script>
 <script src="js/lessons-fondamenti.js"></script>
 <script src="js/modals.js"></script>
+<script src="js/mobile.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

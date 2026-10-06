@@ -487,7 +487,8 @@ function programmaProssimo(s){
   clearTimeout(D.timer);
   var testo=(typeof s.testo==='function')?s.testo():s.testo;
   var parole=String(testo||'').replace(/<[^>]+>/g,' ').split(/\s+/).length;
-  var ms=(s.durata || Math.max(3200, parole*260)) / D.velocita;
+  var scala=(typeof DEMO_BREVE!=='undefined'&&DEMO_BREVE)?COPIONE_BREVE_SCALA:1;
+  var ms=(s.durata || Math.max(3200, parole*260))*scala / D.velocita;
   D.timer=setTimeout(function(){ if(D.riproduce)vaiA(D.passo+1) }, ms);
 }
 
@@ -545,8 +546,8 @@ function concludi(){
   document.getElementById('nCapitolo').textContent='Fine';
   document.getElementById('nTitolo').textContent='Dimostrazione conclusa';
   document.getElementById('nTesto').innerHTML=
-    'Hai visto il percorso completo: costruzione, esecuzione, presidio, pubblicazione, '+
-    'revisione, formazione e monitoraggio. <strong>Sto rimettendo la piattaforma esattamente '+
+    (DEMO_BREVE?'Hai visto il percorso in breve: costruzione, esecuzione, pubblicazione, formazione e monitoraggio; la versione completa aggiunge la Knowledge Base in azione, il ciclo di revisione per intero, le sfide e la community nel dettaglio. ':'Hai visto il percorso completo: costruzione, esecuzione, presidio, pubblicazione, ')+
+    (DEMO_BREVE?'':'revisione, formazione e monitoraggio. ')+'<strong>Sto rimettendo la piattaforma esattamente '+
     'com\'era prima di cominciare</strong>: la dimostrazione non lascia traccia e si può ripetere identica.';
   document.getElementById('nProgresso').style.width='100%';
   var ok=ripristinaStato(D.fotografia);
@@ -668,3 +669,21 @@ function posizionaNarrazione(r,pos,segue){
   box.style.top=Math.round(top)+'px';
   box.style.display='block';
 }
+
+// ══════════════════════════════════════════
+// VERSIONE BREVE
+// ══════════════════════════════════════════
+// Il pulsante ricarica la pagina con o senza `?breve`: la selezione dei passi
+// e' fatta dal copione al caricamento, e ricaricare e' l'unico modo pulito
+// per cambiarla (lo stato viene comunque rimesso a posto prima).
+function alternaBreve(){
+  try{ ripristinaStato(D.fotografia) }catch(e){}
+  var u=location.pathname+(DEMO_BREVE?'':'?breve');
+  location.href=u;
+}
+(function(){
+  var b=document.getElementById('bBreve');
+  if(!b||typeof DEMO_BREVE==='undefined')return;
+  if(DEMO_BREVE){ b.textContent='completa'; b.title='Passa alla versione completa ('+(typeof COPIONE_COMPLETO!=='undefined'?COPIONE_COMPLETO.length:'')+' passi)'; }
+  else { b.textContent='breve'; b.title='Passa alla versione breve ('+(typeof COPIONE_BREVE_PASSI!=='undefined'?COPIONE_BREVE_PASSI.length:'')+' passi, 6 minuti e 41 secondi)'; }
+})();

@@ -4,7 +4,7 @@
 // che l'app si apra anche senza connessione — il che è coerente con il fatto
 // che i dati vivono nel browser e non su un server.
 
-var CACHE = 'relaition-v105';
+var CACHE = 'relaition-v122';
 // L'elenco e' generato dai <script> e <link> di index.html: quando era
 // scritto a mano restava indietro a ogni modulo aggiunto, e nell'app
 // installata i moduli mancanti non avevano copia di riserva — bastava una
@@ -17,6 +17,7 @@ var GUSCIO = [
   './css/marketplace.css',
   './css/builder.css',
   './css/pages.css',
+  './css/mobile.css',
   './manifest.webmanifest',
   './lib/sqljs/sql-wasm.js',
   './lib/sqljs/sql-wasm-inline.js',
@@ -32,6 +33,7 @@ var GUSCIO = [
   './js/mailer.js',
   './js/webhook.js',
   './js/utenti.js',
+  './js/accesso.js',
   './js/connessioni.js',
   './js/connessioni-ui.js',
   './js/explain.js',
@@ -67,6 +69,7 @@ var GUSCIO = [
   './js/lessons-piattaforma.js',
   './js/lessons-fondamenti.js',
   './js/modals.js',
+  './js/mobile.js',
   './js/main.js',
   // La demo fa parte della consegna: senza questi file, aperta senza rete,
   // non avrebbe copia di riserva e resterebbe una pagina bianca.

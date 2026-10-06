@@ -56,7 +56,7 @@ dove si controlla cosa è successo. Al termine il canvas torna com'era.
 `Score > 70?` (condizione) → `Slack` → `Output`.
 
 **Cosa dire:** dieci categorie, 79 componenti. La categoria che conta è
-**Controlli**: è quella che separa un giocattolo da uno strumento aziendale.
+**Controlli**: è quella che separa un semplice tool da uno strumento aziendale.
 
 **Cosa si vede:** i nodi si collegano trascinando dai pallini; la freccia si
 seleziona con un click e si cancella con Canc.

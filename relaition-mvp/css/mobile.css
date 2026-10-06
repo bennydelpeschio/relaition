@@ -1,0 +1,433 @@
+/* ═══════════════════════════════════════════
+   IMPAGINAZIONE PER SCHERMI STRETTI
+   ═══════════════════════════════════════════
+   La piattaforma era uno strumento da scrivania: menu da 240px fissi, tre
+   pannelli affiancati nel Builder, finestre centrate al 90% di una larghezza
+   che su un telefono vale 360px. Il capitolo 2 del documento mette però
+   l'interfaccia "web e mobile" nel primo livello dell'architettura, e la POC
+   è pubblicata su un indirizzo che si apre anche dal telefono: quello che si
+   apre deve funzionare.
+
+   Questo foglio arriva DOPO gli altri e non tocca nulla sopra la soglia: è un
+   livello che si aggiunge, non una riscrittura. Togliendolo, la versione da
+   scrivania resta identica a prima.
+
+   Due soglie, non una:
+     ≤ 1024px  regolazioni di spazio (tablet): meno padding, griglie più corte;
+     ≤ 768px   impaginazione per telefono: menu a scomparsa, pannelli del
+               Builder a scomparsa, finestre a tutta altezza.
+   Sotto 768px la classe `tocco` sul <body> viene messa da js/mobile.js. */
+
+/* Sopra la soglia il contenitore dei comandi secondari non deve esistere come
+   riquadro: `display:contents` lo fa sparire dal layout e i tre pulsanti
+   restano in fila nella barra dove stavano prima. Senza, il <div> impilava
+   tre quadrati da 36px fuori da una barra alta 56. Sta PRIMA delle soglie
+   perché sotto soglia deve poter essere sovrascritto. */
+.tb-secondarie{display:contents}
+
+/* ── Altezza reale della finestra ───────────────────────────────
+   Su iOS e Android la barra degli indirizzi entra e esce dallo schermo e
+   `100vh` resta fissa al massimo: il fondo della pagina finiva sotto il bordo
+   e il registro del Builder non si raggiungeva. `dvh` segue la finestra vera;
+   la riga con `vh` resta come ripiego per i browser che non la conoscono. */
+@media (max-width:1024px){
+  .app{height:100vh;height:100dvh}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TABLET E FINESTRE STRETTE (≤1024px)
+   ───────────────────────────────────────────────────────────── */
+@media (max-width:1024px){
+  .page-pad{padding:18px 16px}
+  .topbar{padding:0 14px;gap:8px}
+  .tb-search{width:180px}
+  .modal{width:94%;padding:22px}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TELEFONO (≤768px)
+   ───────────────────────────────────────────────────────────── */
+@media (max-width:768px){
+
+  /* Il menu esce dal flusso e diventa un pannello a scomparsa: su 360px di
+     larghezza una colonna fissa da 240 lascia al contenuto 120px, e la
+     versione compatta a 68px lascia comunque una striscia di icone che ruba
+     un sesto dello schermo per una navigazione che si usa una volta ogni
+     tanto. Fuori dal flusso, il contenuto ha tutta la larghezza. */
+  .sidebar{
+    position:fixed;top:0;left:0;bottom:0;width:270px;max-width:82vw;
+    transform:translateX(-100%);transition:transform .22s cubic-bezier(.2,0,0,1);
+    z-index:300;box-shadow:none
+  }
+  .sidebar.aperta{transform:translateX(0);box-shadow:0 0 40px rgba(2,6,23,.55)}
+  /* La compressione a icone e la risposta a «finestra stretta» che qui non
+     serve piu: il pannello o e aperto per intero o non c'e. Le regole della
+     colonna stretta vanno pero spente TUTTE, non solo la larghezza: erano
+     dodici, e lasciandone attiva anche una sola il pannello si apriva con le
+     voci centrate, i nomi dei gruppi ridotti a trattini e i contatori
+     schiacciati sopra le icone. js/mobile.js toglie comunque la classe; questo
+     blocco copre l'istante fra il primo disegno e il suo intervento. */
+  .sidebar.compatta{width:270px;max-width:82vw}
+  .sidebar.compatta .logo-text,
+  .sidebar.compatta .logo-sub,
+  .sidebar.compatta .ni-testo,
+  .sidebar.compatta .sf-info{display:block}
+  .sidebar.compatta .sf-esci{display:flex}
+  .sidebar.compatta .logo-area{padding:20px}
+  .sidebar.compatta .logo-area > div{flex-direction:row;gap:8px;align-items:center}
+  .sidebar.compatta .logo-row{justify-content:flex-start;gap:12px;padding:4px;margin:-4px;flex:1}
+  .sidebar.compatta .logo-mark{width:36px;height:36px}
+  .sidebar.compatta nav{padding:8px 12px;display:block}
+  .sidebar.compatta .ni{position:static;width:auto;height:auto;padding:12px;margin:1px 0;gap:10px;justify-content:flex-start;border-radius:8px}
+  .sidebar.compatta .ni-ic{font-size:17px;width:20px}
+  .sidebar.compatta .nav-group{width:auto;height:auto;padding:16px 8px 6px;margin:0;font-size:10px;background:none}
+  .sidebar.compatta .ni-badge{position:static;width:auto;min-width:auto;height:auto;padding:2px 7px;font-size:10px;line-height:normal;border-radius:10px;background:rgba(96,165,250,.18);box-shadow:none}
+  .sidebar.compatta .sidebar-footer{padding:16px}
+  .sidebar.compatta .sf-row{justify-content:space-between;padding:8px;gap:10px}
+  /* Il pulsante ☰ dentro il pannello lo chiude: aprirlo e ridurlo sono la
+     stessa cosa quando il pannello è a scomparsa. */
+  .sb-toggle{font-size:20px}
+
+  /* Velo sotto il pannello: chiude toccando fuori, che è il gesto che tutti
+     provano per primo. */
+  .velo-menu{
+    position:fixed;inset:0;background:rgba(2,6,23,.5);z-index:290;
+    opacity:0;pointer-events:none;transition:opacity .22s
+  }
+  .velo-menu.visibile{opacity:1;pointer-events:auto}
+
+  /* Voci di menu più alte: 34px di altezza sono un bersaglio da mouse, non da
+     pollice. Le linee guida di entrambe le piattaforme stanno sui 44px. */
+  .ni{padding:12px 12px;font-size:14px;min-height:44px}
+  .ni-ic{font-size:17px}
+
+  /* ── Barra superiore ──────────────────────────────────────
+     Sette elementi in fila non stanno in 360px. Restano il menu, il titolo e
+     le due azioni che si usano davvero; il resto passa nel menu «altro». */
+  .topbar{height:52px;padding:0 10px;gap:6px}
+  .tb-title{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+  .tb-sub{display:none}
+  .tb-search{display:none}
+  .topbar .tb-icon-btn{width:38px;height:38px;font-size:15px;flex-shrink:0}
+  #btnInstallApp{display:none!important}
+  .tb-btn{height:36px;padding:0 10px}
+  /* «+ Nuovo Agente» diventa «+»: la parola non ci sta e l'icona basta.
+     Vincolato alla barra: `.tb-btn primary` e la classe del pulsante
+     principale OVUNQUE, guida interattiva compresa, e senza `.topbar`
+     davanti spariva il testo anche da «Avanti» del tour, che diventava un
+     quadrato blu vuoto. */
+  .topbar .tb-btn.primary{font-size:0;width:38px;padding:0;justify-content:center}
+  .topbar .tb-btn.primary::after{content:'+';font-size:20px;font-weight:700;line-height:1}
+  /* Gli elementi che non entrano si nascondono dietro il pulsante «⋯»,
+     che js/mobile.js aggiunge alla barra. */
+  .tb-secondarie{display:none}
+  .tb-secondarie.aperte{
+    display:flex;position:absolute;top:52px;right:8px;z-index:250;
+    background:var(--card);border:1px solid var(--bo);border-radius:12px;
+    padding:8px;gap:8px;box-shadow:var(--sh-xl)
+  }
+
+  /* Il pannello delle notifiche era largo 380px e ancorato a destra: usciva
+     dallo schermo da entrambi i lati. */
+  .notif-panel{
+    position:fixed!important;left:8px!important;right:8px!important;
+    top:58px!important;width:auto!important;max-height:70dvh;overflow-y:auto
+  }
+
+  /* ── Contenuto ────────────────────────────────────────────── */
+  .page-pad{padding:14px 12px}
+  .section-title{font-size:17px}
+  /* Due riquadri per riga invece di quattro: a quattro, un numero a cinque
+     cifre non ci sta e va a capo dentro la sua etichetta. */
+  .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+  .stat-card{padding:12px}
+  .stat-val{font-size:20px}
+  .grid-2,.grid-3{grid-template-columns:minmax(0,1fr)!important}
+  .card{padding:14px}
+
+  /* Le tabelle non si riducono: si fanno scorrere. Mandarle a capo
+     renderebbe illeggibile una riga di sette colonne. */
+  table{min-width:520px}
+  .tabella-scorrevole,.card table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+
+  /* ── Finestre ──────────────────────────────────────────────
+     Centrate e al 90% lasciavano quattro margini inutili su uno schermo che
+     ne ha già pochi. Qui salgono dal basso e occupano quasi tutto: è la forma
+     che su telefono si riconosce come «pannello che si chiude». */
+  .modal-overlay.show{place-items:end center}
+  .modal{
+    width:100%;max-width:none;max-height:92dvh;padding:20px 16px 28px;
+    border-radius:20px 20px 0 0
+  }
+  .modal-lg{max-width:none}
+  .modal h2{font-size:16px}
+  .modal-close{width:38px;height:38px}
+
+  /* ── Builder ───────────────────────────────────────────────
+     Tre pannelli affiancati diventano uno: il canvas. Palette e proprietà
+     salgono dal basso quando servono, come le finestre. Le maniglie di
+     ridimensionamento non hanno senso senza pannelli affiancati. */
+  .builder-wrap{flex-direction:column}
+  .bgrip{display:none}
+  .builder-sidebar,.builder-props{
+    position:fixed;left:0;right:0;bottom:0;width:auto;max-height:78dvh;
+    z-index:280;border:1px solid var(--bo);border-radius:18px 18px 0 0;
+    box-shadow:0 -8px 40px rgba(2,6,23,.28);
+    transform:translateY(102%);transition:transform .22s cubic-bezier(.2,0,0,1)
+  }
+  .builder-sidebar.aperto,.builder-props.aperto{transform:translateY(0)}
+  .builder-sidebar-header,.builder-props-header{padding:12px 14px}
+  .palette-list{padding:8px 10px 20px}
+  /* Su schermo tattile il trascinamento dalla palette al canvas non esiste:
+     il gesto è il tocco, e js/mobile.js lo trasforma in «aggiungi al centro».
+     Il cursore a mano aperta prometteva un trascinamento che non funziona. */
+  .tocco .palette-item{cursor:pointer;padding:11px 10px}
+  .props-body{padding:14px 14px 24px}
+
+  /* La barretta che si vede in cima a un pannello che sale: dice «si tira
+     giù per chiudere» senza scriverlo. */
+  .maniglia-foglio{
+    width:40px;height:4px;border-radius:2px;background:var(--bo2);
+    margin:8px auto 2px;flex-shrink:0
+  }
+
+  /* I due pulsanti che aprono palette e proprieta'. In basso a destra ci
+     sono gia' i comandi dello zoom: a 375px le due file si sovrapponevano,
+     quindi questa sta una riga PIU' IN ALTO invece che a fianco. */
+  .barra-builder-mobile{
+    position:absolute;left:12px;z-index:20;display:flex;gap:6px;
+    bottom:calc(var(--altezza-registro, 36px) + 58px);transition:bottom .18s
+  }
+  .barra-builder-mobile button{
+    height:38px;padding:0 12px;border-radius:10px;border:1px solid var(--bo);
+    background:var(--card);color:var(--tx2);font-family:inherit;font-size:12px;
+    font-weight:700;box-shadow:var(--sh);display:inline-flex;align-items:center;gap:6px;
+    max-width:48vw;overflow:hidden;white-space:nowrap;text-overflow:ellipsis
+  }
+  /* Con un nodo selezionato il pulsante ne porta il nome e si colora: senza
+     l'apertura automatica del pannello serve un segno che dica «la selezione
+     c'e', e i parametri sono qui». Un pulsante che cambia e' quel segno, e
+     costa un colpo d'occhio invece di mezza tela coperta. */
+  .barra-builder-mobile button.con-selezione{
+    border-color:var(--ac);color:var(--ac-d);background:var(--ac-ul)
+  }
+  html[data-theme="dark"] .barra-builder-mobile button.con-selezione{
+    background:rgba(37,99,235,.16);color:#93B4FF
+  }
+  /* Comandi dello zoom più piccoli: cinque quadrati da 36px più le due
+     barre non stanno in 360px di larghezza. */
+  .canvas-controls{right:10px;gap:3px}
+  .canvas-controls button{width:32px;height:32px;font-size:13px}
+  .zoom-label{min-width:38px;line-height:32px;font-size:10px}
+
+  /* La chat del Builder e i suoi suggerimenti: su una colonna. */
+  .chat-builder{padding:8px}
+  .chat-sugg{max-height:64px}
+
+  /* Il registro di esecuzione aperto non deve mangiarsi tutto il canvas. */
+  .exec-log{max-height:52dvh}
+
+  /* ── Accesso ──────────────────────────────────────────────── */
+  #loginScreen>div{padding:26px 20px}
+  .account-griglia{grid-template-columns:minmax(0,1fr)}
+  .logo-intero{width:220px!important;max-width:78vw}
+
+  /* Su iOS un campo con testo sotto i 16px fa ingrandire la pagina appena lo
+     si tocca, e non torna indietro da sola. Il testo dei campi sale quindi a
+     16px: è l'unico modo di impedirlo che non disattivi anche il pizzico per
+     ingrandire, che a una persona ipovedente serve. */
+  input,textarea,select,.prop-input,.prop-select,.palette-search{font-size:16px!important}
+
+  /* Il riquadro grigio che compare su ogni tocco in Chrome per Android
+     lampeggia su liste lunghe: si toglie, lo stato :active resta. */
+  a,button,.ni,.palette-item,.agent-card,.tb-icon-btn,.stat-card{-webkit-tap-highlight-color:transparent}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TELEFONI PICCOLI (≤380px)
+   ───────────────────────────────────────────────────────────── */
+@media (max-width:340px){
+  .stats-row{grid-template-columns:minmax(0,1fr)!important}
+  .tb-title{max-width:34vw}
+  .page-pad{padding:12px 10px}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SCHERMO CORICATO E BASSO
+   ─────────────────────────────────────────────────────────────
+   Un telefono ruotato ha 360px di altezza: un pannello che sale al 78%
+   lascia 80px di canvas. Meglio quasi tutto lo schermo. */
+@media (max-height:480px) and (orientation:landscape){
+  .builder-sidebar,.builder-props{max-height:92dvh}
+  .modal{max-height:96dvh}
+}
+
+
+/* ─────────────────────────────────────────────────────────────
+   ELEMENTI CHE ESISTONO SOLO AL TOCCO
+   ─────────────────────────────────────────────────────────────
+   Il pulsante ☰ della barra, il «⋯», i due pulsanti dei pannelli del Builder
+   e le maniglie: js/mobile.js li aggiunge sempre, perché aggiungerli e
+   toglierli a ogni cambio di larghezza li farebbe sparire nel mezzo di un
+   ridimensionamento. A deciderne la visibilità è il foglio di stile. */
+.solo-tocco{display:none}
+@media (max-width:768px){
+  .solo-tocco{display:inline-flex}
+  .barra-builder-mobile.solo-tocco{display:flex}
+  .maniglia-foglio.solo-tocco{display:block}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   AGGIUSTAMENTI PER PAGINA (≤768px)
+   ───────────────────────────────────────────────────────────── */
+@media (max-width:768px){
+
+  /* ── Marketplace ────────────────────────────────────────── */
+  .mkt-hero{padding:20px;margin-bottom:16px}
+  .mkt-hero h1{font-size:21px;letter-spacing:-.4px}
+  .mkt-hero p{font-size:13px}
+  .mkt-hero-azioni{flex-wrap:wrap}
+  .mkt-hero-azioni .tb-btn{flex:1 1 46%;justify-content:center}
+  /* I dieci filtri per business unit, andando a capo, occupavano dieci righe
+     e spingevano il catalogo fuori dalla prima schermata. In una riga sola
+     che scorre restano tutti raggiungibili e costano 40px. */
+  /* `flex-basis:100%` manda l'ordinamento sulla riga sotto: affiancato,
+     restavano 120px ai filtri e se ne vedevano due. */
+  .mkt-filters{flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .mkt-filters::-webkit-scrollbar{display:none}
+  .mkt-filter{flex-shrink:0;padding:8px 14px}
+  .mkt-grid{grid-template-columns:minmax(0,1fr)}
+  .agent-top{padding:16px 16px 0}
+  .agent-desc{padding:8px 16px}
+  .agent-bottom{padding:10px 16px}
+
+  /* ── Learning Hub, Sfide, Community ─────────────────────── */
+  .learn-hero{padding:20px}
+  .learn-hero h1{font-size:20px}
+  .path-grid,.community-grid,.conn-tipi{grid-template-columns:minmax(0,1fr)!important}
+
+  /* ── Profilo ────────────────────────────────────────────── */
+  .profile-header{flex-direction:column;text-align:center;gap:12px}
+  /* Le sette aree del Monitoraggio e ogni altra fila di schede-linguetta:
+     una riga sola che scorre invece di sette righe impilate. */
+  .tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs > *{flex-shrink:0;white-space:nowrap}
+  .profile-grid{grid-template-columns:minmax(0,1fr)!important}
+
+  /* ── Log esecuzioni ─────────────────────────────────────── */
+  /* Nome dell'agente su tutta la riga, i tre pulsanti sotto: affiancati a
+     375px il nome si spezzava una parola per riga e i pulsanti gli
+     finivano sopra. */
+  .riga-pianificata{flex-wrap:wrap;gap:8px 10px}
+  .riga-pianificata .rp-testo{flex-basis:calc(100% - 22px)}
+  .riga-pianificata .tb-btn{flex:1 1 auto}
+  /* Stessa cosa per le righe dello storico: nome sopra, contatori sotto. */
+  .riga-esecuzione{flex-wrap:wrap;gap:6px 8px;padding:12px 14px!important}
+  .riga-esecuzione .re-testo{flex-basis:calc(100% - 24px)}
+  .riga-esecuzione .badge,.riga-esecuzione > span{font-size:10px}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TABLET IN ORIZZONTALE E FINESTRE MEDIE (769–1100px)
+   ─────────────────────────────────────────────────────────────
+   Qui l'impaginazione da telefono non si applica più e tornano i tre pannelli
+   affiancati del Builder. Alle larghezze originali — 260 di palette, 300 di
+   proprietà, più il menu — al canvas restavano poco più di 200px: si vedeva
+   un nodo e mezzo. I due pannelli laterali si stringono, il canvas respira.
+   Sopra i 1100px non cambia niente. */
+@media (min-width:769px) and (max-width:1100px){
+  .builder-sidebar{width:210px}
+  .builder-props{width:250px}
+  .palette-item .p-sub{display:none}      /* il nome basta, la riga raddoppia */
+  .palette-tab{font-size:10px;padding:7px 3px}
+  .chat-builder{width:420px}
+  .page-pad{padding:18px 16px}
+  .mkt-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SECONDA PASSATA SUL TELEFONO: TESTI E ICONE CHE CI STANNO
+   ─────────────────────────────────────────────────────────────
+   La prima passata aveva reso la piattaforma utilizzabile; questa la rende
+   comoda. I punti dolenti erano quattro, tutti dello stesso tipo: controlli
+   pensati per una barra larga 1200px infilati in 360, dove il testo va a capo
+   dentro il pulsante o esce dal suo riquadro. */
+@media (max-width:768px){
+
+  /* ── Barra superiore ──────────────────────────────────────
+     Il titolo della pagina mangiava lo spazio delle azioni su titoli lunghi
+     («Monitoraggio della piattaforma»), e i pulsanti si schiacciavano. */
+  .tb-title{max-width:38vw;font-size:13.5px}
+  .topbar{gap:4px;padding:0 8px}
+  .topbar .tb-icon-btn{width:36px;height:36px;font-size:14px}
+  .tb-secondarie.aperte{top:56px;right:6px;flex-wrap:wrap;max-width:min(92vw,260px)}
+
+  /* ── Pannello proprietà: la griglia dei comandi ───────────
+     Otto pulsanti (Esegui, Interrompi, Verifica, Nuovo, Contesto, Salva,
+     Esporta, Python, Pianifica, Pubblica) su due colonne strette: le etichette
+     andavano a capo dentro il pulsante e la fila diventava alta il doppio. */
+  .builder-props .tb-btn{height:38px;font-size:11.5px;padding:0 8px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;justify-content:center}
+  .builder-props-header h3{font-size:13px}
+  .props-body .prop-label{font-size:10px;letter-spacing:.3px}
+  .props-body .prop-group{margin-bottom:13px}
+  /* Le tendine dei connettori con etichette lunghe («Rispondi solo se il
+     punteggio supera…») uscivano dal pannello. */
+  .props-body select,.props-body .prop-select{max-width:100%;text-overflow:ellipsis}
+  .props-body input,.props-body textarea{max-width:100%}
+
+  /* ── Chip e badge dentro i pannelli ──────────────────────── */
+  .props-body .chip,.props-body .badge{font-size:10px;padding:2px 7px}
+
+  /* ── Nodi sulla tela ──────────────────────────────────────
+     Un nodo largo 180px su uno schermo da 360 occupa metà larghezza: con lo
+     zoom al 60% il testo diventa illeggibile. Nodi più stretti e testo più
+     grande reggono meglio il rimpicciolimento. */
+  .b-node{min-width:150px}
+  .b-node-head{padding:9px 11px;font-size:11.5px}
+  .b-node-body{padding:8px 11px;font-size:10.5px}
+
+  /* ── Registro di esecuzione ───────────────────────────────
+     L'intestazione aveva cinque controlli in fila che si sovrapponevano. */
+  .exec-log-header{flex-wrap:wrap;gap:4px;padding:7px 10px}
+  .exec-log-header > *{flex-shrink:0}
+  .exec-log-body{font-size:10.5px}
+
+  /* ── Finestre: intestazioni e file di pulsanti ────────────
+     Nei modali il titolo e la ✕ stavano sulla stessa riga di pulsanti lunghi,
+     e il titolo veniva schiacciato a due caratteri per riga. */
+  .modal h2{font-size:15px;line-height:1.3}
+  .modal .tb-btn{height:36px;font-size:11.5px}
+  /* Una fila di pulsanti dentro un modale va a capo invece di comprimersi. */
+  .modal div[style*="display:flex"][style*="gap"]{flex-wrap:wrap}
+
+  /* ── Tendine di sistema ───────────────────────────────────
+     Su iOS un <select> alto meno di 32px è difficile da centrare col pollice. */
+  select,.prop-select{min-height:38px}
+
+  /* ── Titoli di sezione e sottotitoli ─────────────────────── */
+  .section-sub{font-size:12px}
+  .card-title{font-size:13px}
+
+  /* ── Scheda agente nel marketplace ───────────────────────── */
+  .agent-bottom{grid-template-columns:1fr 1fr;row-gap:6px}
+  .agent-bottom .tb-btn.solo-icona{width:100%}
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TABLET: IL BUILDER A TRE PANNELLI STA, MA STRETTO
+   ─────────────────────────────────────────────────────────────
+   Fra 769 e 1100px i pannelli tornano affiancati (§5.170). Qui si riducono
+   anche i contenuti, non solo le larghezze: altrimenti i pulsanti del
+   pannello proprietà restano a due per riga con il testo tagliato. */
+@media (min-width:769px) and (max-width:1100px){
+  .builder-props .tb-btn{font-size:11px;padding:0 6px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .builder-props-header{padding:12px}
+  .props-body{padding:12px}
+  .tb-title{max-width:28vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tb-search{width:150px}
+  .b-node{min-width:160px}
+}
