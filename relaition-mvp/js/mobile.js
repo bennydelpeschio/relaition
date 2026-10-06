@@ -464,7 +464,10 @@ function _preparaPonteTocco(){
       return;
     }
     if(e.touches.length!==1)return;
-    bersaglio=e.target;
+    // Le porte, a zoom basso, sono grandi pochi pixel: il dito prende il nodo e lo
+    // seleziona invece di tirare la freccia. Se il tocco cade vicino a una porta
+    // (raggio proporzionato al nodo) e' la porta il bersaglio.
+    bersaglio=_portaVicina(e.touches[0].clientX,e.touches[0].clientY,null,e.target)||e.target;
     // Toccare un nodo lo fa ridisegnare: l'elemento originale esce dal
     // documento e i suoi touchmove/touchend NON risalgono piu' alla tela (un
     // elemento staccato non ha antenati). E' il motivo per cui il nodo non si
@@ -501,7 +504,24 @@ function _preparaPonteTocco(){
     if(_pinch&&e.touches.length<2)_pinch=null;
     if(!bersaglio)return;
     var t=(e.changedTouches&&e.changedTouches[0])||{clientX:0,clientY:0,screenX:0,screenY:0};
-    _eventoMouse('mouseup',t,document);
+    // Collegamento in corso: il builder lo completa solo se il rilascio avviene
+    // SU una porta (controlla `e.target`), e il ponte rilasciava sempre sul
+    // documento — quindi su telefono un collegamento non si chiudeva mai. Si
+    // cerca la porta d'ingresso piu' vicina al dito, con una tolleranza larga:
+    // il dito copre piu' di una porta, e mirare a 3 px non e' un gesto.
+    var destinazione=document;
+    try{
+      if(typeof B!=='undefined'&&(B.conn||B.reconnect)){
+        var daId=B.conn?B.conn.from:(B.edges[B.reconnect.edgeIdx]||{}).from;
+        var p=_portaVicina(t.clientX,t.clientY,44,null,function(el){
+          // Non si collega un nodo a se' stesso, e un'uscita va verso un ingresso.
+          if(parseInt(el.getAttribute('data-nid'),10)===daId)return false;
+          return B.conn?el.getAttribute('data-port')==='in':true;
+        });
+        if(p)destinazione=p;
+      }
+    }catch(err){}
+    _eventoMouse('mouseup',t,destinazione);
     // Gli eventi mouse «di compatibilita'» del browser cadrebbero sulla tela
     // vuota (il nodo e' stato ridisegnato) e la deselezionerebbero: e' il
     // motivo per cui aprendo le proprieta' la selezione spariva.
@@ -642,3 +662,28 @@ function _preparaRicercaMobile(){
   });
 }
 document.addEventListener('DOMContentLoaded',function(){ setTimeout(_preparaRicercaMobile,400) });
+
+// ── Porte dei nodi, raggiungibili col dito ──────────────────────
+// Restituisce la porta piu' vicina al punto (x,y) entro `raggio` pixel dello
+// schermo, oppure null. Con `raggio` nullo si usa quello di PARTENZA di un
+// collegamento: proporzionato all'altezza del nodo (a zoom basso un nodo e' alto
+// poche decine di pixel, e una tolleranza fissa farebbe prendere la porta anche
+// toccando il corpo del nodo, rendendolo impossibile da spostare).
+function _portaVicina(x,y,raggio,bersaglio,filtro){
+  if(bersaglio&&bersaglio.classList&&bersaglio.classList.contains('b-port'))return null;
+  var porte=document.querySelectorAll('#builderCanvas .b-port');
+  var meglio=null, md=1e9;
+  for(var i=0;i<porte.length;i++){
+    var p=porte[i];
+    if(filtro&&!filtro(p))continue;
+    var r=p.getBoundingClientRect();
+    var d=Math.sqrt(Math.pow(x-(r.left+r.width/2),2)+Math.pow(y-(r.top+r.height/2),2));
+    var lim=raggio;
+    if(lim==null){
+      var nodo=p.closest('.b-node'), h=nodo?nodo.getBoundingClientRect().height:60;
+      lim=Math.max(12,Math.min(22,h*0.4));
+    }
+    if(d<=lim&&d<md){ md=d; meglio=p }
+  }
+  return meglio;
+}

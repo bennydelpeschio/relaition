@@ -605,3 +605,13 @@ discorso di presentazione e i minutaggi nelle domande attese.
   a un clic. Uscendo dall'account compare lo stesso avviso, scritto per esteso.
 - **La testata lo dice**: «bozza non salvata», in arancione.
 - **«Pianifica» su un flusso nuovo propone il salvataggio** invece di rifiutare.
+
+## Telefono: collegare i nodi (v130)
+
+- **Le frecce si tirano col dito.** Due cause insieme: le porte, a zoom basso,
+  sono grandi pochi pixel e il dito prendeva il nodo (selezionandolo); e al
+  rilascio il collegamento non si chiudeva mai, perché il builder lo accetta solo
+  se si rilascia *su una porta* e il ponte tocco rilasciava sul documento. Ora un
+  tocco vicino a una porta tira la freccia (raggio proporzionato al nodo, così il
+  corpo resta trascinabile), e al rilascio si aggancia l'ingresso più vicino
+  entro 44 px.
