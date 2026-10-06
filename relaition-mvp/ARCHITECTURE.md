@@ -4506,7 +4506,8 @@ registrata col nome di quello. La correzione non è rimettere il passo: è
 rendere «Primo nodo sulla tela» autosufficiente, che è la regola della demo
 — ogni passo si deve reggere da solo, anche saltandoci dentro dall'indice.
 
-Risultato: **43 passi, scala 0,70, 6 minuti e 41 secondi cronometrati**. Fuori restano
+Risultato: **48 passi, scala 0,70, circa 7 minuti cronometrati** (vedi §5.191 per
+la revisione successiva). Fuori restano
 il rientro con un altro account e i passi puramente descrittivi.
 
 ### 5.174 Seconda passata sul telefono: testi e icone che ci stanno
@@ -4950,3 +4951,121 @@ Il riquadro ha ora una seconda riga di etichette, quindi serve spazio sotto il
 grafico: la classe `.con-date` lo aggiunge solo dove le date ci sono, invece di
 allargare ogni grafico della piattaforma per un caso solo. Sotto i 560px le due
 righe restano, in corpo più piccolo, e l'intervallo va a capo sotto il titolo.
+
+### 5.190 Due versioni della demo, due registri di scrittura
+
+La versione breve riusava gli stessi passi di quella completa, testo compreso.
+Ma le due servono a cose diverse: nella completa la narrazione **è** il
+commento, e può permettersi il dettaglio; nella breve qualcuno parla sopra, e un
+testo lungo sullo schermo gli fa concorrenza invece di accompagnarlo. Chi
+presenta si trova a competere con il proprio video.
+
+Una voce della lista breve può quindi essere `{t, cap, testo, durata}` e
+riscrivere testo e tempo **solo per quella versione**. Un passo solo, due
+registri: la versione completa resta come documentata, e la breve dice la metà
+delle parole sugli stessi gesti.
+
+### 5.191 Cosa è cambiato nella demo breve, e perché
+
+Il percorso del catalogo era monco: si installava un agente e lo si eseguiva, ma
+non lo si cercava e non lo si teneva. Ora la catena è intera — **si cerca, si
+apre la scheda, si installa, si configura, si esegue, si salva, lo si ritrova
+nell'elenco e lo si riapre** — perché è il ciclo di vita completo di un agente
+visto da chi lavora, e salvare è il gesto in cui un agente del catalogo diventa
+davvero *proprio*. Il flusso che si riapre è quello delle fatture, che la demo ha
+appena installato: è il caso più facile da raccontare a voce.
+
+Il salvataggio chiede il nome con una finestra del browser, che in una
+dimostrazione bloccherebbe tutto e non si vedrebbe nemmeno nel video: il passo
+risponde al posto suo e la rimette com'era. Il percorso eseguito è quello vero,
+senza la finestra di sistema in mezzo.
+
+**La Knowledge Base è passata da quattro passi a tre**, e quelli rimasti dicono
+meno: si cerca un documento, si vede com'è stato indicizzato, e lo si esporta in
+Markdown. Il dettaglio sul funzionamento del recupero resta nella versione
+completa — in una presentazione serve sapere che la conoscenza aziendale c'è,
+che è segmentata e che non resta in ostaggio, non come è fatto il BM25.
+
+**Il pannello delle connessioni è uscito.** Mostrare che una connessione si
+prova è utile in un collaudo, non in una presentazione: è il genere di dettaglio
+che chi guarda non sa dove collocare.
+
+**La formazione ha due passi in più** — le fasi di una sfida e i criteri di
+valutazione — e uno in meno di dettaglio: i **punteggi non si nominano più**.
+Sono tarature che cambiano, e una demo che dichiara un numero destinato a essere
+diverso invecchia male.
+
+**La chiusura ha un cartello esplicito.** Senza, l'ultimo passo si confondeva con
+una pausa e chi guarda non sapeva se fosse finita: in una sala quel dubbio dura
+abbastanza da rovinare il momento in cui si dovrebbe cominciare a parlare.
+
+Tre difetti di sincronia, tutti trovati guardando la demo invece che leggendola:
+
+- **«Primo nodo sulla tela» non dichiarava la pagina.** Nella versione completa
+  non si vedeva, perché il passo precedente era già nel Builder; nella breve
+  arriva subito dopo la Knowledge Base, quindi il nodo veniva aggiunto mentre a
+  schermo c'era un'altra pagina e l'evidenziazione cadeva su una tela che
+  nessuno stava guardando. È questo che rimetteva fuori fase i tre passi della
+  costruzione.
+- **«Scrivo il prompt» mostrava il testo a scrittura finita.** Il motore
+  visualizza la narrazione quando l'azione ha finito: su un passo che scrive una
+  riga intera a macchina, significava vedere il prompt comparire sotto il testo
+  del passo *precedente*. Ora il passo dichiara subito di aver finito e scrive
+  sotto gli occhi di chi legge — che è il senso di un passo intitolato «lettera
+  per lettera».
+- **I passi dell'installazione e della revisione erano stretti.** Aprire una
+  finestra, portare un pulsante in vista, premerlo e caricare il Builder sono
+  quattro gesti: con otto secondi si accavallavano, e il ritardo accumulato si
+  scaricava sui passi successivi. Ora hanno dieci-undici secondi ciascuno.
+
+Infine, «E lo eseguo subito» si regge da solo: se la tela è vuota — ci si è
+saltati dentro dall'indice — carica un flusso prima di premere Esegui, invece di
+aprire la finestra «workflow non valido» e lasciarla aperta sopra i passi dopo.
+
+### 5.192 Un elemento ridisegnato non riceve più eventi di tocco
+
+Su telefono il nodo non si spostava. Il ponte tocco→mouse ascoltava `touchmove`
+e `touchend` sulla tela, ma toccare un nodo lo fa ridisegnare: l'elemento che
+aveva ricevuto il `touchstart` esce dal documento, e gli eventi successivi di
+quello stesso tocco continuano a essere indirizzati *a lui* — che, staccato,
+non ha antenati e non fa risalire niente. Gli ascoltatori vanno quindi messi
+sull'elemento toccato. Per lo stesso motivo il `touchend` va chiuso con
+`preventDefault()` quando il bersaglio è un nodo: altrimenti il browser
+aggiunge i suoi eventi mouse «di compatibilità», che cadono sulla tela vuota e
+deselezionano — da qui la selezione che spariva aprendo le proprietà. Solo per i
+nodi: su una freccia il tocco deve restare un clic.
+
+### 5.193 Il trascinamento non ridisegna quello che non cambia
+
+Spostare un nodo a scatti aveva una causa sola, e non era nel mouse: `b_render()`
+ridisegna anche il pannello proprietà del nodo selezionato, e premere su un nodo
+lo seleziona. Quindi ogni fotogramma di un trascinamento ricostruiva un pannello
+che non stava cambiando. Misurato su un flusso di 14 nodi con un nodo AI
+selezionato: **15,5 ms a fotogramma contro 4,4 senza selezione** — oltre i 16 ms
+di un fotogramma a 60 Hz, cioè scatto.
+
+Durante `B.drag`/`B.panDrag` non si ridisegnano più il pannello proprietà, la
+cronologia della chat e la testata (che riscriveva gli stessi testi e invalidava
+il layout prima che gli archi leggessero le posizioni delle porte); si
+aggiornano solo le posizioni dei nodi esistenti. Al rilascio si ridisegna tutto
+una volta. Ora ~7 ms a fotogramma.
+
+### 5.194 Una bozza non è una versione
+
+L'autosave inseriva una riga in `agents` alla prima modifica di qualunque flusso
+nuovo. Era pensato per non perdere il lavoro, ma il lavoro non perso diventava
+una riga: ogni prova lasciava «Nuovo agente (2)», «(3)»… e distinguere quello
+vero da quelli di scarto toccava a chi li trovava in «I miei agenti».
+
+Due cose diverse stavano nello stesso gesto, e vanno separate. **Non perdere il
+lavoro** lo garantisce la copia di lavoro in `localStorage` (una per utente,
+sovrascritta a ogni modifica: non cresce mai). **Avere un agente** è una scelta
+di chi costruisce, e si fa salvando. Ora l'autosave scrive nel database solo se
+esiste già una riga (`B.dbAgentId`), e la aggiorna sul posto.
+
+Chiudere con un flusso non salvato è l'unico momento in cui conviene fermare
+l'utente: `builderNonSalvato()` è vero solo se ci sono nodi, nessuna riga,
+l'utente ha toccato qualcosa (non è l'esempio né una bozza ripristinata e
+intatta) e non si è in sandbox. Il browser non lascia personalizzare la finestra
+di `beforeunload`, quindi l'avviso ferma la chiusura e basta; il salvataggio
+vero resta il pulsante 💾, e la testata lo segnala in arancione.

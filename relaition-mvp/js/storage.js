@@ -63,6 +63,14 @@ function autosaveAgentToDB(){
   // scrive, qualunque cosa accada sul canvas.
   if(typeof SANDBOX!=='undefined'&&SANDBOX&&SANDBOX.attiva)return;
   if(!DB||!B.nodes.length)return;
+  // Un flusso mai salvato NON crea una riga nel database: resta bozza (la copia
+  // di lavoro in localStorage, una per utente, che si ripristina alla
+  // riapertura). Prima la prima modifica di qualunque flusso nuovo inseriva una
+  // riga, e ogni «prova» lasciava un «Nuovo agente (2)», «(3)»… in «I miei
+  // agenti». Qui si aggiorna soltanto una riga che esiste gia', sul posto: nessuna
+  // versione in piu'. La riga nasce quando lo si salva (💾) o lo si mette in
+  // produzione.
+  if(!B.dbAgentId)return;
   var now=new Date().toISOString();
   var name=currentAgentName||'Workflow senza nome';
   // In creazione il nome predefinito è sempre lo stesso: senza distinzione si
@@ -550,12 +558,31 @@ function saveKBPaste(){
 // tenendoli dentro, ogni ridisegno azzererebbe quello che si stava cercando.
 var KB_FILTRO={testo:'',bu:'Tutte'};
 
-function kbFiltraDocs(v){ KB_FILTRO.testo=String(v||'').toLowerCase(); renderKBDocsList() }
+var _kbTimerFiltro=null;
+function kbFiltraDocs(v){
+  KB_FILTRO.testo=String(v||'').toLowerCase();
+  // Pausa breve: filtrare a ogni lettera su documenti grandi (uno da 3,6 MB) fa
+  // scattare la digitazione. 140 ms non si sentono e raccolgono le lettere.
+  clearTimeout(_kbTimerFiltro);
+  _kbTimerFiltro=setTimeout(renderKBDocsList,140);
+}
+// Documenti con il testo gia' in minuscolo, ricalcolati solo se la tabella cambia.
+var _kbCache={sig:null,docs:null,stats:null};
+function _kbDocsCache(){
+  var s=dbGetOne("SELECT COUNT(*) c, COALESCE(MAX(uploaded_at),'') m, COALESCE(SUM(size),0) z, COALESCE(SUM(chunk_count),0) k FROM kb_docs");
+  var sig=s.c+'|'+s.m+'|'+s.z+'|'+s.k;
+  if(_kbCache.sig!==sig){
+    var tutti=dbAll('SELECT * FROM kb_docs ORDER BY uploaded_at DESC');
+    tutti.forEach(function(d){ d._min=String(d.content||'').toLowerCase() });
+    _kbCache={sig:sig,docs:tutti,stats:(typeof kbStats==='function'?kbStats():{documenti:tutti.length,indicizzati:0,porzioni:0})};
+  }
+  return _kbCache;
+}
 function kbFiltraBU(v){ KB_FILTRO.bu=v||'Tutte'; renderKBDocsList() }
 
 function renderKBDocsList(){
   var el=document.getElementById('kbDocsList');if(!el)return;
-  var tutti=dbAll('SELECT * FROM kb_docs ORDER BY uploaded_at DESC');
+  var cache=_kbDocsCache(), tutti=cache.docs;
   if(!tutti.length){el.innerHTML='<div style="font-size:11px;color:var(--tx4);padding:8px 0">Nessun documento caricato ancora.</div>';return}
 
   // Nome, business unit e riservatezza sono gia' i metadati che il documento
@@ -577,7 +604,7 @@ function renderKBDocsList(){
       || String(d.business_unit||'').toLowerCase().indexOf(q)>=0
       || String(d.confidentiality||'').toLowerCase().indexOf(q)>=0) return true;
     var testo=String(d.content||'');
-    var i=testo.toLowerCase().indexOf(q);
+    var i=d._min.indexOf(q);   // testo gia' in minuscolo: non si ricalcola a ogni lettera
     if(i<0)return false;
     // Un estratto attorno alla parola trovata, tagliato ai confini di riga
     // per non mostrare mezza parola all'inizio e alla fine.
@@ -586,17 +613,18 @@ function renderKBDocsList(){
     return true;
   });
 
-  var st=typeof kbStats==='function'?kbStats():{documenti:tutti.length,indicizzati:0,porzioni:0};
+  var st=cache.stats||{documenti:tutti.length,indicizzati:0,porzioni:0};
   var bus=['Tutte'].concat((typeof KB_BUSINESS_UNITS!=='undefined'?KB_BUSINESS_UNITS:[]).filter(function(b){return b!=='Tutte'}));
 
-  el.innerHTML=
+  var shell=
     '<div style="display:flex;gap:6px;margin-bottom:8px">'+
-      '<input class="prop-input" style="flex:1;height:30px;font-size:11.5px" placeholder="Cerca nel nome o nel testo dei documenti…" '+
+      '<input id="kbCerca" class="prop-input" style="flex:1;height:30px;font-size:11.5px" placeholder="Cerca nel nome o nel testo dei documenti…" '+
         'value="'+escAttr(KB_FILTRO.testo)+'" oninput="kbFiltraDocs(this.value)">'+
       '<select class="prop-select" style="width:140px;height:30px;font-size:11.5px" onchange="kbFiltraBU(this.value)">'+
         bus.map(function(b){return '<option'+(b===KB_FILTRO.bu?' selected':'')+'>'+escHtml(b)+'</option>'}).join('')+
       '</select>'+
-    '</div>'+
+    '</div>';
+  var risultati=
     '<div style="font-size:11px;color:var(--tx3);margin-bottom:8px">'+
       (docs.length===tutti.length
         ? st.documenti+' documenti'
@@ -626,6 +654,14 @@ function renderKBDocsList(){
       '<span style="cursor:pointer;color:#EF4444;font-size:12px;padding:0 4px" onclick="deleteKBDoc(\''+d.id+'\')" title="Elimina">✕</span>'+
     '</div>';
   }).join('');
+
+  // Se il campo di ricerca c'e' gia', si aggiorna SOLO l'elenco. Ricostruire
+  // anche il campo a ogni lettera lo ricreava da capo (perdita del cursore e
+  // del focus, e un ritardo visibile): e' la cosa che faceva «andare a scatti»
+  // la digitazione. Il campo si ricostruisce solo quando manca.
+  var cont=document.getElementById('kbRisultati');
+  if(cont&&el.contains(cont)&&document.getElementById('kbCerca')){ cont.innerHTML=risultati; return }
+  el.innerHTML=shell+'<div id="kbRisultati">'+risultati+'</div>';
 }
 
 function kbReindexAllUI(){
@@ -1147,3 +1183,28 @@ function ricaricaTelaPerUtente(){
   if(typeof aggiornaTitoloBuilder==='function')aggiornaTitoloBuilder();
   if(typeof clearInvalidNodes==='function')clearInvalidNodes();
 }
+
+// ══════════════════════════════════════════
+// FLUSSO NON SALVATO: avviso alla chiusura
+// ══════════════════════════════════════════
+// Un flusso nuovo non e' piu' scritto nel database finche' non lo si salva
+// (vedi autosaveAgentToDB). La bozza sopravvive comunque nella copia di lavoro,
+// ma chi chiude la scheda deve saperlo: «ho lavorato venti minuti e non ho
+// premuto Salva» e' la situazione in cui si vuole essere fermati.
+function builderNonSalvato(){
+  if(typeof B==='undefined'||!B.nodes||!B.nodes.length)return false;
+  if(B.dbAgentId)return false;     // ha una riga: l'autosave la tiene allineata
+  if(B.effimero)return false;      // esempio o bozza ripristinata e non toccata
+  if(typeof SANDBOX!=='undefined'&&SANDBOX&&SANDBOX.attiva)return false;
+  return true;
+}
+window.addEventListener('beforeunload',function(e){
+  if(typeof currentPage!=='undefined'&&currentPage!=='builder')return;
+  if(!builderNonSalvato())return;
+  // Il browser non permette di mettere pulsanti «Salva / Non salvare» in questa
+  // finestra, e scrive lui il testo: l'unica cosa possibile e' fermare la
+  // chiusura. Restando, la testata dice «non ancora salvato» e 💾 e' a un clic.
+  e.preventDefault();
+  e.returnValue='';
+  return '';
+});

@@ -318,7 +318,7 @@ function updateUndoButtons(){
   if(u){u.disabled=!(B.undoStack&&B.undoStack.length);u.style.opacity=u.disabled?.35:1}
   if(r){r.disabled=!(B.redoStack&&B.redoStack.length);r.style.opacity=r.disabled?.35:1}
   // pushUndo non passa da b_render: la barra delle frecce va aggiornata qui.
-  if(typeof renderComposeHistory==='function')renderComposeHistory();
+  if(!B.drag&&!B.panDrag&&typeof renderComposeHistory==='function')renderComposeHistory();
 }
 
 // `opts` è opzionale e additivo (proprietà extra sul nodo, es. {locked:true,
@@ -396,7 +396,19 @@ function b_render(){
 
   // Render nodes
   var colors={tr:{bg:'#FEF3C7',border:'#F59E0B',text:'TRIGGER'},ai:{bg:'#EDE9FE',border:'#6366F1',text:'AI'},ac:{bg:'#D1FAE5',border:'#10B981',text:'ACTION'},cd:{bg:'#FEE2E2',border:'#EF4444',text:'CONDITION'},ou:{bg:'#F1F5F9',border:'#64748B',text:'OUTPUT'},gr:{bg:'#FAE8FF',border:'#D946EF',text:'CONTROLLO'},sa:{bg:'#CFFAFE',border:'#0891B2',text:'AGENTE'}};
-  canvas.innerHTML=B.nodes.map(function(n){
+  // Percorso veloce durante il trascinamento: i nodi ci sono gia' e cambia solo
+  // la posizione, quindi non si ricostruisce tutto l'HTML a ogni fotogramma
+  // (rifare il parsing di ogni nodo ~60 volte al secondo era il costo che si
+  // sentiva come «scatto», piu' evidente con tanti nodi o su macchine lente).
+  // Il primo fotogramma (mousedown) e il rilascio restano completi.
+  var _soloSposta=!!B.drag&&canvas.children.length===B.nodes.length&&
+    B.nodes.every(function(n){return document.getElementById('node-'+n.id)});
+  if(_soloSposta){
+    B.nodes.forEach(function(n){
+      var e=document.getElementById('node-'+n.id);
+      e.style.left=n.x+'px';e.style.top=n.y+'px';
+    });
+  }else canvas.innerHTML=B.nodes.map(function(n){
     var c=colors[n.type]||colors.ou;
     var isInvalid=B._invalidIds&&B._invalidIds[n.id];
     var locked=n.locked?' policy-locked':'';
@@ -429,16 +441,22 @@ function b_render(){
   // stesso nodo (es. due frecce dallo stesso output) richiedevano prima lo
   // stesso calcolo di layout più volte nello stesso render. Un cache per
   // singola chiamata di b_render() lo riduce a una volta per porta.
-  var _portPosCache={};
+  var _portPosCache={}, _mappaPorte=null;
   function portPos(nid,port){
     var cacheKey=nid+':'+port;
     if(_portPosCache[cacheKey]!==undefined)return _portPosCache[cacheKey];
-    var el=canvas.querySelector('.b-port[data-nid="'+nid+'"][data-port="'+port+'"]');
-    if(!el){
-      // fallback: out/in generici
-      el=canvas.querySelector('.b-port[data-nid="'+nid+'"][data-port="'+(port==='in'?'in':'out')+'"]')||
-         canvas.querySelector('.b-port[data-nid="'+nid+'"]');
+    // Mappa delle porte costruita una volta per render: tre querySelector con
+    // selettori ad attributo per ogni freccia, ripetuti a ogni fotogramma di un
+    // trascinamento, erano la parte piu' lenta del disegno degli archi.
+    if(!_mappaPorte){
+      _mappaPorte={};
+      Array.prototype.forEach.call(canvas.querySelectorAll('.b-port'),function(p){
+        var k=p.getAttribute('data-nid');
+        _mappaPorte[k+':'+p.getAttribute('data-port')]=p;
+        if(!_mappaPorte[k+':*'])_mappaPorte[k+':*']=p;
+      });
     }
+    var el=_mappaPorte[nid+':'+port]||_mappaPorte[nid+':'+(port==='in'?'in':'out')]||_mappaPorte[nid+':*'];
     var pos=null;
     if(el){
       var r=el.getBoundingClientRect();
@@ -541,7 +559,12 @@ function b_render(){
   svg.innerHTML=svgHtml;
 
   // Update props
-  if(B.selId>0) renderProps(B.selId);
+  // Durante il trascinamento il pannello proprieta' non cambia: ridisegnarlo a
+  // ogni fotogramma portava b_render da ~4 a ~15 ms con un nodo selezionato
+  // (cioe' sempre, perche' premere su un nodo lo seleziona), oltre il budget
+  // di un fotogramma a 60 Hz. E' il motivo del movimento a scatti. Si ridisegna
+  // al rilascio, quando `B.drag` torna nullo.
+  if(B.selId>0&&!B.drag&&!B.panDrag) renderProps(B.selId);
   // Chat builder mode hint
   var provReady=typeof anyProviderReady==='function'?anyProviderReady():null;
   var hint=document.getElementById('chatBuilderHint');
@@ -578,7 +601,7 @@ function b_render(){
     if(wrap)wrap.classList.toggle('scorrevole',chatSugg.scrollHeight>chatSugg.clientHeight+2);
   }
   if(typeof updateChatBuilderGate==='function')updateChatBuilderGate();
-  if(typeof renderComposeHistory==='function')renderComposeHistory();
+  if(!B.drag&&!B.panDrag&&typeof renderComposeHistory==='function')renderComposeHistory();
   var dot=document.getElementById('chatAIStatusDot');
   if(dot)dot.style.background=provReady?'#10B981':aiConfig.status==='err'?'#EF4444':'var(--tx4)';
   if(typeof updateSuggestionBadge==='function')updateSuggestionBadge();
@@ -2013,6 +2036,11 @@ function fireEvent(eventKey){
 
 function openDeployModal(){
   if(typeof sandboxBlocca==='function'&&sandboxBlocca('pianificare'))return;
+  // Mettere in produzione richiede una riga a cui agganciare la pianificazione.
+  // Prima c'era sempre, perche' l'autosave la creava alla prima modifica; ora un
+  // flusso nuovo e' una bozza. Invece di rifiutare e rimandare al pulsante 💾,
+  // si propone il salvataggio qui: e' esattamente il passo che serve.
+  if(!B.dbAgentId&&B.nodes.length&&typeof saveAgent==='function')saveAgent();
   if(!B.dbAgentId){showToast('⚠️ Salva prima l\'agente (💾) per poterlo mettere in produzione');return}
   var row=dbGetOne('SELECT * FROM agents WHERE id=?',[B.dbAgentId]);
   if(!row)return;
@@ -4396,8 +4424,14 @@ function campiCopertiDaConnessione(nome,config){
 // aprendo un agente non si sapeva quale fosse, e con piu' flussi salvati si
 // finiva per salvare sopra quello sbagliato.
 function aggiornaTitoloBuilder(){
+  // Mentre si trascina un nodo o si sposta la vista nome, numero di nodi e
+  // stato di salvataggio non cambiano: riscrivere la testata a ogni fotogramma
+  // invalidava il layout PRIMA che gli archi leggessero le posizioni delle
+  // porte, costringendo a ricalcolarlo da capo — il movimento a scatti.
+  if(typeof B!=='undefined'&&(B.drag||B.panDrag||B.marquee))return;
   var el=document.getElementById('builderTitoloNome');
-  if(el)el.textContent=currentAgentName||'Nuovo agente';
+  var nomeT=currentAgentName||'Nuovo agente';
+  if(el&&el.textContent!==nomeT)el.textContent=nomeT;
 
   // Briciola: visibile solo mentre si è dentro un sotto-agente aperto dal
   // nodo di delega di un orchestratore.
@@ -4408,8 +4442,8 @@ function aggiornaTitoloBuilder(){
       br.innerHTML='🤝 Sei dentro un sotto-agente delegato da «'+escHtml(B._ritorno.nome)+'» · '+
         '<span class="br-link" onclick="bTornaAllOrchestratore()">↩︎ torna all\'orchestratore</span>';
     }else{
-      br.style.display='none';
-      br.innerHTML='';
+      if(br.style.display!=='none')br.style.display='none';
+      if(br.innerHTML!=='')br.innerHTML='';
     }
   }
 
@@ -4426,9 +4460,13 @@ function aggiornaTitoloBuilder(){
       (typeof descriviPianificazione==='function'&&r.schedule_type!=='manual'
         ? ' \u00b7 '+descriviPianificazione(r.schedule_type,r.schedule_value) : ''));
   }else if(B.nodes.length){
-    parti.push('non ancora salvato');
+    parti.push('bozza non salvata');
   }
-  st.textContent='\u00b7 '+parti.join(' \u00b7 ');
+  // In evidenza solo quando c'e' davvero qualcosa da perdere: una scritta grigia
+  // fra le altre non basta a ricordare di premere Salva.
+  st.classList.toggle('non-salvato',!B.dbAgentId&&B.nodes.length>0&&!B.effimero);
+  var statoT='\u00b7 '+parti.join(' \u00b7 ');
+  if(st.textContent!==statoT)st.textContent=statoT;
 }
 
 // Rinomina dal titolo: e' il posto dove uno cerca di cambiarlo.

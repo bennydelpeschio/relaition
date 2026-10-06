@@ -126,7 +126,7 @@
     <div class="tb-icon-btn" title="La tua Knowledge Base" onclick="openKnowledgeBaseModal()"><span>📦</span></div>
     <div class="tb-icon-btn" onclick="toggleNotifications()"><span>🔔</span><div class="notif-dot"></div></div>
     <div class="notif-panel" id="notifPanel" onclick="event.stopPropagation()"></div>
-    <button class="tb-btn primary" onclick="startNewAgent()">+ Nuovo Agente</button>
+    <button class="tb-btn primary" onclick="startNewAgent()"><span class="tb-piu">+</span> Nuovo Agente</button>
   </header>
 
   <div class="content">
@@ -532,7 +532,7 @@
           </div>
           <!-- Il pulsante vive su un'intestazione scura: con lo sfondo chiaro
                di .tb-btn il testo bianco spariva e si vedeva solo l'emoji. -->
-          <div style="margin-left:auto"><button class="tb-btn btn-su-scuro" onclick="toggleProfileEdit()">✏️ Modifica profilo</button></div>
+          <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="tb-btn btn-su-scuro" onclick="toggleProfileEdit()">✏️ Modifica profilo</button><button class="tb-btn btn-su-scuro" onclick="logout()">🚪 Esci</button></div>
         </div>
 
         <div class="profile-grid">

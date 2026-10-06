@@ -83,10 +83,10 @@ comunque. Tieni il due e il quattro: sono gli unici che il video non spiega.
 
 ## Il commento al video, per sezioni
 
-Minutaggi della registrazione (6'50"). **Non leggere**: sono appoggi. Se resti
+Minutaggi della registrazione (circa 7', cronometrati). **Non leggere**: sono appoggi. Se resti
 indietro, salta le frasi fra parentesi.
 
-### 0:00–0:17 · Mario entra — *la barriera dell'accesso*
+### 0:00–0:18 · Mario entra — *la barriera dell'accesso*
 
 > Lui è Mario. Non è dell'IT: lavora nelle operations, e conosce i processi
 > meglio di chiunque. È esattamente la persona che oggi l'intelligenza
@@ -100,42 +100,49 @@ per entrare in un clic. «Crea un account» registra una persona vera nel
 database, e la sua dashboard parte da zero — vale la pena mostrarlo dal vivo,
 è dieci secondi e chiude la domanda sulla separazione dei dati.)*
 
-### 0:17–0:56 · Installa, configura, esegue — *il percorso più breve*
+### 0:18–1:34 · Dal catalogo a un agente che è suo — *il percorso più breve*
 
-> Va nel catalogo e installa un agente. E qui succede la prima cosa che conta:
-> non arriva come una scatola chiusa, arriva **aperto** dentro lo strumento di
-> costruzione.
+**È il blocco più lungo del video e il più importante: fa vedere il ciclo di vita
+completo di un agente. Non avere fretta, hai più di un minuto.**
+
+> Va nel catalogo e cerca. *[pausa]* E qui succede la prima cosa che conta:
+> installandolo, l'agente non arriva come una scatola chiusa — arriva **aperto**
+> dentro lo strumento di costruzione.
 >
-> Lo adatta: cambia il modello AI su quel nodo — perché un blocco che
-> classifica non ha bisogno dello stesso modello di uno che scrive un testo, e
-> la scelta è per singolo blocco.
+> Lo adatta: cambia il modello AI su quel nodo, perché un blocco che classifica
+> non ha bisogno dello stesso modello di uno che scrive un testo. La scelta è per
+> singolo blocco.
 >
-> E lo esegue. *[pausa]* Dal catalogo a un agente che gira, senza aprire un
-> ticket all'IT e senza che nessuno configuri niente a livello di sistema.
+> E lo esegue. Senza aprire un ticket all'IT, senza che nessuno configuri niente
+> a livello di sistema.
+>
+> *[salvataggio]* Poi lo salva, ed è il momento che vale la pena indicare: **è
+> qui che un agente del catalogo diventa suo**. Con il suo nome, nel suo elenco,
+> mentre l'originale resta intatto per tutti gli altri. Lo ritrova fra i suoi
+> agenti e lo riapre quando vuole, esattamente com'era.
+>
 > Questo è il minuto che risponde alla barriera principale: **il tempo fra
-> l'idea e la cosa che funziona**.
+> l'idea e la cosa che funziona** — e che fa vedere che il lavoro non vive in una
+> sessione, vive in un database.
 
-### 0:56–1:34 · La Knowledge Base — *il dato aziendale*
+### 1:34–1:59 · La Knowledge Base — *il dato aziendale*
 
-**Qui rallenta: è la sezione che i tecnici guarderanno con più attenzione.**
+**Venticinque secondi, di passaggio.** Il dettaglio su come funziona il recupero
+è nelle domande attese (sezione G): se un tecnico lo chiede, c'è tutto. Qui serve
+solo piantare tre idee.
 
-> Prima di costruire da zero, una cosa: questa è la conoscenza dell'azienda.
+> Gli agenti non lavorano nel vuoto: questa è la conoscenza dell'azienda.
 > Procedure, contratti, casistiche.
 >
-> E non è una cartella di file. *[filtro]* Si cerca, si filtra per reparto —
-> con sei documenti si scorre, in un'azienda vera sono centinaia.
+> E non è una cartella di file: ogni documento è **indicizzato in porzioni**, ed
+> è da quelle che un agente andrà a pescare. Non tagli a lunghezza fissa — una
+> normativa si taglia per articolo, un contratto per clausola.
 >
-> *[apre il documento]* E si entra dentro: qui si vede **come è stato
-> tagliato**. Non a lunghezza fissa: una normativa si taglia per articolo, un
-> contratto per clausola, una procedura per passo. È la differenza fra una
-> porzione che ha senso da sola e una che si interrompe a metà frase.
->
-> *[prova il recupero]* E il recupero si prova **prima** di fidarsene: si fa
-> una domanda e si vede quali porzioni di quali documenti escono, con il loro
-> punteggio. Da qui in poi gli agenti rispondono con i documenti dell'azienda,
-> non con quello che il modello ha letto su internet.
+> *[esportazione]* E tutto quello che sta qui si porta via in un file di testo.
+> È la risposta a «e se domani cambiamo strumento?»: i dati non restano in
+> ostaggio.
 
-### 1:34–2:41 · Costruisce da zero ed esegue — *il cuore*
+### 1:59–3:00 · Costruisce da zero ed esegue — *il cuore*
 
 > Adesso costruisce il suo. Il caso è banale e capita a tutti: le richieste che
 > arrivano via email e che qualcuno smista a mano ogni mattina.
@@ -155,7 +162,7 @@ database, e la sua dashboard parte da zero — vale la pena mostrarlo dal vivo,
 > blocca più progetti di AI nelle aziende: *«va bene, ma come ci è arrivato?»*.
 > Ricostruisce informazioni usate, decisioni prese, controlli intervenuti.
 
-### 2:41–3:03 · Quando un flusso non parte — *l'onestà che convince*
+### 3:00–3:19 · Quando un flusso non parte — *l'onestà che convince*
 
 **Questa sezione è nuova e vale la pena annunciarla.**
 
@@ -185,7 +192,7 @@ tutte — e si può dire indicando il registro vuoto:
 > ciascuno. Sono due situazioni diverse e la piattaforma le tratta in modo
 > diverso, perché per chi deve decidere cosa fare dopo *sono* diverse.
 
-### 3:03–3:56 · La seconda modalità e la produzione
+### 3:19–4:06 · La seconda modalità e la produzione
 
 > Quella era la modalità per chi vuole vedere il disegno. C'è la seconda, per
 > chi non vuole disegnare niente: **lo descrive a parole**, come lo direbbe a un
@@ -198,7 +205,7 @@ tutte — e si può dire indicando il registro vuoto:
 > E un agente utile non si lancia a mano ogni mattina: parte a orario, a
 > intervallo, o quando arriva un evento.
 
-### 3:56–4:30 · Pubblicazione e revisione — *la governance che non blocca*
+### 4:06–4:41 · Pubblicazione e revisione — *la governance che non blocca*
 
 > L'agente funziona: diventa patrimonio dell'azienda. Lo propone al catalogo.
 >
@@ -208,7 +215,7 @@ tutte — e si può dire indicando il registro vuoto:
 > Qui il bottom-up non diventa anarchia: chi costruisce non si approva da solo.
 > Ma nessuno ha dovuto chiedere il permesso per cominciare.
 
-### 4:30–6:04 · Formazione, sfide, community — *il change management*
+### 4:41–6:20 · Formazione, sfide, community — *il change management*
 
 **Non correre. È l'aggancio al capitolo di Suzana ed è la parte che
 differenzia il progetto.**
@@ -230,8 +237,9 @@ differenzia il progetto.**
 > Si impara sbagliando, senza conseguenze.
 >
 > *[sfide]* Le sfide interne trasformano tutto questo in qualcosa che le
-> persone hanno voglia di fare, con regole e criteri dichiarati prima e
-> punteggi calcolati sul lavoro vero.
+> persone hanno voglia di fare. Ognuna ha le sue fasi, con le date, e i criteri
+> di valutazione si leggono **prima** di iscriversi — non dopo, quando ormai si
+> è lavorato per niente.
 >
 > *[community]* E la community è dove chi ha risolto un problema lo passa agli
 > altri — con dentro l'agente, pronto da aprire. Non un racconto: una cosa
@@ -240,7 +248,7 @@ differenzia il progetto.**
 > È così che l'adozione sale dal basso: non perché qualcuno l'ha imposta, ma
 > perché qualcuno l'ha resa facile e conveniente.
 
-### 6:04–6:41 · Chiusura del video
+### 6:20–6:55 · Chiusura del video
 
 > *[profilo, token]* Ogni persona vede il proprio lavoro — e quanto costa: la
 > piattaforma conta i token di ogni chiamata, per persona, agente e fornitore.
@@ -251,20 +259,29 @@ differenzia il progetto.**
 > monitoraggio, con ogni numero calcolato sui dati — e dove è una stima, la
 > piattaforma lo dichiara.
 >
-> *[connessioni]* Le connessioni ai sistemi aziendali si configurano una volta
-> e più agenti le riusano: non sono un campo dentro un nodo, sono un oggetto
-> della piattaforma. È quello che la rende governabile da un reparto IT.
->
 > *[tema scuro]* E, visto che ci siamo: funziona anche così.
+>
+> *[cartello finale]* — e qui il video si chiude da solo.
+
+*(Il cartello «Fine della dimostrazione» è il tuo segnale: non serve dire «e
+questo è tutto», lo ha già detto lo schermo. Fai una pausa di un secondo e
+attacca la chiusura.)*
+
+*(Le **connessioni** ai sistemi aziendali sono uscite dal video: in una
+presentazione sono un dettaglio che chi guarda non sa dove collocare. Se qualcuno
+chiede come ci si collega a un ERP, la risposta è nelle domande attese — si
+configurano una volta e più agenti le riusano, sono un oggetto della piattaforma
+e non un campo dentro un nodo, ed è quello che le rende governabili da un reparto
+IT.)*
 
 ---
 
 ## Chiusura (dopo il video, 20")
 
-> In meno di sette minuti abbiamo visto una persona che non programma installare un
-> agente ed eseguirlo, costruirne uno da zero, ripararne uno rotto, proporlo
-> all'azienda — e imparare a farlo dentro la piattaforma stessa. Con i controlli
-> sempre in mezzo.
+> In sette minuti abbiamo visto una persona che non programma prendere un agente
+> dal catalogo e **farlo proprio**, costruirne uno da zero, ripararne uno rotto,
+> proporlo all'azienda — e imparare a farlo dentro la piattaforma stessa. Con i
+> controlli sempre in mezzo.
 >
 > Questo è il senso di RelAItion: **l'AI non la governano pochi specialisti, la
 > governa un'organizzazione intera, in sicurezza**.

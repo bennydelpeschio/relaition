@@ -394,7 +394,7 @@ Questa sezione segue l'ordine del video: se una domanda arriva «su quella cosa
 che avete appena mostrato», è quasi certamente qui. Sono anche i punti dove
 conviene **offrire** un approfondimento, se la discussione va bene e c'è tempo.
 
-## Sull'installazione e configurazione dell'agente *(minuto 0:17–0:56)*
+## Sull'installazione e configurazione dell'agente *(minuto 0:18–1:34)*
 
 **«Quindi chiunque può installare qualsiasi agente?»**
 > Nel prototipo sì, perché è una dimostrazione. In produzione l'installazione
@@ -414,12 +414,14 @@ conviene **offrire** un approfondimento, se la discussione va bene e c'è tempo.
 > versione nuova, chi l'aveva installata riceve la notifica e decide se
 > aggiornare — non viene aggiornato d'ufficio.
 
-## Sulla Knowledge Base *(minuto 0:56–1:34)*
+## Sulla Knowledge Base *(minuto 1:34–1:59)*
 
-> **È la sezione su cui conviene offrire l'approfondimento**: è quella dove un
-> docente tecnico trova più da chiedere, ed è quella dove le risposte sono più
-> solide. Se la discussione va bene, proponi tu: «se vi interessa, vi mostro
-> come viene segmentato un documento».
+> **È la sezione su cui conviene offrire l'approfondimento**: nel video dura
+> venticinque secondi di proposito — si vede che i documenti ci sono, che sono
+> indicizzati e che si esportano, e basta — ma è quella dove un docente tecnico
+> trova più da chiedere, ed è quella dove le risposte sono più solide. Se la
+> discussione va bene, proponi tu: «se vi interessa, vi mostro come viene
+> segmentato un documento e come si prova il recupero prima di fidarsene».
 
 **«Perché segmentare in modo diverso a seconda del documento?»**
 > Perché un taglio a lunghezza fissa spezza un articolo di legge a metà frase,
@@ -448,7 +450,7 @@ conviene **offrire** un approfondimento, se la discussione va bene e c'è tempo.
 > manuale e alla conoscenza prodotta dagli agenti stessi. Nel prototipo c'è il
 > caricamento manuale, perché gli altri richiedono il livello server.
 
-## Sulla riparazione di un flusso *(minuto 2:41–3:03)*
+## Sulla riparazione di un flusso *(minuto 3:00–3:19)*
 
 **«Come fa a sapere qual è il blocco giusto?»**
 > Con un punteggio semplice e prevedibile, calcolato **solo fra i blocchi dello
@@ -469,7 +471,7 @@ conviene **offrire** un approfondimento, se la discussione va bene e c'è tempo.
 > un altro strumento, o arrivato da un collega. È il caso reale di
 > un'organizzazione in cui gli agenti circolano.
 
-## Sulla formazione e le certificazioni *(minuto 4:30–6:04)*
+## Sulla formazione e le certificazioni *(minuto 4:41–6:20)*
 
 **«Le certificazioni valgono qualcosa fuori dall'azienda?»**
 > No, e non lo pretendiamo: sono interne, e certificano l'uso della
@@ -493,7 +495,13 @@ conviene **offrire** un approfondimento, se la discussione va bene e c'è tempo.
 > piace, il problema è il corso. Più completion rate e skill coverage, che sono
 > nel cruscotto del capitolo 6.
 
-## Sul consumo e le connessioni *(minuto 6:04–6:41)*
+## Sul consumo e le connessioni *(minuto 6:20–6:55)*
+
+> **Le connessioni non sono più nel video.** In una presentazione sono un
+> dettaglio che chi guarda non sa dove collocare, quindi sono uscite dalla demo
+> breve — ma la domanda su «come vi collegate a un ERP» arriva lo stesso, e la
+> risposta è qui sotto. Se vogliono vederlo, il pannello è a due clic dalla
+> piattaforma aperta.
 
 **«Quei numeri di token sono reali?»**
 > Sono contati su ogni chiamata: misurati dove il fornitore li riporta nella

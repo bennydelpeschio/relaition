@@ -411,3 +411,7 @@ body.bgrip-trascino.row{cursor:row-resize}
 .builder-ritorno .br-link{cursor:pointer;font-weight:700;color:var(--ac);
   text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
 .builder-ritorno .br-link:hover{opacity:.78}
+
+/* Flusso nuovo non ancora salvato: la scritta della testata si fa notare. */
+.bt-stato.non-salvato{color:#D97706;font-weight:700}
+html[data-theme="dark"] .bt-stato.non-salvato{color:#FBBF24}

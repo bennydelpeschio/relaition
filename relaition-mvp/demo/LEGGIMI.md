@@ -5,7 +5,7 @@ l'elemento di cui parla, compie le azioni e racconta cosa sta facendo, passo per
 passo. Serve per registrare un video da mostrare a una commissione o a un
 investitore senza dover guidare il mouse a mano.
 
-**109 passi in 10 capitoli.** La sola narrazione somma 17 minuti; in riproduzione
+**113 passi in 10 capitoli.** La sola narrazione somma 17 minuti; in riproduzione
 automatica le azioni — esecuzioni, scrittura a macchina, attese — si aggiungono,
 quindi conviene contare qualcosa in più. Il peso sta sul Builder: costruzione a
 mano, costruzione conversazionale, dettaglio dei nodi, esecuzione e
@@ -13,7 +13,7 @@ pianificazione occupano da soli quattro capitoli; il capitolo 8 — Learning Hub
 Sfide, Community — è il più lungo con 22 passi, e il capitolo 10 chiude uscendo
 e rientrando **con un altro account**, per mostrare che i dati sono per persona.
 
-## Versione breve: 6 minuti e 41 secondi
+## Versione breve: circa 7 minuti
 
 Per una presentazione commerciale o per un video c'è la **versione breve**:
 
@@ -22,16 +22,18 @@ http://localhost:8099/demo/demo.html?breve
 ```
 
 oppure il pulsante **breve** nella barra dei comandi (che diventa
-**completa** per tornare indietro). Sono **43 passi**, gli stessi della demo
-completa, con i tempi di lettura al 70%: **6 minuti e 41 secondi** in
-riproduzione automatica a 1×, senza chiave collegata — cronometrati su un giro
-intero, non stimati. Chiude con le connessioni e il tema scuro acceso e spento.
+**completa** per tornare indietro). Sono **48 passi**, presi dalla demo completa, con i tempi di lettura al 70% e i
+testi riscritti piu' corti: chi presenta parla sopra, e un riquadro lungo gli fa
+concorrenza. **Circa 7 minuti** in riproduzione automatica a 1×, senza chiave
+collegata — cronometrati su due giri interi, non stimati. Chiude con il tema
+scuro e un cartello che dichiara la fine.
 
 Passa da **tutte e dieci le voci del menu** — una demo che salta una pagina
-lascia il dubbio che quella pagina non esista — e soprattutto **costruisce un
-agente completo e poi esegue quello**, invece di costruirne uno ed eseguirne
-un altro già pronto: trigger, mascheramento dei dati, nodo AI con il suo
-prompt, uscita.
+lascia il dubbio che quella pagina non esista — e porta a termine due percorsi
+interi invece di accennarli: dal **catalogo a un agente proprio** (si cerca, si
+apre la scheda, si installa, si configura, si esegue, si salva, lo si ritrova e
+lo si riapre) e la **costruzione a mano** di un flusso che poi viene eseguito —
+trigger, nodo AI con il suo prompt, mascheramento dei dati, uscita.
 
 Tiene per intero le tre catene che hanno bisogno l'una dell'altra, e sono
 segnate nel codice: la costruzione a mano (chi ne toglie un passo si ritrova a
@@ -45,14 +47,20 @@ una sfida e un contributo scritto e pubblicato. È la parte che il documento
 mette sullo stesso piano della tecnologia, e in una presentazione commerciale
 è quella che distingue una piattaforma da un editor di flussi.
 
-Non si esce e non si rientra con un altro account: in sei minuti il cambio di
-utente costa due passi e aggiunge una cosa sola, che si può raccontare a voce.
+La Knowledge Base qui passa in fretta — si cerca un documento, si vede come e'
+stato indicizzato, lo si esporta — perche' in una presentazione serve sapere che
+la conoscenza aziendale c'e' e che non resta in ostaggio, non come funziona il
+recupero: quello sta nella versione completa.
+
+Non si esce e non si rientra con un altro account: il cambio di utente costa due
+passi e aggiunge una cosa sola, che si puo' raccontare a voce.
 
 Restano nella versione completa: ricerca e filtri del catalogo, recensioni,
 palette e annullamento, ciclo e tetto di sicurezza, validazione, modifica via
 chat, allegati alla mail, interruzione a metà, flusso con Knowledge Base,
 richiesta di modifica in revisione, candidatura a una sfida, badge e obiettivi
-del profilo, e il rientro con un altro account.
+del profilo, il pannello delle connessioni, il funzionamento del recupero dalla
+Knowledge Base, e il rientro con un altro account.
 
 L'elenco dei passi, con il criterio di scelta scritto sopra, è
 `COPIONE_BREVE_PASSI` in fondo a `copione.js`.
@@ -144,7 +152,7 @@ finito di parlare su un passaggio.
 | **P** | avvia o mette in pausa la riproduzione automatica |
 | **I** | apre l'indice dei capitoli, per saltare dove serve |
 | **H** | nasconde la barra dei comandi; per riaverla muovi il mouse e clicca «⌃ comandi», oppure ripremi H |
-| **breve / completa** | passa alla versione breve (43 passi, 6 minuti e 41 secondi) o a quella completa (109 passi) |
+| **breve / completa** | passa alla versione breve (48 passi, circa 7 minuti) o a quella completa (113 passi) |
 
 Nella barra ci sono anche la **velocità** (1× → 1,5× → 2× → 0,75×) e il tasto
 **⟲** che ricomincia da capo ripristinando lo stato.
@@ -217,7 +225,7 @@ nessun pulsante aggiunto, nessuna riga di logica toccata. Cancellando la cartell
 |---|---|
 | `demo.html` | il palco: riquadro, faretto, riquadro di narrazione, comandi |
 | `motore.js` | fotografia e ripristino, avanzamento, puntatore, posizionamento |
-| `copione.js` | i 109 passi: cosa fa ognuno, cosa illumina, cosa racconta |
+| `copione.js` | i 113 passi: cosa fa ognuno, cosa illumina, cosa racconta |
 
 Funziona perché pagina e applicazione condividono l'origine: da lì si chiamano
 `go()`, `dbAll()` e le altre funzioni esattamente come farebbe il codice

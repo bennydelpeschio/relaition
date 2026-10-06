@@ -685,5 +685,5 @@ function alternaBreve(){
   var b=document.getElementById('bBreve');
   if(!b||typeof DEMO_BREVE==='undefined')return;
   if(DEMO_BREVE){ b.textContent='completa'; b.title='Passa alla versione completa ('+(typeof COPIONE_COMPLETO!=='undefined'?COPIONE_COMPLETO.length:'')+' passi)'; }
-  else { b.textContent='breve'; b.title='Passa alla versione breve ('+(typeof COPIONE_BREVE_PASSI!=='undefined'?COPIONE_BREVE_PASSI.length:'')+' passi, 6 minuti e 41 secondi)'; }
+  else { b.textContent='breve'; b.title='Passa alla versione breve ('+(typeof COPIONE_BREVE_PASSI!=='undefined'?COPIONE_BREVE_PASSI.length:'')+' passi, circa 7 minuti)'; }
 })();

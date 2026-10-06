@@ -511,3 +511,97 @@ Grazie a chi ha provato la piattaforma e ha scritto cosa non tornava. Quasi tutt
   testa al riquadro c'è l'intervallo («30 set – 6 ott»), l'ultima barra dice
   **oggi** ed è evidenziata, e il suggerimento del mouse porta la data per
   esteso.
+
+## Dimostrazione guidata (versione breve)
+
+Rifatta su indicazione di chi la presenterà. **48 passi, circa 7 minuti**,
+cronometrati su due giri interi.
+
+- **I testi sono più corti.** La versione breve adesso ha un testo proprio: dice
+  cosa si sta vedendo in una riga e lascia alla voce il perché. Chi presenta
+  parla sopra, e un riquadro lungo gli faceva concorrenza. La versione completa
+  resta com'era.
+- **Il percorso del catalogo è intero**: si cerca dalla barra, si apre la scheda,
+  si installa, si configura, si esegue, **si salva**, lo si ritrova nell'elenco e
+  lo si riapre. Il flusso che si riapre è quello delle fatture, il più facile da
+  raccontare.
+- **La Knowledge Base passa in fretta**: documento cercato, indicizzazione
+  mostrata, esportazione in Markdown. Il dettaglio sul recupero resta nella
+  versione completa.
+- **Il pannello delle connessioni è uscito.**
+- **Formazione e sfide hanno due passi in più** (le fasi di una sfida, i criteri
+  di valutazione) e **non nominano più i punteggi**: sono tarature che cambiano.
+- **Chiude con il tema scuro e un cartello «Fine della dimostrazione»**, così chi
+  presenta sa quando attaccare.
+- **Tre difetti di sincronia corretti**: la costruzione a mano partiva mentre a
+  schermo c'era ancora un'altra pagina; «Scrivo il prompt» mostrava il testo a
+  scrittura già finita; i passi dell'installazione e della revisione erano
+  stretti e accumulavano ritardo.
+- **Nessun pop-up resta aperto**: verificato passo per passo su tutti e 48.
+
+Aggiornati di conseguenza il copione parlato (`demo/VOCE-DEMO-BREVE.md`), il
+discorso di presentazione e i minutaggi nelle domande attese.
+
+## Telefono (v124)
+
+- **I nodi si spostano col dito.** Toccando un nodo il Builder lo ridisegna e
+  l'elemento originale esce dal documento: i suoi eventi di spostamento non
+  arrivavano più alla tela. Ora si ascoltano sull'elemento toccato.
+- **La selezione non si perde più** aprendo le proprietà: i click «di
+  compatibilità» del browser cadevano sulla tela vuota e la deselezionavano.
+- **Pannello «Integrazione AI» richiudibile** (chiuso di default sul telefono):
+  nel foglio dei blocchi lasciava poco spazio ai connettori.
+- **Più tela**: della chat del Builder resta la barra di scrittura; suggerimenti
+  e cronologia compaiono solo mentre la si usa.
+- **Accesso scorrevole**, in verticale e in orizzontale, con logo ridotto.
+- **Tasto «Esci» nel profilo**, accanto a «Modifica profilo» (anche su desktop).
+
+## Telefono, barra superiore (v125)
+
+- **Ricerca di nuovo raggiungibile**: un'icona 🔍 nella testata apre la barra a
+  tutta larghezza (prima era nascosta e basta). Si richiude toccando fuori.
+- **«+ Nuovo Agente» mostra un «+»** vero, grande e centrato: il segno era un
+  `::after` che sul telefono non sempre compariva.
+- **Icone centrate** in tutti i pulsanti della testata e nel menu «⋯».
+
+## Trascinamento dei nodi (v126)
+
+- **Spostare un nodo costa meno.** A ogni fotogramma si ricostruiva l'HTML di
+  tutti i nodi; ora, mentre si trascina, si aggiornano solo le posizioni degli
+  elementi esistenti, e le porte degli archi si cercano in una mappa invece che
+  con tre ricerche per freccia. Il disegno resta identico (verificato a
+  confronto diretto con quello completo).
+
+## Trascinamento fluido (v127)
+
+- **Causa trovata**: a ogni fotogramma `b_render` ridisegnava anche il pannello
+  proprietà del nodo selezionato. Premendo su un nodo lo si seleziona, quindi
+  durante ogni spostamento il pannello veniva ricostruito 60 volte al secondo:
+  il costo di un fotogramma saliva da ~4 a ~15 ms, oltre il budget di 16 ms.
+  Ora il pannello (e la cronologia della chat) si ridisegnano al rilascio.
+  Misurato: 15,5 → 7,1 ms a fotogramma. Resta in v126 la ricostruzione dei soli
+  nodi spostati, e la testata non viene più riscritta durante il trascinamento.
+
+## Ricerca nella Knowledge Base (v128)
+
+- **La digitazione non va più a scatti.** A ogni lettera si ricaricavano dal
+  database tutti i documenti con l'intero testo (uno di 3,7 MB), si rifaceva il
+  minuscolo su ognuno, si ricalcolavano le statistiche e si ricostruiva anche il
+  campo di ricerca. Ora: documenti e testo minuscolo in cache (si ricalcolano
+  solo se la tabella cambia), pausa di 140 ms che raccoglie le lettere, e si
+  ridisegna la sola lista, non il campo. Con un documento da 4 MB: 1,6 ms per
+  lettera.
+
+## Salvataggi e bozze (v129)
+
+- **Niente più «Nuovo agente (2), (3)…».** Un flusso mai salvato non crea più una
+  riga nel database alla prima modifica: resta **bozza** (una per utente, in
+  locale, ripristinata alla riapertura). L'autosave aggiorna soltanto agenti già
+  salvati, **sul posto**: nessuna versione in più. La riga nasce quando premi 💾
+  o metti il flusso in produzione.
+- **Avviso alla chiusura.** Con un flusso nuovo non salvato nel Builder, chiudere
+  o ricaricare la scheda viene fermato dal browser («vuoi uscire?»). Il browser
+  non permette pulsanti «Salva / Non salvare» in quella finestra: restando, 💾 è
+  a un clic. Uscendo dall'account compare lo stesso avviso, scritto per esteso.
+- **La testata lo dice**: «bozza non salvata», in arancione.
+- **«Pianifica» su un flusso nuovo propone il salvataggio** invece di rifiutare.

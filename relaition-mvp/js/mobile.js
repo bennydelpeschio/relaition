@@ -439,7 +439,7 @@ function _preparaPonteTocco(){
   if(!ca||ca._pontePronto)return;
   ca._pontePronto=true;
 
-  var bersaglio=null;
+  var bersaglio=null, nodoToccato=false;
 
   ca.addEventListener('touchstart',function(e){
     if(!dispositivoTattile())return;
@@ -465,10 +465,21 @@ function _preparaPonteTocco(){
     }
     if(e.touches.length!==1)return;
     bersaglio=e.target;
+    // Toccare un nodo lo fa ridisegnare: l'elemento originale esce dal
+    // documento e i suoi touchmove/touchend NON risalgono piu' alla tela (un
+    // elemento staccato non ha antenati). E' il motivo per cui il nodo non si
+    // riusciva a spostare. Gli ascoltatori vanno messi sull'elemento toccato.
+    var el=bersaglio; nodoToccato=!!(el.closest&&el.closest('.b-node'));
+    if(el&&el.addEventListener&&!el._ponte){
+      el._ponte=true;
+      el.addEventListener('touchmove',function(ev){ muovi(ev) },{passive:false});
+      el.addEventListener('touchend',function(ev){ fine(ev) },{passive:false});
+      el.addEventListener('touchcancel',function(ev){ fine(ev) });
+    }
     _eventoMouse('mousedown',e.touches[0],bersaglio);
   },{passive:true});
 
-  ca.addEventListener('touchmove',function(e){
+  var muovi=function(e){
     if(!dispositivoTattile())return;
     if(_pinch&&e.touches.length===2){
       e.preventDefault();
@@ -481,14 +492,21 @@ function _preparaPonteTocco(){
     // Senza questo, il browser scorre la pagina mentre si sposta un nodo e il
     // nodo resta indietro.
     e.preventDefault();
+    if(_inizioTocco&&(Math.abs(e.touches[0].clientX-_inizioTocco.x)>10||Math.abs(e.touches[0].clientY-_inizioTocco.y)>10))_toccoMosso=true;
     _eventoMouse('mousemove',e.touches[0],document);
-  },{passive:false});
+  };
+  ca.addEventListener("touchmove",muovi,{passive:false});
 
   var fine=function(e){
     if(_pinch&&e.touches.length<2)_pinch=null;
     if(!bersaglio)return;
     var t=(e.changedTouches&&e.changedTouches[0])||{clientX:0,clientY:0,screenX:0,screenY:0};
     _eventoMouse('mouseup',t,document);
+    // Gli eventi mouse «di compatibilita'» del browser cadrebbero sulla tela
+    // vuota (il nodo e' stato ridisegnato) e la deselezionerebbero: e' il
+    // motivo per cui aprendo le proprieta' la selezione spariva.
+    // Solo per i nodi: un tocco su una freccia deve restare un clic.
+    if(e.cancelable&&nodoToccato)e.preventDefault();
     bersaglio=null;
   };
   ca.addEventListener('touchend',fine);
@@ -572,3 +590,55 @@ function _agganciaSessione(){
     window[nome]=avvolta;
   });
 }
+
+// ── Pannello «Integrazione AI» richiudibile (telefono) ──────────
+// Nel foglio dei blocchi occupava mezza altezza, e i connettori che si
+// cercavano restavano sotto. Chiuso di default; un tocco sul titolo lo apre
+// (serve ogni tanto: collegare la chiave si fa una volta). Il pannello compare
+// ogni volta che il Builder si ridisegna, quindi si aggancia sul contenitore.
+document.addEventListener('click',function(e){
+  var t=e.target.closest&&e.target.closest('.ai-panel-title');
+  if(!t||!schermoStretto())return;
+  var p=t.closest('.ai-panel'); if(!p)return;
+  p.classList.toggle('chiuso');
+  try{ localStorage.setItem('relaition_ai_panel_aperto',p.classList.contains('chiuso')?'0':'1') }catch(err){}
+});
+function _chiudiPannelloAI(){
+  if(!schermoStretto())return;
+  var p=document.querySelector('.ai-panel'); if(!p||p._init)return;
+  p._init=true;
+  var aperto='0'; try{ aperto=localStorage.getItem('relaition_ai_panel_aperto')||'0' }catch(err){}
+  if(aperto!=='1')p.classList.add('chiuso');
+}
+document.addEventListener('DOMContentLoaded',function(){ setTimeout(_chiudiPannelloAI,600) });
+window.addEventListener('hashchange',function(){ setTimeout(_chiudiPannelloAI,300) });
+
+// ── Ricerca da telefono ─────────────────────────────────────────
+// La barra di ricerca della testata e' nascosta sotto i 768px perche' non ci
+// sta. Nascosta e basta, pero', significava non poter cercare: al suo posto
+// un'icona la apre a tutta larghezza.
+function _preparaRicercaMobile(){
+  var tb=document.querySelector('.topbar');
+  if(!tb||document.getElementById('btnCercaMobile')||!tb.querySelector('.tb-search'))return;
+  var b=document.createElement('div');
+  b.className='tb-icon-btn solo-tocco';
+  b.id='btnCercaMobile';
+  b.title='Cerca';
+  b.setAttribute('aria-label','Cerca');
+  b.innerHTML='<span>🔍</span>';
+  b.onclick=function(e){
+    e.stopPropagation();
+    tb.classList.toggle('cerca-aperta');
+    if(tb.classList.contains('cerca-aperta')){
+      var i=document.getElementById('globalSearch'); if(i)setTimeout(function(){ i.focus() },50);
+    }
+  };
+  var bersaglio=document.getElementById('btnAltroMobile')||tb.querySelector('.notif-panel');
+  tb.insertBefore(b,bersaglio||null);
+  // Un tocco fuori la richiude, e cosi' il passaggio a un'altra pagina.
+  document.addEventListener('click',function(e){
+    if(!e.target.closest||e.target.closest('.tb-search')||e.target.closest('#btnCercaMobile'))return;
+    tb.classList.remove('cerca-aperta');
+  });
+}
+document.addEventListener('DOMContentLoaded',function(){ setTimeout(_preparaRicercaMobile,400) });

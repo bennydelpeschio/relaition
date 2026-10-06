@@ -109,7 +109,8 @@ function doLogin(e){
 function doGuestLogin(){completeLogin(UTENTE_OSPITE.email)}
 
 function logout(){
-  if(!confirm('Uscire da RelAItion?'))return;
+  var _nonSalv=(typeof builderNonSalvato==='function'&&builderNonSalvato());
+  if(!confirm(_nonSalv?'Il flusso nel Builder non è stato salvato: la bozza resta su questo dispositivo ma non compare in «I miei agenti».\n\nUscire comunque da RelAItion?':'Uscire da RelAItion?'))return;
   localStorage.removeItem('relaition_logged_in');
   localStorage.removeItem('relaition_login_email');
   // Niente ricaricamento: rifare l'inizializzazione di SQLite costava qualche
