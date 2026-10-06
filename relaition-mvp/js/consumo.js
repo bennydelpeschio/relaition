@@ -149,11 +149,74 @@ function usaQuota(){
 // Risposta simulata, nel formato che il nodo si aspetta. Dice di essere
 // simulata anche dentro il testo: se finisce in un file o in una mail, lo si
 // legge li'.
+// Chiavi che il prompt chiede esplicitamente al modello. Un prompt scritto
+// bene le dichiara — «Rispondi SOLO JSON: {punteggio, motivazione}» — e sono
+// le stesse che un nodo "Convalida output" a valle pretende.
+function chiaviRichiesteDalPrompt(prompt){
+  var t=String(prompt||'');
+  var chiavi=[],visti={};
+  function aggiungi(k){
+    k=String(k||'').trim().replace(/^["'`]|["'`]$/g,'').trim();
+    if(!k||!/^[A-Za-z_][\w]{0,40}$/.test(k)||visti[k])return;
+    visti[k]=true;chiavi.push(k);
+  }
+  // Forma 1: un blocco fra graffe elencato nel prompt.
+  var m=t.match(/\{([^{}]{2,400})\}/g)||[];
+  m.forEach(function(blocco){
+    var dentro=blocco.slice(1,-1);
+    // Forma 1b: chiavi con i due punti ("punteggio": 0-100)
+    var conDuePunti=dentro.match(/["']?([A-Za-z_]\w{0,40})["']?\s*:/g);
+    if(conDuePunti&&conDuePunti.length>=2){
+      conDuePunti.forEach(function(p){ aggiungi(p.replace(/\s*:\s*$/,'')) });
+      return;
+    }
+    // Forma 1a: elenco semplice separato da virgole
+    if(dentro.indexOf(',')>=0||/^[A-Za-z_]\w*$/.test(dentro.trim())){
+      dentro.split(',').forEach(aggiungi);
+    }
+  });
+  return chiavi.slice(0,12);
+}
+
+// Valore plausibile per una chiave, scelto dal suo nome. Deterministico: la
+// stessa chiave dà sempre lo stesso valore, così due esecuzioni della stessa
+// prova sono confrontabili.
+function valoreSimulatoPerChiave(k){
+  var n=String(k).toLowerCase();
+  if(/punteggio|score|priorit|rischio_num|valutazione|rating|probabilit|percentuale/.test(n)){
+    var s=0;for(var i=0;i<n.length;i++)s+=n.charCodeAt(i);
+    return 40+(s%41); // 40..80: dentro qualunque scala 0-100
+  }
+  if(/^(is_|ha_|e_)|^(valido|approvato|urgente|completo|conforme)$/.test(n))return true;
+  if(/importo|totale|quantit|numero|conteggio|giorni|ore|anni/.test(n))return 0;
+  if(/data|scadenza|_il$/.test(n))return new Date().toISOString().substring(0,10);
+  if(/elenco|lista|voci|articoli|righe|tag/.test(n))return [];
+  return 'valore simulato (quota di prova)';
+}
+
 function rispostaQuota(prompt,systemPrompt,config){
   var fmt=String((config&&(config.outformat||config.outFormat))||'').toLowerCase();
   var estratto=String(prompt||'').replace(/\s+/g,' ').trim().substring(0,90);
   if(fmt==='json'){
-    return JSON.stringify({simulato:true,fonte:'quota di prova',nota:'Risposta simulata: nessun modello collegato. Il flusso prosegue per mostrare la struttura, non il contenuto.',richiesta:estratto});
+    // La risposta simulata deve avere la FORMA che il nodo ha chiesto, non una
+    // forma propria. Senza questo, un flusso con un nodo "Convalida output" a
+    // valle si fermava sempre — «campo mancante: punteggio» — e il blocco non
+    // diceva niente sul flusso: diceva solo che la simulazione ignorava il
+    // prompt. Un orchestratore che delega a un sotto-agente così non arrivava
+    // mai in fondo. I campi restano dichiaratamente simulati: `simulato:true`
+    // e `nota` viaggiano dentro il JSON, quindi chiunque lo legga — in un
+    // file, in una mail, nel registro — sa che il contenuto non è vero.
+    var out={simulato:true,fonte:'quota di prova',
+      nota:'Risposta simulata: nessun modello collegato. I campi rispettano la forma chiesta dal prompt, i valori non sono veri.',
+      richiesta:estratto};
+    // Le chiavi si cercano nel prompt di sistema oltre che nel messaggio: è lì
+    // che il nodo AI scrive «Rispondi SOLO JSON: {…}», e dopo la chiamata a
+    // uno strumento il messaggio contiene l'esito dello strumento, non più la
+    // richiesta originale.
+    chiaviRichiesteDalPrompt(String(systemPrompt||'')+'\n'+String(prompt||'')).forEach(function(k){
+      if(out[k]===undefined)out[k]=valoreSimulatoPerChiave(k);
+    });
+    return JSON.stringify(out);
   }
   return 'Risposta simulata dalla quota di prova (nessun modello collegato). Richiesta: «'+estratto+(String(prompt||'').length>90?'…':'')+'». Collega la tua chiave nel pannello Integrazione AI per una risposta vera.';
 }

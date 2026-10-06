@@ -150,6 +150,10 @@ function loadSavedAgent(name){
   try{
     B.nodes=JSON.parse(row.nodes_json);B.edges=JSON.parse(row.edges_json);B.nextId=row.next_id||1;
     B.selId=-1;B.selIds=[];B.selEdgeIdx=-1;currentAgentName=name;B.dbAgentId=row.id;B.context=row.context||'';
+    // Si apre un altro flusso dalla lista: la briciola di ritorno a un
+    // orchestratore non c'entra piu' e lascerebbe in testa al Builder un
+    // collegamento verso un flusso da cui non si e' arrivati.
+    B._ritorno=null;
     go('builder');b_render();
     // Aprire un agente e trovarlo fuori schermo — perché la vista conservava
     // pan e zoom del flusso precedente — sembrava un flusso vuoto. La vista si
@@ -244,7 +248,14 @@ function applicaImport(data){
   // I campi obbligatori acquisiti dai connettori dopo l'esportazione
   // resterebbero vuoti e bloccherebbero l'esecuzione di un flusso che era
   // valido quando e' stato esportato.
-  if(typeof fillRequiredDefaults==='function')fillRequiredDefaults(B.nodes);
+  // Quanti campi sono stati riempiti con il valore predefinito del connettore
+  // va detto: sono valori messi dalla piattaforma, non dall'autore del flusso,
+  // e chi importa deve sapere che li' c'e' un segnaposto da guardare prima di
+  // mandare il flusso in produzione. Il motore si ferma comunque se restano
+  // vuoti (vedi rtPrevolo in js/agent-runtime.js), ma un segnaposto plausibile
+  // non e' vuoto: passerebbe senza che nessuno lo abbia scelto.
+  var riempiti=0;
+  if(typeof fillRequiredDefaults==='function')riempiti=fillRequiredDefaults(B.nodes)||0;
 
   closeModal();
   go('builder');
@@ -253,7 +264,9 @@ function applicaImport(data){
   if(typeof bResetView==='function')bResetView();
   if(typeof aggiornaTitoloBuilder==='function')aggiornaTitoloBuilder();
 
-  showToast('\u2705 "'+currentAgentName+'" importato: '+B.nodes.length+' nodi. Premi \ud83d\udcbe Salva per conservarlo');
+  showToast('\u2705 "'+currentAgentName+'" importato: '+B.nodes.length+' nodi'+
+    (riempiti?' \u00b7 \u26a0\ufe0f '+riempiti+' campo/i obbligatorio/i riempito/i con il valore predefinito: controllali':'')+
+    '. Premi \ud83d\udcbe Salva per conservarlo');
   addAct('Importato workflow: '+currentAgentName);
   return true;
 }
@@ -532,15 +545,66 @@ function saveKBPaste(){
   openKBDocsModal();
 }
 
+// Filtri dell'elenco dei documenti. Vivono fuori dalla funzione perche'
+// l'elenco si ridisegna a ogni caricamento, cancellazione e reindicizzazione:
+// tenendoli dentro, ogni ridisegno azzererebbe quello che si stava cercando.
+var KB_FILTRO={testo:'',bu:'Tutte'};
+
+function kbFiltraDocs(v){ KB_FILTRO.testo=String(v||'').toLowerCase(); renderKBDocsList() }
+function kbFiltraBU(v){ KB_FILTRO.bu=v||'Tutte'; renderKBDocsList() }
+
 function renderKBDocsList(){
   var el=document.getElementById('kbDocsList');if(!el)return;
-  var docs=dbAll('SELECT * FROM kb_docs ORDER BY uploaded_at DESC');
-  if(!docs.length){el.innerHTML='<div style="font-size:11px;color:var(--tx4);padding:8px 0">Nessun documento caricato ancora.</div>';return}
-  var st=typeof kbStats==='function'?kbStats():{documenti:docs.length,indicizzati:0,porzioni:0};
-  el.innerHTML='<div style="font-size:11px;color:var(--tx3);margin-bottom:8px">'+
-      st.documenti+' documenti · '+st.indicizzati+' indicizzati · <strong>'+st.porzioni+' porzioni</strong> ricercabili'+
+  var tutti=dbAll('SELECT * FROM kb_docs ORDER BY uploaded_at DESC');
+  if(!tutti.length){el.innerHTML='<div style="font-size:11px;color:var(--tx4);padding:8px 0">Nessun documento caricato ancora.</div>';return}
+
+  // Nome, business unit e riservatezza sono gia' i metadati che il documento
+  // di progetto assegna a ogni documento: la ricerca usa quelli, senza
+  // introdurre concetti nuovi. Con sei documenti si scorre; con sessanta,
+  // che e' il caso vero in azienda, un elenco piatto non si naviga.
+  // La ricerca guarda anche DENTRO i documenti, non solo i nomi: in una
+  // Knowledge Base vera il nome del file è l'ultima cosa che si ricorda —
+  // «dov'era scritta la penale per il recesso?» non contiene «contratto».
+  // Quando la corrispondenza è nel contenuto lo si dice, con la riga in cui
+  // compare: senza, un documento che appare nei risultati senza che il nome
+  // c'entri sembra un errore del filtro.
+  var dentro={};
+  var docs=tutti.filter(function(d){
+    if(KB_FILTRO.bu!=='Tutte'&&(d.business_unit||'Tutte')!==KB_FILTRO.bu)return false;
+    if(!KB_FILTRO.testo)return true;
+    var q=KB_FILTRO.testo;
+    if(String(d.name||'').toLowerCase().indexOf(q)>=0
+      || String(d.business_unit||'').toLowerCase().indexOf(q)>=0
+      || String(d.confidentiality||'').toLowerCase().indexOf(q)>=0) return true;
+    var testo=String(d.content||'');
+    var i=testo.toLowerCase().indexOf(q);
+    if(i<0)return false;
+    // Un estratto attorno alla parola trovata, tagliato ai confini di riga
+    // per non mostrare mezza parola all'inizio e alla fine.
+    var da=Math.max(0,i-45), a=Math.min(testo.length,i+q.length+65);
+    dentro[d.id]=(da>0?'…':'')+testo.substring(da,a).replace(/\s+/g,' ').trim()+(a<testo.length?'…':'');
+    return true;
+  });
+
+  var st=typeof kbStats==='function'?kbStats():{documenti:tutti.length,indicizzati:0,porzioni:0};
+  var bus=['Tutte'].concat((typeof KB_BUSINESS_UNITS!=='undefined'?KB_BUSINESS_UNITS:[]).filter(function(b){return b!=='Tutte'}));
+
+  el.innerHTML=
+    '<div style="display:flex;gap:6px;margin-bottom:8px">'+
+      '<input class="prop-input" style="flex:1;height:30px;font-size:11.5px" placeholder="Cerca nel nome o nel testo dei documenti…" '+
+        'value="'+escAttr(KB_FILTRO.testo)+'" oninput="kbFiltraDocs(this.value)">'+
+      '<select class="prop-select" style="width:140px;height:30px;font-size:11.5px" onchange="kbFiltraBU(this.value)">'+
+        bus.map(function(b){return '<option'+(b===KB_FILTRO.bu?' selected':'')+'>'+escHtml(b)+'</option>'}).join('')+
+      '</select>'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--tx3);margin-bottom:8px">'+
+      (docs.length===tutti.length
+        ? st.documenti+' documenti'
+        : '<strong>'+docs.length+'</strong> di '+st.documenti+' documenti')+
+      ' · '+st.indicizzati+' indicizzati · <strong>'+st.porzioni+' porzioni</strong> ricercabili'+
       (st.indicizzati<st.documenti?' · <span style="color:var(--ac2);cursor:pointer;text-decoration:underline" onclick="kbReindexAllUI()">indicizza i mancanti</span>':'')+
     '</div>'+
+    (docs.length?'':'<div style="font-size:11px;color:var(--tx4);padding:8px 0">Nessun documento corrisponde al filtro.</div>')+
     docs.map(function(d){
     var tipo=(typeof KB_TYPE_LABEL!=='undefined'&&KB_TYPE_LABEL[d.source_type])||'—';
     return '<div class="validation-item" style="background:var(--bg2);border-color:var(--bo);cursor:default;align-items:center">'+
@@ -553,6 +617,11 @@ function renderKBDocsList(){
           (d.chunk_count?d.chunk_count+' porzioni':'<span style="color:#EF4444">non indicizzato</span>')+' · '+
           new Date(d.uploaded_at).toLocaleDateString('it-IT')+
         '</div>'+
+        // Se la corrispondenza e' nel testo e non nel nome, si mostra dove:
+        // altrimenti il documento sembra comparire nei risultati per sbaglio.
+        (dentro[d.id]
+          ? '<div style="font-size:10px;color:var(--tx3);margin-top:4px;padding:4px 7px;background:var(--bg2);border-left:2px solid var(--ac2);border-radius:0 5px 5px 0;line-height:1.45">'+escHtml(dentro[d.id])+'</div>'
+          : '')+
       '</div>'+
       '<span style="cursor:pointer;color:#EF4444;font-size:12px;padding:0 4px" onclick="deleteKBDoc(\''+d.id+'\')" title="Elimina">✕</span>'+
     '</div>';

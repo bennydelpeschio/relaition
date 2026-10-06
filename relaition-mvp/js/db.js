@@ -265,7 +265,11 @@ var MIGRATIONS=[
   // cancellarlo — è comunque lavoro dell'utente, e con lo stesso nome
   // sarebbe irraggiungibile da loadSavedAgent, che cerca per nome.
   "UPDATE agents SET name = name || ' (' || id || ')' WHERE id NOT IN (SELECT MAX(id) FROM agents GROUP BY name)",
-  "CREATE UNIQUE INDEX IF NOT EXISTS idx_agents_name ON agents (name)"
+  "CREATE UNIQUE INDEX IF NOT EXISTS idx_agents_name ON agents (name)",
+  // Account creati dalla schermata di accesso. I quattro profili dimostrativi
+  // restano scritti nel codice: questi sono gli altri, e vivono nel database
+  // come tutto il resto.
+  "CREATE TABLE IF NOT EXISTS utenti_registrati (email TEXT PRIMARY KEY, password TEXT, name TEXT, iniziali TEXT, colore TEXT, role TEXT, org TEXT, creato_il TEXT)"
 ];
 
 // Il motore SQLite (sql.js) normalmente scarica il proprio file .wasm con
@@ -336,7 +340,7 @@ function dbGetOne(sql,params){var r=dbAll(sql,params);return r.length?r[0]:null}
 // Elenco usato da export/import JSON e dal reset: ogni tabella nuova va
 // aggiunta qui, altrimenti resterebbe fuori dal pacchetto di uscita (D6).
 var DB_TABLES=['agents','exec_log','published_agents','my_agents','kb_docs','forum_posts','forum_comments','learn_progress','quiz_done','challenges_registered','xp_log',
-  'agent_versions','kb_chunks','agent_memory','publications','policies','connessioni','execution_events','recensioni','challenge_submissions','challenge_winners','challenge_questions','challenge_votes','challenge_feedback','obiettivi_config','forum_likes','forum_views','identita','profili','consumo_token'];
+  'agent_versions','kb_chunks','agent_memory','publications','policies','connessioni','execution_events','recensioni','challenge_submissions','challenge_winners','challenge_questions','challenge_votes','challenge_feedback','obiettivi_config','forum_likes','forum_views','identita','profili','consumo_token','utenti_registrati'];
 
 function dbInsertRow(table,row){
   // Le chiavi che iniziano con `_` sono annotazioni del pacchetto di export,

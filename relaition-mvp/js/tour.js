@@ -18,7 +18,7 @@ var GUIDA_PASSI=[
   {
     pagina:'builder', sel:'.builder-sidebar',
     titolo:'La palette dei componenti',
-    testo:'Dieci categorie, 78 componenti. I <strong>Controlli</strong> sono la categoria che distingue un giocattolo da uno strumento aziendale: mascherano dati, convalidano output, chiedono approvazione umana.',
+    testo:'Dieci categorie, 78 componenti. I <strong>Controlli</strong> sono la categoria che distingue un semplice tool da uno strumento aziendale: mascherano dati, convalidano output, chiedono approvazione umana.',
     pos:'right'
   },
   {
@@ -165,7 +165,10 @@ function guidaDisegna(s,i){
 
   // Il riquadro si posiziona dal lato indicato, ma non deve mai uscire dallo
   // schermo: se non ci sta, si ribalta sul lato opposto.
-  var bw=340,bh=box.offsetHeight||190,m=14;
+  // 340px fissi erano piu' larghi di un telefono da 320: il riquadro usciva
+  // da entrambi i lati e il testo finiva tagliato. Si restringe quando lo
+  // schermo lo impone, invece di essere riposizionato all'infinito.
+  var bw=Math.min(340,window.innerWidth-20),bh=box.offsetHeight||190,m=14;
   var top,left;
   var pos=s.pos||'bottom';
   if(pos==='right'){ left=r.right+m; top=r.top; }

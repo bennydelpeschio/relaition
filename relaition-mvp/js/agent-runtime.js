@@ -168,6 +168,12 @@ function createRuntimeContext(spec){
     gr: { startedAt: Date.now(), aiCalls: 0, kbChunks: [], maskMap: {}, lastError: null },
     pipeline: '',
     hasError: false,
+    // Elenco strutturato di cosa si è rotto, e su quale nodo. Il registro
+    // raccontava già l'errore riga per riga, ma su un flusso di dodici nodi
+    // trovare la riga rossa in mezzo a quaranta righe verdi è esattamente il
+    // lavoro che la piattaforma deve togliere: da qui nasce la finestra degli
+    // errori di esecuzione, gemella di quella della validazione.
+    problemi: [],
     waiting: null,
     outputs: {},        // output per nodo, per i punti di convergenza
     // Ordine di completamento dei nodi: serve a risolvere un segnaposto
@@ -175,6 +181,24 @@ function createRuntimeContext(spec){
     ordineOutput: [],
     skipFrom: {}        // rami disattivati da una condizione
   };
+}
+
+// Registra un problema nell'elenco strutturato. `kind` dice di che natura è,
+// perché la finestra propone rimedi diversi: un campo vuoto si riempie, un
+// controllo che blocca si riapre, un guasto di rete si riprova.
+// `rimedio` è il testo della cosa concreta da fare, non una ripetizione del
+// problema con altre parole.
+function rtProblema(ctx, node, kind, msg, rimedio){
+  if(!ctx.problemi) ctx.problemi = [];
+  ctx.problemi.push({
+    nodeId: node ? node.id : null,
+    nome: node ? node.name : null,
+    icona: node ? (node.icon || '•') : '🔴',
+    tipo: node ? node.type : null,
+    kind: kind,
+    msg: msg,
+    rimedio: rimedio || null
+  });
 }
 
 function rtEmit(ctx, type, nodeId, payload){
@@ -376,6 +400,20 @@ async function rtRunConnector(ctx, node, input){
     : (node.config || {});
   var key = idempotencyKey(ctx.execId, node.id, 1);
 
+  // Secondo controllo, dopo che la connessione ha fatto la sua parte: il
+  // pre-volo guarda la configurazione del nodo, questo guarda quello che
+  // l'adattatore riceverà davvero. Serve nei casi in cui i due differiscono —
+  // una connessione cancellata fra il pre-volo e l'esecuzione, o un campo
+  // riempito da un segnaposto che a questo giro risolve a vuoto. Il nodo
+  // fallisce invece di chiamare l'adattatore con un destinatario vuoto.
+  if(!ctx.replay){
+    var vuoti = rtCampiMancanti({ type:'ac', name:node.name, config:cfg });
+    if(vuoti.length){
+      return { ok:false, blocco:true, error:'campi obbligatori non compilati: '+vuoti.join(', '),
+        msg:'⛔ "'+node.name+'" non eseguito: manca '+vuoti.join(', ')+'. Il flusso si interrompe qui: i nodi a valle riceverebbero il testo di un passaggio mai avvenuto.', real:false };
+    }
+  }
+
   var replayed = rtReplayLookup(ctx, node.id, 'tool');
   if(replayed !== null){
     rtRecordCall(ctx, node.id, 'tool', { replay:true }, replayed);
@@ -570,6 +608,17 @@ async function rtRunAiNode(ctx, node){
     sys = 'ISTRUZIONI GENERALI DEL WORKFLOW (da rispettare sempre):\n'+ctx.context.trim()+'\n\n---\n\n'+sys;
   }
 
+  // Stato della simulazione degli strumenti, condiviso fra le iterazioni di
+  // QUESTO nodo. Prima il contrassegno «la chiamata simulata è già stata
+  // fatta» veniva scritto su `cfgRun`, che è una copia nuova a ogni giro: la
+  // simulazione proponeva lo stesso strumento a ogni iterazione, il controllo
+  // anti-ciclo lo intercettava, e l'output del nodo finiva per essere la
+  // narrazione della chiamata invece della risposta chiesta dal prompt. Un
+  // nodo «Convalida output» a valle la respingeva sempre, e il flusso non
+  // arrivava mai in fondo. Un oggetto passato per riferimento sopravvive alle
+  // iterazioni senza sporcare la configurazione salvata del nodo.
+  var simStrumenti = { fatto:false };
+
   var strumenti = [];
   if(cfg.useTools !== false){
     var abilitati = cfg.enabledTools ? String(cfg.enabledTools).split(',').map(function(s){return s.trim()}).filter(Boolean) : null;
@@ -604,7 +653,13 @@ async function rtRunAiNode(ctx, node){
   var scelto = (typeof risolviProvider === 'function')
     ? risolviProvider(cfg.model)
     : { provider: cfg.model || 'claude' };
-  var provRisolto = scelto.provider || cfg.model || 'claude';
+  // Senza nessun fornitore collegato `risolviProvider` restituisce provider
+  // nullo, e il ripiego su `cfg.model` faceva finire nel registro la parola
+  // «auto», che è la SCELTA fatta sul nodo e non il nome di un fornitore:
+  // si leggevano righe come «non supportato da auto», che non vuol dire
+  // niente. In quel caso si ricade sul predefinito, come fa la chiamata vera.
+  var provRisolto = scelto.provider ||
+    ((cfg.model && cfg.model !== 'auto') ? cfg.model : 'claude');
   // Il modello va scritto nel registro: due esecuzioni dello stesso flusso con
   // modelli diversi possono dare risultati diversi, e senza saperlo il
   // confronto fra due registri non significa nulla.
@@ -681,6 +736,7 @@ async function rtRunAiNode(ctx, node){
     // al modello può durare decine di secondi, ed è proprio quella che
     // l'utente vuole poter troncare.
     var cfgRun = Object.assign({}, cfg, { model: provRisolto, modelId: cfg.modelId,
+      _toolSim: simStrumenti,
       signal: ctx.abortCtrl ? ctx.abortCtrl.signal : undefined,
       // Da dove viene la chiamata, per il conto dei token (js/consumo.js).
       consumo: { agente: ctx.agentName, nodo: node.name } });
@@ -763,7 +819,40 @@ async function rtRunSubAgent(ctx, node){
   }
   rtEmit(ctx, 'agent:handoff', node.id, { to: nome, direction:'in', status: sub.status, nodes: sub.stepsCount });
   msgs.push('   ↳ "'+nome+'" ha completato '+sub.stepsCount+' nodi ('+sub.status+'): controllo restituito');
-  return { text: sub.pipeline || ctx.pipeline, msgs: msgs, subTrace: sub.trace };
+
+  // Il sotto-agente è finito male: fermarsi qui è l'unica cosa onesta. Prima
+  // si passava `ctx.pipeline` al nodo a valle, cioè l'input che il
+  // sotto-agente aveva RICEVUTO, presentato come il risultato che non ha
+  // prodotto — e il nodo successivo lavorava su quel testo senza che niente
+  // nel registro facesse sospettare lo scambio.
+  if(sub.status === 'error' || sub.status === 'aborted'){
+    msgs.push('   ⛔ La delega non ha prodotto un risultato utilizzabile: il flusso si interrompe invece di passare a valle l\'input non trasformato.');
+    return { text: ctx.pipeline, msgs: msgs, subTrace: sub.trace, ok:false, blocco:true,
+      error:'il sotto-agente "'+nome+'" è terminato in stato '+sub.status,
+      subNome: nome, subProblemi: sub.problemi || [] };
+  }
+  // Delega sospesa: il sotto-agente ha incontrato un'approvazione umana. Non
+  // è un guasto e non è una fine — l'orchestratore si sospende insieme a lui,
+  // e quando l'approvazione arriva riprendono entrambi dal punto esatto in cui
+  // si erano fermati. Il contrario (trattarla come un errore) rendeva
+  // inservibile qualunque orchestratore che deleghi a un agente con un
+  // controllo umano, cioè proprio i casi per cui la delega esiste.
+  if(sub.status === 'waiting'){
+    msgs.push('   ⏸️ "'+nome+'" si è fermato su un\'approvazione umana: l\'orchestratore resta in attesa e riprenderà da qui.');
+    return { text: ctx.pipeline, msgs: msgs, subTrace: sub.trace,
+      attesa:true, subExecId: sub.execId, subNome: nome };
+  }
+
+  // Esito utile: diventa l'input del nodo collegato a valle.
+  var esito = sub.pipeline || '';
+  if(!esito){
+    // Concluso senza produrre testo: va detto, perché il nodo a valle
+    // ricadrebbe sull'input dell'orchestratore e sembrerebbe tutto normale.
+    msgs.push('   ⚠️ La delega si è conclusa senza produrre testo: a valle non arriva nulla da "'+nome+'".');
+  }else{
+    msgs.push('   ↳ Esito della delega passato al nodo a valle ('+esito.length.toLocaleString('it-IT')+' caratteri)');
+  }
+  return { text: esito, msgs: msgs, subTrace: sub.trace };
 }
 
 // ── Grafo: dipendenze e ondate (B4) ──────────────────────────────────────
@@ -902,6 +991,71 @@ function rtInputFor(ctx, node, stato){
   return vals.map(function(v,i){ return '--- contributo '+(i+1)+' ---\n'+v }).join('\n\n');
 }
 
+// ══════════════════════════════════════════════════════════════
+// PRE-VOLO: CAMPI OBBLIGATORI
+// ══════════════════════════════════════════════════════════════
+// Il controllo sui campi obbligatori viveva solo in validateWorkflow(), cioè
+// nel Builder. Chi faceva partire un flusso da un'altra strada — la
+// pianificazione, la scheda di un agente nel marketplace, la ripresa di
+// un'esecuzione sospesa, o un sotto-agente chiamato da un orchestratore — non
+// passava da lì: il nodo partiva con il destinatario vuoto, l'adattatore
+// riceveva una stringa vuota e l'esecuzione si chiudeva «done» avendo in
+// realtà spedito niente a nessuno. Un flusso che dichiara di aver scritto a un
+// destinatario che non ha mai avuto è la bugia peggiore che questo registro
+// possa raccontare.
+//
+// Quindi: il controllo si sposta nel motore, dove passa QUALSIASI esecuzione,
+// e il flusso non parte affatto. Non «parte e fallisce al terzo nodo»: non
+// parte, perché un invio parziale lascia metà del lavoro fatto e metà no, e
+// quello stato non è descrivibile nel registro.
+//
+// Un campo fornito da una connessione non è «vuoto»: è compilato altrove.
+function rtCampiMancanti(node){
+  var mancanti = [];
+  if(!node) return mancanti;
+  var cfg = node.config || {};
+  var def = null;
+  if(node.type === 'ac' && typeof getConnectorConfig === 'function') def = getConnectorConfig(node.name);
+  else if(node.type === 'tr' && typeof TRIGGER_CONFIGS !== 'undefined') def = TRIGGER_CONFIGS[node.name];
+  if(!def || !def.fields || !def.fields.length) return mancanti;
+  if(typeof campiObbligatoriEffettivi !== 'function') return mancanti;
+
+  var coperti = (node.type === 'ac' && typeof campiCopertiDaConnessione === 'function')
+    ? campiCopertiDaConnessione(node.name, cfg) : {};
+  campiObbligatoriEffettivi(def, cfg)
+    .filter(function(f){ return !coperti[f.k] })
+    .forEach(function(f){
+      var v = cfg[f.k];
+      if(v === undefined || v === null || !String(v).trim()) mancanti.push(f.l || f.k);
+    });
+  return mancanti;
+}
+
+// Elenco dei problemi di tutto il grafo, nell'ordine in cui i nodi sarebbero
+// stati eseguiti: chi legge il registro trova prima quello che avrebbe bloccato
+// per primo.
+function rtPrevolo(ctx){
+  var problemi = [];
+  ctx.nodes.forEach(function(n){
+    var m = rtCampiMancanti(n);
+    if(m.length) problemi.push({ nodeId:n.id, nome:n.name, icona:n.icon||'•', tipo:n.type, campi:m });
+    // Un nodo Sotto-agente che non indica quale agente chiamare, o che indica
+    // un agente non più salvato, è un buco nel grafo: a valle arriverebbe
+    // l'input non trasformato e nessuno saprebbe che la delega non è avvenuta.
+    if(n.type === 'sa'){
+      var nome = (n.config && n.config.agentName) || '';
+      if(!nome) problemi.push({ nodeId:n.id, nome:n.name, icona:n.icon||'🤝', tipo:n.type, campi:['Agente da chiamare'] });
+      else{
+        var esiste = null;
+        try{ esiste = dbGetOne('SELECT id FROM agents WHERE name=?', [nome]) }catch(e){ esiste = null }
+        if(!esiste) problemi.push({ nodeId:n.id, nome:n.name, icona:n.icon||'🤝', tipo:n.type,
+          campi:['Agente «'+nome+'» non è fra quelli salvati'] });
+      }
+    }
+  });
+  return problemi;
+}
+
 // ── Esecuzione ───────────────────────────────────────────────────────────
 
 async function executeGraph(spec){
@@ -913,15 +1067,45 @@ async function executeGraph(spec){
 
   rtEmit(ctx, 'execution:queued', null, { agente: ctx.agentName, nodi: ctx.nodes.length, seed: ctx.trace.seed, replay: !!ctx.replay });
 
+  // Pre-volo. Si fa QUI e non nel Builder perché qui passano tutte le strade:
+  // il pulsante Esegui, la pianificazione, la scheda del marketplace e la
+  // delega da un orchestratore. Se un nodo non ha i dati per fare il suo
+  // lavoro, il flusso non parte: nessun nodo viene eseguito, nessun messaggio
+  // viene spedito. In una rigiocata il controllo si salta: lì non si chiama
+  // nessuno, si rileggono risultati già registrati.
+  //
+  // IL REGISTRO RESTA VUOTO, ed è la cosa giusta. Il registro di esecuzione
+  // racconta cosa è successo mentre il flusso girava: se il flusso non è
+  // partito non è successo niente, e riempirlo di righe rosse farebbe sembrare
+  // che qualcosa sia stato tentato. I problemi viaggiano in `ctx.problemi`, che
+  // è un'altra cosa — è la diagnosi, e va nella finestra degli errori, non nel
+  // diario di bordo di un viaggio mai cominciato.
+  if(!ctx.replay){
+    var problemi = rtPrevolo(ctx);
+    if(problemi.length){
+      rtEmit(ctx, 'execution:blocked', null, { motivo:'campi obbligatori non compilati', nodi: problemi });
+      ctx.hasError = true;
+      ctx.nonPartito = true;
+      ctx.gr.lastError = 'campi obbligatori non compilati su '+problemi.length+' nodo/i';
+      problemi.forEach(function(p){
+        rtProblema(ctx, { id:p.nodeId, name:p.nome, icon:p.icona, type:p.tipo },
+          'campo-obbligatorio',
+          'Campo obbligatorio non compilato: '+p.campi.join(', '),
+          'Apri il nodo e compila '+(p.campi.length===1?'il campo':'i campi')+', oppure usa «Compila» per i valori predefiniti del connettore.');
+      });
+      delete RUNNING_CTX[ctx.execId];
+      return rtFinalize(ctx, 'error', 0);
+    }
+  }
+
   // I nodi esclusi vanno dichiarati in apertura: un risultato ottenuto saltando
   // un controllo o un passaggio non è confrontabile con uno ottenuto a flusso
   // intero, e chi legge il registro deve saperlo subito.
   if(ctx.esclusi.length){
     rtEmit(ctx, 'execution:excluded', null, { nodi: ctx.esclusi.map(function(n){ return n.name }) });
-    ctx.steps.push({ time: rtNow(), type:'SISTEMA', status:'WARN',
-      msg:'🚫 '+ctx.esclusi.length+' nodo/i escluso/i dall\'esecuzione: '+
-          ctx.esclusi.map(function(n){ return n.icon+' '+n.name }).join(', ')+
-          ': il flusso prosegue collegando i nodi a monte con quelli a valle' });
+    rtPushSistema(ctx, '🚫 '+ctx.esclusi.length+' nodo/i escluso/i dall\'esecuzione: '+
+      ctx.esclusi.map(function(n){ return n.icon+' '+n.name }).join(', ')+
+      ': il flusso prosegue collegando i nodi a monte con quelli a valle', 'WARN');
   }
 
   // Interruzione richiesta dall'utente. Si controlla fra un'ondata e l'altra:
@@ -941,7 +1125,7 @@ async function executeGraph(spec){
   while(guardia++ < maxOndate){
     if(ctx.abort){
       rtEmit(ctx, 'execution:aborted', null, { eseguiti: eseguiti, richiestaDa: 'utente' });
-      ctx.steps.push({ time: rtNow(), type:'SISTEMA', msg:'⏹️ Esecuzione interrotta su richiesta, '+eseguiti+' nodi completati, i restanti non sono stati avviati', status:'WARN' });
+      rtPushSistema(ctx, '⏹️ Esecuzione interrotta su richiesta, '+eseguiti+' nodi completati, i restanti non sono stati avviati', 'WARN');
       delete RUNNING_CTX[ctx.execId];
       return rtFinalize(ctx, 'aborted', eseguiti);
     }
@@ -972,7 +1156,8 @@ async function executeGraph(spec){
       if(esiti[i].waiting){
         // Sospensione: si interrompe qui conservando tutto lo stato, così la
         // ripresa non deve rieseguire ciò che è già stato fatto.
-        ctx.waiting = { nodeId: esiti[i].nodeId, stato: stato, eseguiti: eseguiti };
+        ctx.waiting = { nodeId: esiti[i].nodeId, stato: stato, eseguiti: eseguiti,
+          subExecId: esiti[i].subExecId, subNome: esiti[i].subNome };
         SUSPENDED_RUNS[ctx.execId] = { ctx: ctx, stato: stato };
         // La sospensione non e piu "in corso": lasciarla in RUNNING_CTX
         // terrebbe isExecutionRunning() vero per sempre e farebbe puntare
@@ -1067,14 +1252,14 @@ async function rtExecuteNode(ctx, node, stato){
   if(rtShouldSkip(ctx, node, stato)){
     stato[node.id] = 'skipped';
     rtEmit(ctx, 'node:skipped', node.id, { nome: node.name });
-    ctx.steps.push({ time: rtNow(), type: rtTypeLabel(node), msg:'⏭ Saltato (ramo non attivo): '+node.name, status:'SKIP' });
+    rtPush(ctx, node, '⏭ Saltato (ramo non attivo): '+node.name, 'SKIP');
     return { counted:false };
   }
 
   // Interruzione arrivata mentre questo nodo era in coda: non si avvia.
   if(ctx.abort){
     stato[node.id] = 'skipped';
-    ctx.steps.push({ time: rtNow(), type: rtTypeLabel(node), msg:'⏹ Non avviato: esecuzione interrotta', status:'WARN' });
+    rtPush(ctx, node, '⏹ Non avviato: esecuzione interrotta', 'WARN');
     return { counted:false };
   }
 
@@ -1084,7 +1269,7 @@ async function rtExecuteNode(ctx, node, stato){
   await rtSimulatedLatency(ctx, node);
   if(ctx.abort){
     stato[node.id] = 'skipped';
-    ctx.steps.push({ time: rtNow(), type: rtTypeLabel(node), msg:'⏹ Interrotto prima dell\'esecuzione: '+node.name, status:'WARN' });
+    rtPush(ctx, node, '⏹ Interrotto prima dell\'esecuzione: '+node.name, 'WARN');
     return { counted:false };
   }
 
@@ -1136,13 +1321,43 @@ async function rtExecuteNode(ctx, node, stato){
         stato[node.id] = 'error'; ctx.hasError = true;
         rtEmit(ctx, 'node:error', node.id, { motivo:'bloccato dal controllo', messaggio:g.msg });
         rtPush(ctx, node, '⛔ Esecuzione interrotta dal controllo "'+node.name+'"', 'ERR');
+        rtProblema(ctx, node, 'controllo',
+          // Il messaggio del controllo comincia già con la sua icona: anteporne
+          // un'altra fa leggere due simboli di fila senza aggiungere niente.
+          String(rtTesto(g.msg || 'Convalida non superata')).replace(/^\s*[^\w\s(«"']+\s*/, ''),
+          'Apri il nodo: o l\'output a monte va corretto, o il controllo è più severo di quanto serva (campo «Se la convalida fallisce»).');
         return { fatal:true, counted:true };
       }
 
     }else if(node.type === 'sa'){
       r = await rtRunSubAgent(ctx, node);
       ctx.pipeline = r.text;
-      r.msgs.forEach(function(m){ rtPush(ctx, node, m, 'OK') });
+      r.msgs.forEach(function(m){ rtPush(ctx, node, m, r.ok === false ? 'ERR' : (r.attesa ? 'WARN' : 'OK')) });
+      // Il sotto-agente attende un'approvazione: si sospende anche qui,
+      // ricordando quale esecuzione delegata va ripresa per prima.
+      if(r.attesa){
+        stato[node.id] = 'waiting';
+        rtEmit(ctx, 'node:waiting', node.id,
+          { motivo:'il sotto-agente "'+r.subNome+'" attende un\'autorizzazione', delegaA:r.subNome, subExecId:r.subExecId });
+        return { waiting:true, nodeId:node.id, counted:true, subExecId:r.subExecId, subNome:r.subNome };
+      }
+      // Delega fallita: il nodo a valle non ha un input e il flusso si ferma.
+      // Vedi la nota in rtRunSubAgent.
+      if(r.blocco){
+        stato[node.id] = 'error';
+        ctx.hasError = true; ctx.gr.lastError = r.error || 'delega non riuscita';
+        rtEmit(ctx, 'node:error', node.id, { motivo:'delega non riuscita', messaggio:r.error });
+        rtProblema(ctx, node, 'delega', r.error || 'La delega non è riuscita',
+          'Apri il sotto-agente dal pannello del nodo («Apri … nel Builder») ed eseguilo da solo: l\'errore è dentro di lui, non qui.');
+        // Il motivo vero sta dentro il sotto-agente: si riporta qui, altrimenti
+        // la finestra direbbe solo «la delega è fallita» e lascerebbe il lavoro
+        // di scoprire perché.
+        (r.subProblemi || []).forEach(function(p){
+          ctx.problemi.push({ nodeId:null, nome:p.nome, icona:p.icona, tipo:p.tipo, kind:p.kind,
+            msg:'dentro «'+r.subNome+'»: '+p.msg, rimedio:p.rimedio, dentroSottoAgente:r.subNome });
+        });
+        return { fatal:true, counted:true };
+      }
 
     }else if(node.type === 'cd'){
       await rtRunLogicNode(ctx, node, stato);
@@ -1158,6 +1373,27 @@ async function rtExecuteNode(ctx, node, stato){
         if(e.text !== undefined && e.ok !== false) ctx.pipeline = e.text;
         if(e.ok === false){ ctx.hasError = true; ctx.gr.lastError = e.error || 'azione fallita' }
         rtPush(ctx, node, e.msg, e.ok === false ? 'ERR' : 'OK');
+        // Un guasto di rete lascia proseguire: a valle può esserci un
+        // controllo che lo assorbe, ed è il comportamento voluto. Un nodo che
+        // non ha i dati per lavorare è un'altra cosa — non è un guasto, è una
+        // configurazione incompleta, e lasciar proseguire significherebbe
+        // passare al nodo successivo l'input di un passaggio mai avvenuto
+        // spacciandolo per il suo risultato.
+        if(e.blocco){
+          stato[node.id] = 'error';
+          rtEmit(ctx, 'node:error', node.id, { motivo:'configurazione incompleta', messaggio:e.error });
+          rtProblema(ctx, node, 'campo-obbligatorio', e.error || 'Configurazione incompleta',
+            'Apri il nodo e compila i campi segnati. Se li forniva una connessione, controlla che sia ancora collegata.');
+          return { fatal:true, counted:true };
+        }
+        // Guasto non bloccante (rete, servizio esterno): il flusso prosegue,
+        // ma l'esito resta «con errori» e questo nodo va comunque elencato,
+        // altrimenti a fine corsa si legge «terminato con errori» senza sapere
+        // dove.
+        if(e.ok === false){
+          rtProblema(ctx, node, 'azione', e.error || 'Azione non riuscita',
+            'Il flusso è proseguito. Controlla la connessione del nodo e riesegui: se è un guasto esterno, un nodo «Gestione eccezioni» a valle può assorbirlo.');
+        }
       }
 
     }else{ // ou: nodi terminali
@@ -1175,6 +1411,8 @@ async function rtExecuteNode(ctx, node, stato){
     ctx.hasError = true; ctx.gr.lastError = err.message;
     rtEmit(ctx, 'node:error', node.id, { messaggio: err.message });
     rtPush(ctx, node, '❌ Errore: '+err.message, 'ERR');
+    rtProblema(ctx, node, 'eccezione', err.message || String(err),
+      'È un errore imprevisto dentro il nodo. Apri la console del browser (F12) per la traccia completa e segnala il testo esatto.');
     return { counted:true };
   }
 }
@@ -1359,6 +1597,20 @@ function rtTesto(t){
     : s;
 }
 
+// Riga di sistema, cioè non attribuibile a un nodo preciso oppure attribuibile
+// a un nodo che NON è ancora partito. Serve un helper a sé perché il motore in
+// più punti scriveva direttamente in `ctx.steps`: quelle righe finivano nello
+// storico ma **non** nel registro a schermo, che si popola dagli eventi. Il
+// risultato era il peggiore possibile: l'esecuzione si fermava, il pannello
+// restava muto, e il motivo compariva solo riaprendo l'esecuzione dallo
+// storico. Da qui passano tutte, e si vedono mentre succedono.
+function rtPushSistema(ctx, msg, status, nodeId, tipo){
+  var step = { time: rtNow(), type: tipo || 'SISTEMA', msg: msg, status: status || 'OK',
+               nodeId: (nodeId == null ? null : nodeId) };
+  ctx.steps.push(step);
+  try{ ctx.onEvent({ event_type:'step', node_id:step.nodeId, payload:step, seq:++ctx.seq, ts:new Date().toISOString() }, ctx) }catch(e){}
+}
+
 function rtPush(ctx, node, msg, status){
   var step = { time: rtNow(), type: rtTypeLabel(node), msg: msg, status: status || 'OK', nodeId: node.id };
   ctx.steps.push(step);
@@ -1370,7 +1622,15 @@ function rtFinalize(ctx, status, eseguiti){
   return {
     status: status, pipeline: ctx.pipeline, steps: ctx.steps, events: ctx.events,
     trace: ctx.trace, stepsCount: eseguiti, execId: ctx.execId,
-    duration: Date.now()-ctx.startedAt, waiting: ctx.waiting, ctx: ctx
+    duration: Date.now()-ctx.startedAt, waiting: ctx.waiting, ctx: ctx,
+    // Cosa si è rotto e dove: l'interfaccia lo usa per la finestra degli
+    // errori di esecuzione, gemella di quella della validazione.
+    problemi: ctx.problemi || [],
+    // Vero quando il flusso non è nemmeno partito. Non è un dettaglio di
+    // sfumatura: un'esecuzione mai cominciata non va scritta nel registro né
+    // contata nello storico, altrimenti le statistiche contano tentativi che
+    // non sono avvenuti.
+    nonPartito: !!ctx.nonPartito
   };
 }
 
@@ -1382,22 +1642,70 @@ async function resumeSuspendedRun(execId, autorizzato){
   delete SUSPENDED_RUNS[execId];
   var ctx = s.ctx, stato = s.stato;
   var nodeId = ctx.waiting.nodeId;
+  var subExecId = ctx.waiting.subExecId, subNome = ctx.waiting.subNome;
+  var eseguitiPrima = ctx.waiting.eseguiti;
 
   if(!autorizzato){
     stato[nodeId] = 'error'; ctx.hasError = true;
     rtEmit(ctx, 'node:error', nodeId, { motivo:'autorizzazione negata' });
     rtPush(ctx, { id:nodeId, type:'gr' }, '⛔ Autorizzazione negata: esecuzione interrotta', 'ERR');
-    return rtFinalize(ctx, 'error', ctx.waiting.eseguiti);
+    rtProblema(ctx, ctx.nodes.find(function(n){ return n.id === nodeId }) || { id:nodeId, name:'Controllo', icon:'✋', type:'gr' },
+      'autorizzazione', 'Autorizzazione negata: l\'esecuzione è stata interrotta qui',
+      'Non è un difetto del flusso: è una decisione. Per proseguire, riesegui e autorizza.');
+    // Il rifiuto riguarda anche la delega sospesa: lasciarla in attesa
+    // significherebbe tenerla in memoria per sempre, e un'autorizzazione
+    // negata non è un'attesa, è una decisione.
+    if(subExecId && SUSPENDED_RUNS[subExecId]){
+      try{ await resumeSuspendedRun(subExecId, false) }catch(e){}
+      rtPush(ctx, { id:nodeId, type:'sa' }, '   ↳ Anche la delega a "'+subNome+'" è stata chiusa senza autorizzazione', 'ERR');
+    }
+    return rtFinalize(ctx, 'error', eseguitiPrima);
   }
 
-  stato[nodeId] = 'done';
-  ctx.outputs[nodeId] = ctx.pipeline;
-  ctx.ordineOutput.push(nodeId);
-  ctx.waiting = null;
-  rtEmit(ctx, 'node:complete', nodeId, { autorizzato:true });
-  rtPush(ctx, { id:nodeId, type:'gr' }, '✅ Autorizzato: l\'esecuzione riprende', 'OK');
+  // Il nodo sospeso è una delega: l'approvazione appartiene al sotto-agente,
+  // che riprende per primo. Solo quando ha finito il suo esito diventa
+  // l'output del nodo di delega e il flusso dell'orchestratore riparte.
+  if(subExecId){
+    var sub = null;
+    try{ sub = await resumeSuspendedRun(subExecId, true) }catch(e){ sub = null }
+    var nodoSa = ctx.nodes.find(function(n){ return n.id === nodeId }) || { id:nodeId, type:'sa' };
+    if(!sub || sub.status !== 'done'){
+      stato[nodeId] = 'error'; ctx.hasError = true;
+      ctx.gr.lastError = 'la delega a "'+subNome+'" non è arrivata a termine';
+      rtEmit(ctx, 'node:error', nodeId, { motivo:'delega non conclusa', delegaA:subNome, stato: sub?sub.status:'sconosciuto' });
+      rtPush(ctx, nodoSa, '⛔ "'+subNome+'" non è arrivato a termine ('+(sub?sub.status:'esecuzione non ritrovata')+'): il flusso si interrompe invece di passare a valle un esito che non c\'è', 'ERR');
+      rtProblema(ctx, nodoSa, 'delega',
+        'Il sotto-agente "'+subNome+'" non è arrivato a termine ('+(sub?sub.status:'esecuzione non ritrovata')+')',
+        'Apri «'+subNome+'» dal pannello del nodo ed eseguilo da solo: l\'errore è dentro di lui.');
+      // I problemi del sotto-agente valgono anche qui: senza, la finestra
+      // direbbe «la delega è fallita» e si fermerebbe lì, lasciando da
+      // ricostruire a mano quale nodo del sotto-agente si è rotto.
+      if(sub && sub.problemi && sub.problemi.length){
+        sub.problemi.forEach(function(p){
+          ctx.problemi.push({ nodeId:null, nome:p.nome, icona:p.icona, tipo:p.tipo, kind:p.kind,
+            msg:'dentro «'+subNome+'»: '+p.msg, rimedio:p.rimedio, dentroSottoAgente:subNome });
+        });
+      }
+      return rtFinalize(ctx, 'error', eseguitiPrima);
+    }
+    ctx.pipeline = sub.pipeline || ctx.pipeline;
+    stato[nodeId] = 'done';
+    ctx.outputs[nodeId] = ctx.pipeline;
+    ctx.ordineOutput.push(nodeId);
+    ctx.waiting = null;
+    rtEmit(ctx, 'agent:handoff', nodeId, { to: subNome, direction:'in', status: sub.status, nodes: sub.stepsCount });
+    rtEmit(ctx, 'node:complete', nodeId, { autorizzato:true, delegaA:subNome });
+    rtPush(ctx, nodoSa, '✅ Autorizzato: "'+subNome+'" ha completato la sua parte, l\'esito passa al nodo a valle ('+String(ctx.pipeline||'').length.toLocaleString('it-IT')+' caratteri)', 'OK');
+  }else{
+    stato[nodeId] = 'done';
+    ctx.outputs[nodeId] = ctx.pipeline;
+    ctx.ordineOutput.push(nodeId);
+    ctx.waiting = null;
+    rtEmit(ctx, 'node:complete', nodeId, { autorizzato:true });
+    rtPush(ctx, { id:nodeId, type:'gr' }, '✅ Autorizzato: l\'esecuzione riprende', 'OK');
+  }
 
-  var eseguiti = s.ctx.waiting ? s.ctx.waiting.eseguiti : 0, guardia = 0;
+  var eseguiti = eseguitiPrima || 0, guardia = 0;
   while(guardia++ < 200){
     var pronti = rtReadyNodes(ctx, stato);
     if(!pronti.length) break;
@@ -1407,7 +1715,8 @@ async function resumeSuspendedRun(execId, autorizzato){
     for(var i=0;i<esiti.length;i++){
       eseguiti += esiti[i].counted ? 1 : 0;
       if(esiti[i].waiting){
-        ctx.waiting = { nodeId: esiti[i].nodeId, stato: stato, eseguiti: eseguiti };
+        ctx.waiting = { nodeId: esiti[i].nodeId, stato: stato, eseguiti: eseguiti,
+          subExecId: esiti[i].subExecId, subNome: esiti[i].subNome };
         SUSPENDED_RUNS[ctx.execId] = { ctx: ctx, stato: stato };
         // La sospensione non e piu "in corso": lasciarla in RUNNING_CTX
         // terrebbe isExecutionRunning() vero per sempre e farebbe puntare

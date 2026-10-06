@@ -369,7 +369,7 @@ function renderObiettiviProfilo(){
     '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">'+
       ob.map(function(o){
         var f=o.val>=o.obiettivo;
-        return '<span title="'+escHtml(o.t)+(f?': raggiunto':', '+o.val+' di '+o.obiettivo)+'" style="font-size:16px;opacity:'+(f?1:.28)+'">'+o.ic+'</span>';
+        return '<span title="'+escAttr(o.t)+(f?': raggiunto':', '+o.val+' di '+o.obiettivo)+'" style="font-size:16px;opacity:'+(f?1:.28)+'">'+o.ic+'</span>';
       }).join('')+
     '</div>'+
     (fatti.length<ob.length
@@ -778,10 +778,10 @@ function openNewPost(idEsistente){
   var tipi=['Soluzione','Domanda','Showcase','Tutorial','Discussione'];
   openModal(
     '<div style="display:flex;justify-content:space-between;align-items:center"><h2>'+(p?'Modifica post':'Nuovo post')+'</h2><button class="modal-close" onclick="closeModal()">✕</button></div>'+
-    '<div class="prop-group mt-16"><div class="prop-label">Titolo</div><input class="prop-input" id="newPostTitle" value="'+escHtml(p?p.title:'')+'" placeholder="Il tuo titolo..."></div>'+
+    '<div class="prop-group mt-16"><div class="prop-label">Titolo</div><input class="prop-input" id="newPostTitle" value="'+escAttr(p?p.title:'')+'" placeholder="Il tuo titolo..."></div>'+
     '<div class="prop-group"><div class="prop-label">Tipo</div><select class="prop-select" id="newPostType">'+
       tipi.map(function(t){return '<option'+(p&&p.type===t?' selected':'')+'>'+t+'</option>'}).join('')+'</select></div>'+
-    '<div class="prop-group"><div class="prop-label">Tag</div><input class="prop-input" id="newPostTag" value="'+escHtml(p?p.tag:'')+'" placeholder="es. Sales, HR, Builder..."></div>'+
+    '<div class="prop-group"><div class="prop-label">Tag</div><input class="prop-input" id="newPostTag" value="'+escAttr(p?p.tag:'')+'" placeholder="es. Sales, HR, Builder..."></div>'+
     '<div class="prop-group"><div class="prop-label">Contenuto</div><textarea class="prop-input" id="newPostBody" rows="5" placeholder="Scrivi il tuo post...">'+escHtml(p?p.body:'')+'</textarea></div>'+
     // Allegare il workflow di cui si parla è ciò che rende un post utile agli
     // altri: senza, resta un racconto che nessuno può provare.
@@ -1024,7 +1024,7 @@ function renderProfile(){
   document.getElementById('badge-shelf').innerHTML=
     '<div style="font-size:11px;color:var(--tx4);margin-bottom:8px">'+ottenuti.length+' di '+badges.length+' ottenuti</div>'+
     badges.map(function(b){
-      return '<div class="badge-item" title="'+escHtml(b.hint)+'" style="'+(b.ok?'':'opacity:.4;filter:grayscale(1)')+'">'+
+      return '<div class="badge-item" title="'+escAttr(b.hint)+'" style="'+(b.ok?'':'opacity:.4;filter:grayscale(1)')+'">'+
         '<span>'+b.icon+'</span>'+b.name+'</div>';
     }).join('')+
     // La scala dei privilegi: il documento dice che l'accumulo di XP sblocca
@@ -1037,7 +1037,7 @@ function renderProfile(){
         '<div style="font-size:11px;font-weight:700;margin-bottom:7px">Cosa sblocca l’esperienza</div>'+
         PRIVILEGI.map(function(p){
           var ok=privilegioSbloccato(p.xp);
-          return '<div title="'+escHtml(p.desc)+'" style="display:flex;align-items:center;gap:7px;font-size:11px;'+
+          return '<div title="'+escAttr(p.desc)+'" style="display:flex;align-items:center;gap:7px;font-size:11px;'+
             'padding:3px 0;color:'+(ok?'var(--tx2)':'var(--tx4)')+'">'+
             '<span style="width:14px">'+(ok?'✅':'🔒')+'</span>'+
             '<span style="flex:1">'+escHtml(p.nome)+'</span>'+
@@ -1082,21 +1082,21 @@ function renderProfile(){
         // riattribuzione avviene in blocco, previa conferma che dice quanti
         // elementi verranno spostati.
         '<div class="profile-edit-field"><label>Nome</label>'+
-          '<input class="prop-input" id="pf-name" value="'+escHtml(profileData.name)+'" maxlength="40">'+
+          '<input class="prop-input" id="pf-name" value="'+escAttr(profileData.name)+'" maxlength="40">'+
           '<div style="font-size:10px;color:var(--tx4);margin-top:3px">Identifica i tuoi agenti e le tue esecuzioni: cambiandolo verranno riattribuiti al nuovo nome.</div></div>'+
-        '<div class="profile-edit-field"><label>Ruolo</label><input class="prop-input" id="pf-role" value="'+escHtml(profileData.role||'')+'"></div>'+
-        '<div class="profile-edit-field"><label>Organizzazione</label><input class="prop-input" id="pf-org" value="'+escHtml(profileData.org||'')+'"></div>'+
-        '<div class="profile-edit-field"><label>Reparto</label><input class="prop-input" id="pf-reparto" value="'+escHtml(profileData.reparto||'')+'" placeholder="es. Operations"></div>'+
+        '<div class="profile-edit-field"><label>Ruolo</label><input class="prop-input" id="pf-role" value="'+escAttr(profileData.role||'')+'"></div>'+
+        '<div class="profile-edit-field"><label>Organizzazione</label><input class="prop-input" id="pf-org" value="'+escAttr(profileData.org||'')+'"></div>'+
+        '<div class="profile-edit-field"><label>Reparto</label><input class="prop-input" id="pf-reparto" value="'+escAttr(profileData.reparto||'')+'" placeholder="es. Operations"></div>'+
         // Il settore non e' decorativo: i suggerimenti del cruscotto lo usano
         // per proporre agenti del catalogo pertinenti, quindi e' a scelta
         // chiusa sulle stesse business unit del marketplace.
         '<div class="profile-edit-field"><label>Settore di interesse</label><select class="prop-select" id="pf-settore">'+
           ['','Sales','Marketing','Finance','HR','Legal','Insurance','DevOps','Customer Service','Produttività']
-            .map(function(s){return '<option value="'+escHtml(s)+'"'+((profileData.settore||'')===s?' selected':'')+'>'+(s||'— nessuno —')+'</option>'}).join('')+
+            .map(function(s){return '<option value="'+escAttr(s)+'"'+((profileData.settore||'')===s?' selected':'')+'>'+(s||'— nessuno —')+'</option>'}).join('')+
         '</select></div>'+
-        '<div class="profile-edit-field"><label>Email</label><input class="prop-input" id="pf-email" value="'+escHtml(profileData.email||'')+'"></div>'+
-        '<div class="profile-edit-field"><label>Telefono</label><input class="prop-input" id="pf-telefono" value="'+escHtml(profileData.telefono||'')+'" placeholder="+39 ..."></div>'+
-        '<div class="profile-edit-field"><label>LinkedIn</label><input class="prop-input" id="pf-linkedin" value="'+escHtml(profileData.linkedin||'')+'"></div>'+
+        '<div class="profile-edit-field"><label>Email</label><input class="prop-input" id="pf-email" value="'+escAttr(profileData.email||'')+'"></div>'+
+        '<div class="profile-edit-field"><label>Telefono</label><input class="prop-input" id="pf-telefono" value="'+escAttr(profileData.telefono||'')+'" placeholder="+39 ..."></div>'+
+        '<div class="profile-edit-field"><label>LinkedIn</label><input class="prop-input" id="pf-linkedin" value="'+escAttr(profileData.linkedin||'')+'"></div>'+
         '<div class="profile-edit-field"><label>Bio</label><textarea class="prop-input" id="pf-bio" rows="3">'+escHtml(profileData.bio||'')+'</textarea></div>'+
         '<div style="display:flex;gap:8px;margin-top:12px"><button class="tb-btn primary" onclick="saveProfileData()">💾 Salva</button><button class="tb-btn" onclick="profileEditing=false;renderProfile()">Annulla</button></div></div>';
       infoCard.insertAdjacentHTML('beforebegin',editHtml);
@@ -1963,9 +1963,12 @@ function renderExecLogPage(){
         // Un agente marcato attivo ma senza pianificazione non parte mai: va
         // detto qui, che è dove si guarda per capire perché non è successo nulla.
         var inerte=(a.schedule_type==='manual'||!a.schedule_type);
-        return '<div class="list-row" style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--bg2)">'+
+        // `riga-pianificata` serve al foglio per schermi stretti: nome e tre
+        // pulsanti su una riga sola, a 375px, spezzavano il nome una parola
+        // per riga con i pulsanti sopra il testo.
+        return '<div class="list-row riga-pianificata" style="display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--bg2)">'+
           '<div style="width:8px;height:8px;border-radius:50%;background:#F59E0B;flex-shrink:0"></div>'+
-          '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">'+escHtml(a.name)+'</div>'+
+          '<div class="rp-testo"><div style="font-size:13px;font-weight:700">'+escHtml(a.name)+'</div>'+
           '<div style="font-size:11px;color:'+(inerte?'#B45309':'var(--tx4)')+'">'+
             (inerte?'⚠️ ':'')+schedDesc+
             (a.last_run_at?' · ultima esecuzione '+relTimeIt(new Date(a.last_run_at).getTime()):' · non ancora eseguita')+
@@ -1999,9 +2002,12 @@ function renderExecLogPage(){
   function rigaEsecuzione(l){
     var d=new Date(l.ts);
     var dateStr=d.toLocaleDateString('it-IT',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-    return '<div class="list-row" style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--bg2);cursor:pointer" onclick="openExecLogDetail('+l.id+')" title="Clicca per il dettaglio">'+
+    // `riga-esecuzione`: sei elementi a larghezza fissa piu' il nome, su una
+    // riga sola, a 375px lasciavano al nome due caratteri per riga. Il foglio
+    // per schermi stretti la manda a capo.
+    return '<div class="list-row riga-esecuzione" style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--bg2);cursor:pointer" onclick="openExecLogDetail('+l.id+')" title="Clicca per il dettaglio">'+
       '<div style="width:10px;height:10px;border-radius:50%;background:'+(l.status==='ok'?'var(--ok)':'#EF4444')+';flex-shrink:0"></div>'+
-      '<div style="flex:1;min-width:0">'+
+      '<div class="re-testo">'+
         '<div style="font-size:13px;font-weight:700">'+escHtml(l.agent)+'</div>'+
         (l.summary?'<div style="font-size:11px;color:var(--tx4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escHtml(l.summary)+'</div>':'')+
       '</div>'+
@@ -2349,7 +2355,7 @@ function disegnaVisore(){
       (piu?'<button class="tb-btn" style="height:44px;flex:0 0 40px;justify-content:center" onclick="scorriImmaginePost(-1)" title="Precedente (←)">‹</button>':'')+
       '<div style="flex:1;min-width:0;height:100%;overflow:auto;display:flex;align-items:center;justify-content:center;'+
         'background:#FFFFFF;border-radius:12px">'+
-        '<img src="'+p.dati+'" alt="'+escHtml(p.nome||'')+'" '+
+        '<img src="'+p.dati+'" alt="'+escAttr(p.nome||'')+'" '+
           'style="max-width:none;width:'+(IMG_APERTA.zoom*100)+'%;height:auto;display:block">'+
       '</div>'+
       (piu?'<button class="tb-btn" style="height:44px;flex:0 0 40px;justify-content:center" onclick="scorriImmaginePost(1)" title="Successiva (→)">›</button>':'')+
@@ -2392,7 +2398,7 @@ function disegnaLivelli(){
     var ottenuto=(raggiunto>=L.n);
     var attuale=(!ottenuto && raggiunto===L.n-1);
     var stato=ottenuto?'Completato ✓':(attuale?'In corso: '+a.pct+'%':'Bloccato 🔒');
-    return '<div title="'+escHtml(L.desc)+'" style="flex:1;min-width:130px;border-radius:12px;padding:12px;'+
+    return '<div title="'+escAttr(L.desc)+'" style="flex:1;min-width:130px;border-radius:12px;padding:12px;'+
       'background:'+((ottenuto||attuale)?'var(--card)':'var(--bg2)')+';'+
       'border:2px solid '+(ottenuto?L.col:(attuale?'var(--ac3)':'var(--bo)'))+';'+
       ((ottenuto||attuale)?'':'opacity:.7')+'">'+
@@ -2490,7 +2496,7 @@ function apriProfiloPubblico(nome){
     '<div style="font-size:11px;color:var(--tx4);margin:12px 0 7px">'+ottenuti.length+' di '+badges.length+' riconoscimenti ottenuti</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
       badges.map(function(b){
-        return '<div class="badge-item" title="'+escHtml(b.hint)+'" style="'+(b.ok?'':'opacity:.35;filter:grayscale(1)')+'">'+
+        return '<div class="badge-item" title="'+escAttr(b.hint)+'" style="'+(b.ok?'':'opacity:.35;filter:grayscale(1)')+'">'+
           '<span>'+b.icon+'</span>'+b.name+'</div>';
       }).join('')+
     '</div>'+

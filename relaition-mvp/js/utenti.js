@@ -56,7 +56,19 @@ var UTENTE_OSPITE={
 function utenteDaEmail(email){
   var e=String(email||'').trim().toLowerCase();
   if(e===UTENTE_OSPITE.email)return UTENTE_OSPITE;
-  return UTENTI.filter(function(u){return u.email.toLowerCase()===e})[0]||null;
+  var demo=UTENTI.filter(function(u){return u.email.toLowerCase()===e})[0];
+  if(demo)return demo;
+  // Account creati dalla schermata di accesso (js/accesso.js): vivono nel
+  // database, non nel codice, ma da qui in avanti sono utenti come gli altri —
+  // stesso profilo, stessa attribuzione di agenti ed esecuzioni.
+  var r=(typeof utenteRegistrato==='function')?utenteRegistrato(e):null;
+  if(!r)return null;
+  return {
+    email:r.email, password:r.password||'',
+    name:r.name, iniziali:r.iniziali||'??', colore:r.colore||'#64748B',
+    role:r.role||'Utente', org:r.org||'—',
+    bio:'', linkedin:'', registrato:true
+  };
 }
 
 // Sovrascrive i valori di partenza con quelli salvati dall'utente. Va chiamata
@@ -373,4 +385,15 @@ function ripristinaIdentita(){
     }
     return true;
   }catch(e){ return false }
+}
+
+// Solo i quattro profili scritti nel codice (più l'ospite). Serve a
+// distinguerli dagli account registrati, che `utenteDaEmail` restituisce
+// insieme a loro: senza questa funzione, il recupero password scambiava un
+// account vero per un profilo dimostrativo e si rifiutava di cambiarne la
+// password.
+function profiloDimostrativo(email){
+  var e=String(email||'').trim().toLowerCase();
+  if(e===UTENTE_OSPITE.email)return UTENTE_OSPITE;
+  return UTENTI.filter(function(u){return u.email.toLowerCase()===e})[0]||null;
 }

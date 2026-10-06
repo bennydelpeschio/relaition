@@ -1,5 +1,13 @@
 function escHtml(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
+// escHtml passa da textContent, che protegge & < > ma NON le virgolette: il
+// browser non ha bisogno di scapparle dentro il testo di un elemento. Dentro
+// un attributo fra virgolette doppie, invece, la prima virgoletta del
+// contenuto chiude l'attributo e il resto diventa markup. Serve quindi una
+// versione per gli attributi, da usare ogni volta che il valore puo'
+// contenerne — un titolo scritto da chi usa la piattaforma, o un JSON.
+function escAttr(s){return escHtml(s).replace(/"/g,'&quot;')}
+
 function showToast(msg){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast';t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove()},3500)}
 
 function closeModal(){document.getElementById('modalOverlay').classList.remove('show')}

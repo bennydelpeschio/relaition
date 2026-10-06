@@ -28,6 +28,10 @@ function openConnessioni(){
       '</div></div>'
   );
   renderConnessioni();
+  // Il servizio locale si interroga una volta all'apertura: le schede che ne
+  // dipendono passano da «verifico» al loro stato vero senza che nessuno
+  // debba premere niente.
+  if(typeof connAggiornaDisponibilitaServizio==='function')connAggiornaDisponibilitaServizio();
 }
 
 function renderConnessioni(){
@@ -66,12 +70,23 @@ function renderConnessioni(){
         '<div class="conn-ic">'+t.icona+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div class="conn-nome">'+escHtml(c.nome)+
-            (t.nota?'<span class="conn-sim" title="'+escHtml(t.notaSpiegazione||'')+'">'+escHtml(t.nota)+'</span>':'')+
+            (t.nota?'<span class="conn-sim" title="'+escAttr(t.notaSpiegazione||'')+'">'+escHtml(t.nota)+'</span>':'')+
           '</div>'+
           '<div class="conn-sub">'+escHtml(t.label.split(' (')[0])+' \u00b7 '+escHtml(String(riassunto))+'</div>'+
         '</div>'+
         '<span class="conn-stato '+st+'">'+etichetta+'</span>'+
       '</div>'+
+      // Cosa si pu\u00f2 provare QUI E ORA, prima di premere: una prova
+      // impossibile annunciata \u00e8 informazione, la stessa prova che fallisce
+      // dopo il clic sembra un difetto della piattaforma.
+      (function(){
+        var cap=(typeof connCapacitaProva==='function')?connCapacitaProva(c.tipo):null;
+        if(!cap||!cap.testo)return '';
+        var col={ok:'var(--ok)',manca:'#D97706',impossibile:'var(--tx4)'}[cap.stato]||'var(--tx4)';
+        var ic={ok:'\u25cf',manca:'\u25b2',impossibile:'\u25cb'}[cap.stato]||'\u25cf';
+        return '<div class="conn-capacita" title="'+escAttr(cap.dettaglio||'')+'" style="color:'+col+'">'+
+          ic+' '+escHtml(cap.testo)+'</div>';
+      })()+
       '<div id="conn-esito-'+c.id+'">'+
         (c.esito_test?'<div class="conn-esito '+(c.stato==='ok'?'ok':'errore')+'">'+escHtml(c.esito_test)+'</div>':'')+
       '</div>'+
@@ -97,7 +112,7 @@ function connForm(c,tipo){
       '<button class="modal-close" onclick="openConnessioni()">✕</button></div>'+
     '<div style="font-size:11.5px;color:var(--tx3);margin:10px 0 14px;line-height:1.55">'+escHtml(t.descrizione)+'</div>'+
     '<div class="prop-group"><div class="prop-label">Nome <span style="color:#EF4444">*</span></div>'+
-      '<input class="prop-input" id="connNome" value="'+escHtml(nome)+'" placeholder="es. Drive Contratti"></div>'+
+      '<input class="prop-input" id="connNome" value="'+escAttr(nome)+'" placeholder="es. Drive Contratti"></div>'+
     (t.campi||[]).map(function(f){
       var v=cfg[f.k]||'';
       var lab=f.l+(f.req?' <span style="color:#EF4444">*</span>':'');
@@ -105,9 +120,9 @@ function connForm(c,tipo){
         '<select class="prop-select" id="connC_'+f.k+'">'+f.opts.map(function(o){
           return '<option'+(v===o?' selected':'')+'>'+escHtml(o)+'</option>'}).join('')+'</select></div>';
       if(f.ta)return '<div class="prop-group"><div class="prop-label">'+lab+'</div>'+
-        '<textarea class="prop-input" id="connC_'+f.k+'" rows="3" placeholder="'+escHtml(f.ph||'')+'">'+escHtml(v)+'</textarea></div>';
+        '<textarea class="prop-input" id="connC_'+f.k+'" rows="3" placeholder="'+escAttr(f.ph||'')+'">'+escHtml(v)+'</textarea></div>';
       return '<div class="prop-group"><div class="prop-label">'+lab+'</div>'+
-        '<input class="prop-input" id="connC_'+f.k+'" value="'+escHtml(v)+'" placeholder="'+escHtml(f.ph||'')+'"></div>';
+        '<input class="prop-input" id="connC_'+f.k+'" value="'+escAttr(v)+'" placeholder="'+escAttr(f.ph||'')+'"></div>';
     }).join('')+
     // La cartella non è un campo di testo: il permesso si ottiene solo con un
     // click dell'utente sul selettore di sistema.
@@ -115,7 +130,7 @@ function connForm(c,tipo){
       ? '<div class="prop-group"><div class="prop-label">Cartella <span style="color:#EF4444">*</span></div>'+
         '<button class="tb-btn" style="width:100%" onclick="connScegliCartella()">'+
           (cfg.alias?'📂 '+escHtml(cfg.alias)+': cambia':'Scegli cartella…')+'</button>'+
-        '<input type="hidden" id="connC_alias" value="'+escHtml(cfg.alias||'')+'">'+
+        '<input type="hidden" id="connC_alias" value="'+escAttr(cfg.alias||'')+'">'+
         '<div id="connCartellaInfo" style="font-size:10px;color:var(--tx4);margin-top:5px">'+
           (cfg.alias?'✅ Collegata':'Serve il permesso: si ottiene solo scegliendola qui.')+'</div></div>'
       : '')+

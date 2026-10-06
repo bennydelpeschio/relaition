@@ -180,7 +180,7 @@ function allegatiHTMLPost(p){
   var h='';
   imgs.forEach(function(x){
     h+='<div style="margin:9px 0;border-radius:10px;overflow:hidden;border:1px solid var(--bo);background:var(--bg2)">'+
-      '<img src="'+x.a.dati+'" alt="'+escHtml(x.a.nome||'')+'" loading="lazy" '+
+      '<img src="'+x.a.dati+'" alt="'+escAttr(x.a.nome||'')+'" loading="lazy" '+
         'onclick="event.stopPropagation();apriImmaginePost('+p.id+','+x.i+')" title="Apri a schermo intero" '+
         'style="display:block;width:100%;max-height:260px;object-fit:cover;cursor:zoom-in">'+
       '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px">'+
@@ -217,7 +217,7 @@ function postAllegatiRiquadro(){
   var n=POST_ALLEGATI.length;
   var chip=POST_ALLEGATI.map(function(a,i){
     var img=/^image\//.test(a.mime||'');
-    return '<span class="allegato-chip" title="'+escHtml(a.nome)+'">'+
+    return '<span class="allegato-chip" title="'+escAttr(a.nome)+'">'+
       '<span style="font-size:10px">'+(img?'🖼️':'📎')+'</span>'+
       '<span class="allegato-nome">'+escHtml(a.nome)+'</span>'+
       '<span class="allegato-x" title="Togli" onclick="postTogliAllegato('+i+')">✕</span></span>';

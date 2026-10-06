@@ -27,15 +27,51 @@ function renderDashChart(){
     var n=0;
     try{ n=dbGetOne('SELECT COUNT(*) c FROM exec_log WHERE user=? AND ts>=? AND ts<?',[chi,d.toISOString(),d2.toISOString()]).c }catch(e){}
     tot+=n;
-    dati.push({label:giorni[d.getDay()],val:n});
+    // La data sotto il giorno della settimana. Con i soli nomi dei giorni il
+    // grafico si legge solo se si e' eseguito qualcosa di recente: chi torna
+    // dopo due settimane vede «Mar, Mer, Gio...» e non ha modo di sapere di
+    // QUALE martedi' si parli — potrebbe essere quello di ieri o quello di un
+    // mese fa. Sette etichette che si ripetono ogni settimana non sono
+    // un'ascissa, sono un indizio.
+    dati.push({
+      label:giorni[d.getDay()],
+      data:d.getDate()+'/'+(d.getMonth()+1),
+      estesa:dataEstesaIt(d),
+      oggi:(i===0),
+      val:n
+    });
   }
   var maxVal=Math.max(1,Math.max.apply(null,dati.map(function(x){return x.val})));
-  card.innerHTML='<div class="card-header"><div class="card-title">Le tue esecuzioni, ultimi sette giorni</div><span class="badge '+(tot?'badge-g':'badge-gray')+'">'+tot+' in settimana</span></div>'+
+  // L'intervallo nell'intestazione: risponde a «quali sette giorni?» senza
+  // costringere a leggere la prima e l'ultima barra.
+  var inizio=new Date(oggi); inizio.setDate(oggi.getDate()-6);
+  var periodo=dataBreveIt(inizio)+' – '+dataBreveIt(oggi)+
+    (inizio.getFullYear()!==oggi.getFullYear()?' '+oggi.getFullYear():'');
+  card.innerHTML='<div class="card-header"><div class="card-title">Le tue esecuzioni, ultimi sette giorni '+
+      '<span class="card-periodo">'+periodo+'</span></div><span class="badge '+(tot?'badge-g':'badge-gray')+'">'+tot+' in settimana</span></div>'+
     (tot?'':'<div style="font-size:11.5px;color:var(--tx4);margin:-4px 0 8px">Nessuna esecuzione negli ultimi sette giorni: esegui un agente dal Builder e comparirà qui.</div>')+
-    '<div class="mini-chart">'+dati.map(function(x){
+    '<div class="mini-chart con-date">'+dati.map(function(x){
       var h=Math.round(x.val/maxVal*100);
-      return '<div class="mini-bar" style="height:'+Math.max(h,2)+'%;'+(x.val?'':'opacity:.35')+'" title="'+x.label+': '+x.val+' esecuzioni"><span class="mini-bar-val">'+x.val+'</span><span class="mini-bar-label">'+x.label+'</span></div>';
+      return '<div class="mini-bar'+(x.oggi?' oggi':'')+'" style="height:'+Math.max(h,2)+'%;'+(x.val?'':'opacity:.35')+'" '+
+        'title="'+escAttr(x.estesa+(x.oggi?' (oggi)':'')+': '+x.val+(x.val===1?' esecuzione':' esecuzioni'))+'">'+
+        '<span class="mini-bar-val">'+x.val+'</span>'+
+        '<span class="mini-bar-label">'+x.label+'<span class="mini-bar-data">'+(x.oggi?'oggi':x.data)+'</span></span></div>';
     }).join('')+'</div>';
+}
+
+// «6 ott», per l'intervallo in intestazione. L'anno si aggiunge solo quando la
+// settimana lo attraversa: scriverlo sempre e' rumore, ometterlo a cavallo di
+// capodanno e' ambiguo.
+function dataBreveIt(d){
+  try{ return d.toLocaleDateString('it-IT',{day:'numeric',month:'short'}).replace('.',''); }
+  catch(e){ return d.getDate()+'/'+(d.getMonth()+1) }
+}
+
+// «lunedì 6 ottobre 2026», per il suggerimento del mouse: li' lo spazio non
+// manca e la data per esteso toglie ogni dubbio.
+function dataEstesaIt(d){
+  try{ return d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) }
+  catch(e){ return d.toISOString().substring(0,10) }
 }
 
 // Agenti piu' usati dalla persona, con l'andamento degli ultimi sette giorni

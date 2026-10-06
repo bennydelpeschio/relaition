@@ -316,3 +316,56 @@ function connQuando(iso){
   var g=Math.round(min/1440);
   return g===1?'ieri':g+' giorni fa';
 }
+
+// ══════════════════════════════════════════
+// COSA SI PUÒ PROVARE QUI E ORA
+// ══════════════════════════════════════════
+// Le prove sono tutte reali, ma non tutte sono possibili ovunque: la scrittura
+// in una cartella vuole la File System Access API (Chrome ed Edge da
+// scrivania, non Safari, non telefono), e database, SMTP e webhook vogliono il
+// servizio locale avviato. Finora lo si scopriva premendo Prova e leggendo
+// l'errore, che durante una dimostrazione sembra un guasto invece di una
+// condizione mancante.
+//
+// Qui si risponde PRIMA: ogni scheda dice se la prova è disponibile, e se no
+// che cosa manca. Una prova che non si può fare, annunciata, è informazione;
+// la stessa prova che fallisce dopo il clic sembra un difetto.
+var CONN_SERVIZIO_DISPONIBILE=null;   // null = non ancora verificato
+
+async function connAggiornaDisponibilitaServizio(){
+  // `sondaDisponibile()` restituisce l'indirizzo del servizio oppure null:
+  // null significa «verificato e assente», che non e' la stessa cosa di «non
+  // ancora verificato». Si converte in booleano, o le due condizioni si
+  // confondono e la scheda resta per sempre su «verifico».
+  try{ CONN_SERVIZIO_DISPONIBILE=!!(await sondaDisponibile()) }
+  catch(e){ CONN_SERVIZIO_DISPONIBILE=false }
+  if(typeof renderConnessioni==='function'&&document.getElementById('connLista'))renderConnessioni();
+  return CONN_SERVIZIO_DISPONIBILE;
+}
+
+// {stato:'ok'|'manca'|'impossibile', testo, dettaglio}
+function connCapacitaProva(tipo){
+  if(tipo==='cartella'){
+    if(typeof csSupportata==='function'&&csSupportata())
+      return {stato:'ok',testo:'provabile dal browser',
+              dettaglio:'La prova scrive un file nella cartella collegata e poi lo rimuove: è una verifica di scrittura vera.'};
+    return {stato:'impossibile',testo:'non su questo browser',
+            dettaglio:(typeof csMotivoNonSupportata==='function')?csMotivoNonSupportata():'File System Access API non disponibile.'};
+  }
+  if(tipo==='http'){
+    return {stato:'ok',testo:'provabile dal browser',
+            dettaglio:'La chiamata parte dal browser. Con il servizio locale avviato si distingue anche un blocco CORS da un indirizzo sbagliato.'};
+  }
+  if(tipo==='database'||tipo==='smtp'||tipo==='webhook'){
+    if(CONN_SERVIZIO_DISPONIBILE===true)
+      return {stato:'ok',testo:'servizio locale attivo',
+              dettaglio:tipo==='database'?'La prova apre una connessione TCP reale verso host e porta.'
+                      :tipo==='smtp'?'La prova invia un\'email vera dal servizio locale.'
+                      :'La prova verifica che il ricevitore sia in ascolto.'};
+    if(CONN_SERVIZIO_DISPONIBILE===null)
+      return {stato:'manca',testo:'verifico il servizio…',dettaglio:'Controllo se il servizio locale è avviato.'};
+    return {stato:'manca',testo:'serve il servizio locale',
+            dettaglio:'Il browser non apre socket TCP né invia posta: lo fa il servizio locale. Avvia servizio-webhook/AVVIA-RICEVITORE.cmd (oppure servizio-mail) e riprova.'};
+  }
+  return {stato:'ok',testo:'',dettaglio:''};
+}

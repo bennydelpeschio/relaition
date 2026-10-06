@@ -24,7 +24,7 @@ function aiutoTestoHTML(id,tipo,nid,chiave){
   return '<div class="aiuto-testo" id="aiuto_'+id+'">'+
     '<button type="button" class="aiuto-testo-apri" onclick="aiutoTestoAlterna(\''+id+'\')">Aiutami a scriverlo</button>'+
     '<div class="aiuto-testo-corpo" style="display:none">'+
-      '<textarea class="prop-input" id="aiutoRichiesta_'+id+'" rows="2" placeholder="'+escHtml(domanda)+'" onkeydown="aiutoTestoTasto(event,\''+id+'\',\''+tipo+'\','+(nid==null?'null':nid)+',\''+(chiave||'')+'\')"></textarea>'+
+      '<textarea class="prop-input" id="aiutoRichiesta_'+id+'" rows="2" placeholder="'+escAttr(domanda)+'" onkeydown="aiutoTestoTasto(event,\''+id+'\',\''+tipo+'\','+(nid==null?'null':nid)+',\''+(chiave||'')+'\')"></textarea>'+
       '<div class="aiuto-testo-azioni">'+
         '<button type="button" class="tb-btn" onclick="aiutoTestoGenera(\''+id+'\',\''+tipo+'\','+(nid==null?'null':nid)+',\''+(chiave||'')+'\',false)">Scrivi da zero</button>'+
         '<button type="button" class="tb-btn" onclick="aiutoTestoGenera(\''+id+'\',\''+tipo+'\','+(nid==null?'null':nid)+',\''+(chiave||'')+'\',true)">Migliora quello che c\'è</button>'+

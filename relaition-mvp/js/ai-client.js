@@ -38,29 +38,52 @@ var MISTRAL_MODEL=AI_MODELS.mistral;   // retro-compatibilità
 //
 // I modelli locali non sono qui: il loro elenco lo si chiede al server, che e'
 // l'unico a sapere cosa sia installato (`discoverLocalModels`).
+// L'elenco e' ordinato dal piu' capace al piu' economico, che e' l'ordine in
+// cui si sceglie: si parte dal modello buono e si scende quando il compito non
+// lo richiede. Dove il fornitore pubblica un ALIAS mobile («-latest») si usa
+// quello: segue la generazione corrente senza che questo file vada aggiornato
+// a ogni ritiro, ed e' gia' successo con gemini-2.0-flash.
+//
+// ATTENZIONE: questi identificativi invecchiano. Sono un punto di partenza
+// comodo, non la verita': la verita' ce l'ha il fornitore, e si chiede con il
+// pulsante «Rileva» del pannello (rilevaModelliFornitore), che interroga
+// l'elenco dei modelli abilitati PER QUELLA CHIAVE. Quello che non e' in
+// elenco si scrive a mano con «Altro modello…» sul nodo.
 var AI_MODELLI_DISPONIBILI={
   claude:[
+    {id:'claude-fable-5-1', nome:'Claude Fable 5.1', nota:'il più capace, per ragionamento e compiti lunghi'},
     {id:'claude-opus-5',    nome:'Claude Opus 5',    nota:'equilibrio fra capacità e costo: predefinito'},
     {id:'claude-sonnet-5',  nome:'Claude Sonnet 5',  nota:'più economico, adatto a estrazione e classificazione'},
-    {id:'claude-haiku-4-5-20251001', nome:'Claude Haiku 4.5', nota:'il più rapido ed economico, per compiti semplici'},
-    {id:'claude-fable-5-1', nome:'Claude Fable 5.1', nota:'il più capace, per ragionamento e compiti lunghi'}
+    {id:'claude-haiku-4-5-20251001', nome:'Claude Haiku 4.5', nota:'il più rapido ed economico, per compiti semplici'}
   ],
   openai:[
-    {id:'gpt-4o-mini',   nome:'GPT-4o mini',   nota:'economico, adatto a estrazione e classificazione'},
-    {id:'gpt-4o',        nome:'GPT-4o',        nota:'più capace, per sintesi e testi lunghi'},
+    {id:'gpt-5',         nome:'GPT-5',         nota:'il più capace della famiglia GPT-5'},
+    {id:'gpt-5-mini',    nome:'GPT-5 mini',    nota:'buon compromesso fra capacità e costo'},
+    {id:'gpt-5-nano',    nome:'GPT-5 nano',    nota:'il più rapido ed economico della famiglia'},
+    {id:'o3',            nome:'o3',            nota:'ragionamento esteso, per problemi a più passaggi'},
+    {id:'o4-mini',       nome:'o4-mini',       nota:'ragionamento a costo contenuto'},
     {id:'gpt-4.1',       nome:'GPT-4.1',       nota:'contesto ampio, buono sui documenti lunghi'},
-    {id:'gpt-4.1-mini',  nome:'GPT-4.1 mini',  nota:'contesto ampio a costo contenuto'}
+    {id:'gpt-4.1-mini',  nome:'GPT-4.1 mini',  nota:'contesto ampio a costo contenuto'},
+    {id:'gpt-4.1-nano',  nome:'GPT-4.1 nano',  nota:'il più economico della famiglia 4.1'},
+    {id:'gpt-4o',        nome:'GPT-4o',        nota:'generazione precedente, multimodale'},
+    {id:'gpt-4o-mini',   nome:'GPT-4o mini',   nota:'economico e molto diffuso: predefinito'}
   ],
   gemini:[
-    // Alias mobili di Google: seguono la generazione corrente senza richiedere
-    // una modifica al codice a ogni ritiro.
-    {id:'gemini-flash-latest',      nome:'Gemini Flash',      nota:'veloce ed economico: predefinito'},
-    {id:'gemini-pro-latest',        nome:'Gemini Pro',        nota:'più capace su compiti complessi'},
-    {id:'gemini-flash-lite-latest', nome:'Gemini Flash Lite', nota:'il più rapido, per classificazioni ad alto volume'}
+    // Alias mobili di Google per primi: seguono la generazione corrente.
+    {id:'gemini-pro-latest',        nome:'Gemini Pro (ultima)',        nota:'alias mobile: segue la generazione Pro corrente'},
+    {id:'gemini-flash-latest',      nome:'Gemini Flash (ultima)',      nota:'alias mobile, veloce ed economico: predefinito'},
+    {id:'gemini-flash-lite-latest', nome:'Gemini Flash Lite (ultima)', nota:'il più rapido, per classificazioni ad alto volume'},
+    {id:'gemini-2.5-pro',           nome:'Gemini 2.5 Pro',             nota:'versione fissata: non cambia sotto i piedi'},
+    {id:'gemini-2.5-flash',         nome:'Gemini 2.5 Flash',           nota:'versione fissata, veloce'},
+    {id:'gemini-2.5-flash-lite',    nome:'Gemini 2.5 Flash Lite',      nota:'versione fissata, la più economica'}
   ],
   mistral:[
-    {id:'mistral-large-latest', nome:'Mistral Large', nota:'il più capace di Mistral'},
-    {id:'mistral-small-latest', nome:'Mistral Small', nota:'economico, per compiti semplici'}
+    {id:'mistral-large-latest',   nome:'Mistral Large',    nota:'il più capace di Mistral: predefinito'},
+    {id:'mistral-medium-latest',  nome:'Mistral Medium',   nota:'compromesso fra capacità e costo'},
+    {id:'mistral-small-latest',   nome:'Mistral Small',    nota:'economico, per compiti semplici'},
+    {id:'magistral-medium-latest',nome:'Magistral Medium', nota:'orientato al ragionamento'},
+    {id:'ministral-8b-latest',    nome:'Ministral 8B',     nota:'piccolo e rapido, per alti volumi'},
+    {id:'codestral-latest',       nome:'Codestral',        nota:'specializzato sul codice'}
   ],
   locale:[],    // popolati da discoverLocalModels(): dipendono da cosa è installato
   custom:[]
@@ -77,6 +100,12 @@ function modelliDelProvider(p){
       return typeof m==='string'?{id:m,nome:m,nota:''}:m;
     });
   }
+  // Se il fornitore e' stato interrogato («Rileva»), vince il suo elenco: sono
+  // i modelli abilitati per QUELLA chiave, che e' l'unica verita' che conta.
+  // L'elenco scritto nel codice resta come punto di partenza quando il
+  // rilevamento non e' stato fatto o non e' passato (CORS, rete, permessi).
+  var pcr=(aiConfig.providers||{})[chiave];
+  if(pcr&&pcr.modelliRilevati&&pcr.modelliRilevati.length)return pcr.modelliRilevati;
   return AI_MODELLI_DISPONIBILI[chiave]||[];
 }
 
@@ -89,7 +118,43 @@ function modelloEffettivo(provider,scelto){
   if(scelto&&elenco.some(function(m){return m.id===scelto}))return scelto;
   var pc=(aiConfig.providers||{})[p];
   if(p==='locale'||p==='custom')return (pc&&pc.model)||scelto||'';
+  // Identificativo scritto a mano dal nodo (voce «Altro modello…»): si manda
+  // al fornitore cosi' com'e'. E' l'unico modo per usare un modello uscito
+  // dopo questa versione senza aspettare un aggiornamento del codice.
+  if(scelto&&scelto.indexOf(MODELLO_LIBERO_PREFISSO)===0)
+    return scelto.substring(MODELLO_LIBERO_PREFISSO.length);
   return AI_MODELS[p]||'';
+}
+
+// ══════════════════════════════════════════
+// UN MODELLO CHE NON È NELL'ELENCO
+// ══════════════════════════════════════════
+// L'elenco dei modelli è scritto nel codice, e questo lo fa invecchiare: ogni
+// volta che un fornitore ne pubblica uno nuovo, chi usa la piattaforma deve
+// aspettare che qualcuno aggiorni `AI_MODELLI_DISPONIBILI`. In una
+// dimostrazione fatta sei mesi dopo il rilascio, significa un elenco che
+// sembra vecchio.
+//
+// La scorciatoia sarebbe scrivere a mano gli identificativi dei modelli
+// annunciati di recente. È però il modo più sicuro di rompere tutto: un
+// identificativo sbagliato di una lettera non dà un avviso, dà un 404 al
+// primo Esegui, e lo dà davanti a chi guarda. Gli identificativi veri li
+// pubblica il fornitore, cambiano, e questo codice non può verificarli.
+//
+// Quindi: ogni fornitore ha in fondo alla tendina «Altro modello…», che apre
+// un campo libero dove si incolla l'identificativo esatto preso dalla
+// documentazione del fornitore. La piattaforma lo manda così com'è. È la
+// stessa soluzione già adottata per i modelli locali e per l'endpoint custom,
+// estesa ai quattro fornitori principali: l'elenco resta una comodità, non un
+// limite.
+var MODELLO_LIBERO_PREFISSO='libero:';
+var MODELLO_LIBERO_VOCE='__altro__';
+
+// Modello scritto a mano per un nodo, se c'è.
+function modelloLiberoDi(config){
+  var v=config&&config.modelId;
+  return (v&&String(v).indexOf(MODELLO_LIBERO_PREFISSO)===0)
+    ? String(v).substring(MODELLO_LIBERO_PREFISSO.length) : '';
 }
 
 // ── MODELLI IN LOCALE ──
@@ -148,7 +213,13 @@ function aiProviderStatusHint(model){
 }
 
 function providerLabel(p){
-  return {claude:'Claude',openai:'OpenAI',gemini:'Gemini',mistral:'Mistral',locale:'Modello in locale',custom:'Custom/Open source'}[normalizeProviderName(p)]||p;
+  // `auto` non e' un fornitore: e' la scelta «usa quello collegato». Se
+  // arriva fin qui vuol dire che la risoluzione non ha trovato nessuno, e
+  // scriverlo tale e quale produceva righe di registro come «non supportato
+  // da auto». Ha un'etichetta sua, cosi' chi legge capisce cosa e' successo.
+  return {claude:'Claude',openai:'OpenAI',gemini:'Gemini',mistral:'Mistral',
+          locale:'Modello in locale',custom:'Custom/Open source',
+          auto:'Automatico (nessun fornitore collegato)'}[normalizeProviderName(p)]||p;
 }
 
 // Ogni provider ricorda la propria key/stato indipendentemente da quale sia
@@ -374,6 +445,19 @@ async function testAIKey(){
   }
 
   if(!key){st.innerHTML='<span class="ai-dot err"></span> Inserisci una API key';return}
+
+  // Ogni fornitore ha un prefisso riconoscibile. Incollare una chiave OpenAI
+  // avendo selezionato Anthropic era un errore facilissimo — i campi sono
+  // uguali e le chiavi si somigliano — e produceva un 401 che parlava di
+  // «chiave non valida»: chi legge pensa che la chiave sia scaduta, non che
+  // sia nel posto sbagliato. Si dice prima di chiamare, e si dice quale.
+  var incoerenza=chiaveNonCoerente(provider,key);
+  if(incoerenza){
+    commitProviderStatus(provider,'err');
+    st.innerHTML='<span class="ai-dot err"></span> '+incoerenza;
+    return;
+  }
+
   commitProviderStatus(provider,'idle',{key:key});
   st.innerHTML='<span class="ai-dot running"></span> Chiamata API di verifica...';
   var t0=Date.now();
@@ -478,8 +562,15 @@ async function callAIWithTools(prompt,systemPrompt,config,tools){
     // Simulazione deterministica: il primo strumento disponibile viene
     // invocato una sola volta, così la demo mostra il ciclo completo anche
     // senza credenziali. Marcata come simulata.
-    if(tools&&tools.length&&!(config&&config._toolSimDone)){
-      if(config)config._toolSimDone=true;
+    // Il contrassegno «già fatta» vive in `config._toolSim`, un oggetto che il
+    // motore passa per riferimento e che sopravvive alle iterazioni del nodo.
+    // Scriverlo su `config` non bastava: il motore ricostruisce la
+    // configurazione a ogni giro, quindi il contrassegno si perdeva e la
+    // simulazione riproponeva lo stesso strumento all'infinito.
+    var sim=(config&&config._toolSim)||null;
+    var giaFatta=sim?sim.fatto:!!(config&&config._toolSimDone);
+    if(tools&&tools.length&&!giaFatta){
+      if(sim)sim.fatto=true; else if(config)config._toolSimDone=true;
       return { text:base.text, demo:true,
                toolCall:{ name:tools[0].name, nodeId:tools[0].nodeId, args:{},
                           reason:'scelta simulata: nessuna chiave configurata per '+providerLabel(provider) } };
@@ -936,3 +1027,194 @@ function providerEffettivo(scelta){
   if(r&&r.provider)return r.provider;
   return normalizeProviderName(aiConfig.provider);
 }
+
+// ══════════════════════════════════════════
+// LA CHIAVE È DEL FORNITORE SELEZIONATO?
+// ══════════════════════════════════════════
+// Il pannello ha un campo solo e quattro fornitori: incollare la chiave di uno
+// avendo selezionato un altro e' l'errore piu' facile da fare, e il fornitore
+// risponde 401 «invalid api key». Chi legge conclude che la chiave e' scaduta
+// e va a generarne un'altra, che fallira' uguale.
+//
+// Il controllo e' volutamente PERMISSIVO: riconosce solo i prefissi
+// documentati e inequivocabili, e in caso di dubbio lascia passare. Un
+// controllo severo invecchierebbe male — i fornitori cambiano i formati — e
+// bloccherebbe una chiave buona, che e' un danno peggiore di un 401 spiegato
+// male. Qui si intercetta il caso certo: la chiave di un ALTRO fornitore fra
+// quelli integrati.
+var PREFISSI_CHIAVE={
+  claude:{ prefissi:['sk-ant-'], nome:'Anthropic (Claude)' },
+  openai:{ prefissi:['sk-proj-','sk-svcacct-'], nome:'OpenAI' },
+  gemini:{ prefissi:['AIza'], nome:'Google (Gemini)' }
+};
+
+function riconosciFornitoreChiave(key){
+  var k=String(key||'');
+  for(var p in PREFISSI_CHIAVE){
+    var ok=PREFISSI_CHIAVE[p].prefissi.some(function(pre){ return k.indexOf(pre)===0 });
+    if(ok)return p;
+  }
+  // `sk-` senza altro: e' OpenAI nel formato vecchio, ma anche molti endpoint
+  // compatibili lo usano. Non si decide.
+  return null;
+}
+
+// Restituisce il messaggio da mostrare, oppure null se non c'e' niente da
+// dire. Non blocca mai una chiave che non si sa riconoscere.
+function chiaveNonCoerente(provider,key){
+  var atteso=PREFISSI_CHIAVE[provider];
+  var trovato=riconosciFornitoreChiave(key);
+  if(!trovato)return null;              // formato non riconosciuto: si prova
+  if(trovato===provider)return null;    // coerente
+  var nomeTrovato=PREFISSI_CHIAVE[trovato].nome;
+  var nomeAtteso=atteso?atteso.nome:providerLabel(provider);
+  return '❌ Questa sembra una chiave <strong>'+nomeTrovato+'</strong>, ma il fornitore selezionato è <strong>'+
+         nomeAtteso+'</strong>. Cambia fornitore qui sopra, oppure incolla la chiave giusta.';
+}
+
+// ══════════════════════════════════════════
+// CHIEDERE AL FORNITORE QUALI MODELLI HA
+// ══════════════════════════════════════════
+// Un elenco scritto nel codice e' sempre in ritardo di qualche mese, e nessuno
+// che legge questo file puo' sapere quali modelli siano abilitati sulla chiave
+// di chi lo usa: un piano gratuito e uno a consumo vedono cataloghi diversi.
+//
+// Tutti e quattro i fornitori pubblicano l'elenco. Lo si chiede con la chiave
+// dell'utente e si tiene il risultato: da quel momento la tendina dei nodi
+// mostra i modelli VERI di quella chiave, non quelli che immaginavamo noi.
+//
+// Due avvertenze oneste. La prima: la chiamata parte dal browser, quindi puo'
+// essere rifiutata dalle regole CORS del fornitore — in quel caso non si
+// finge, si dice che non e' passata e si resta sull'elenco predefinito. La
+// seconda: l'elenco contiene anche modelli che non servono a una chat
+// (immagini, trascrizione, incorporamenti), e vanno tolti o la tendina diventa
+// illeggibile.
+var MODELLI_DA_ESCLUDERE=/embed|whisper|tts|audio|speech|image|dall-e|vision-preview|moderation|rerank|ocr|transcribe|realtime|search|codex-mini/i;
+
+function _ordinaModelli(ids){
+  // I piu' recenti in cima: gli identificativi contengono quasi sempre una
+  // versione o una data, e l'ordine alfabetico inverso li avvicina abbastanza
+  // da essere utile. Gli alias «-latest» restano sopra a tutto.
+  return ids.sort(function(a,b){
+    var la=/latest/.test(a)?0:1, lb=/latest/.test(b)?0:1;
+    if(la!==lb)return la-lb;
+    return b.localeCompare(a);
+  });
+}
+
+async function rilevaModelliFornitore(){
+  saveCurrentProviderDraft();
+  var p=aiConfig.provider;
+  var st=document.getElementById('aiStatus');
+  var pc=(aiConfig.providers||{})[p]||{};
+  if(p==='locale'||p==='custom')return discoverLocalModels();
+  if(!pc.key){ st.innerHTML='<span class="ai-dot err"></span> Serve la chiave per chiedere al fornitore quali modelli hai'; return }
+
+  st.innerHTML='<span class="ai-dot running"></span> Chiedo a '+providerLabel(p)+' l\'elenco dei suoi modelli…';
+  try{
+    var url,opz={headers:{}};
+    if(p==='claude'){
+      url='https://api.anthropic.com/v1/models?limit=100';
+      opz.headers={'x-api-key':pc.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+    }else if(p==='openai'){
+      url=(openaiUrl()||'').replace(/\/chat\/completions$/,'')+'/models';
+      opz.headers={'Authorization':'Bearer '+pc.key};
+    }else if(p==='mistral'){
+      url='https://api.mistral.ai/v1/models';
+      opz.headers={'Authorization':'Bearer '+pc.key};
+    }else if(p==='gemini'){
+      url='https://generativelanguage.googleapis.com/v1beta/models?key='+encodeURIComponent(pc.key)+'&pageSize=200';
+    }else{ st.innerHTML='<span class="ai-dot err"></span> Fornitore non previsto'; return }
+
+    var r=await fetch(url,opz);
+    var d=await r.json();
+    if(!r.ok){
+      var m=(d&&d.error&&(d.error.message||d.error))||('HTTP '+r.status);
+      st.innerHTML='<span class="ai-dot err"></span> ❌ '+escHtml(String(m).substring(0,110));
+      return;
+    }
+
+    // Ogni fornitore impacchetta l'elenco a modo suo.
+    var grezzi=[];
+    if(p==='gemini'){
+      grezzi=(d.models||[]).filter(function(m){
+        // Solo i modelli che sanno generare testo su richiesta.
+        return (m.supportedGenerationMethods||[]).indexOf('generateContent')>=0;
+      }).map(function(m){ return String(m.name||'').replace(/^models\//,'') });
+    }else{
+      grezzi=(d.data||d.models||[]).map(function(m){ return m.id||m.name }).filter(Boolean);
+    }
+
+    var ids=_ordinaModelli(grezzi.filter(function(id){ return id && !MODELLI_DA_ESCLUDERE.test(id) }));
+    if(!ids.length){
+      st.innerHTML='<span class="ai-dot err"></span> '+providerLabel(p)+' ha risposto, ma nessun modello di generazione testo è abilitato su questa chiave';
+      return;
+    }
+
+    // Le note dell'elenco scritto nel codice si conservano dove l'id combacia:
+    // sono l'unica cosa che il fornitore non restituisce e che aiuta a
+    // scegliere.
+    var note={};
+    (AI_MODELLI_DISPONIBILI[p]||[]).forEach(function(m){ note[m.id]={nome:m.nome,nota:m.nota} });
+    aiConfig.providers[p].modelliRilevati=ids.map(function(id){
+      return {id:id, nome:(note[id]&&note[id].nome)||id, nota:(note[id]&&note[id].nota)||''};
+    });
+
+    st.innerHTML='<span class="ai-dot ok"></span> ✅ '+ids.length+' modelli rilevati su '+providerLabel(p)+
+      ': ora sono nella tendina «Modello» di ogni nodo AI';
+    showToast('✅ '+ids.length+' modelli rilevati da '+providerLabel(p));
+    salvaProviderInSessione();
+    salvaModelliRilevati();
+    if(typeof B!=='undefined'&&typeof renderProps==='function'&&B.selId>0)renderProps(B.selId);
+  }catch(e){
+    // Il caso tipico e' il rifiuto CORS: la chiamata non parte nemmeno e non
+    // c'e' un codice di stato da mostrare. Si dice cosa e' successo e cosa
+    // resta possibile, invece di lasciare un messaggio vago.
+    st.innerHTML='<span class="ai-dot err"></span> Il browser non è riuscito a interrogare '+providerLabel(p)+
+      ' (di solito è una restrizione CORS del fornitore). Resta l\'elenco predefinito, '+
+      'e sul singolo nodo puoi scrivere l\'identificativo con «Altro modello…».';
+  }
+}
+
+// ══════════════════════════════════════════
+// L'ELENCO RILEVATO SOPRAVVIVE AL RICARICAMENTO
+// ══════════════════════════════════════════
+// La chiave sta in `sessionStorage` e sparisce chiudendo la scheda: è una
+// scelta di sicurezza e resta. L'elenco dei modelli, invece, non è un segreto:
+// sono i nomi pubblici dei modelli di un fornitore. Tenerlo in `localStorage`
+// significa che si rileva una volta e le tendine dei nodi restano aggiornate
+// anche domani, anche prima di reincollare la chiave — che è esattamente la
+// differenza fra una funzione che si usa e una che si prova una volta.
+var MODELLI_RILEVATI_CHIAVE='relaition_modelli_rilevati';
+
+function salvaModelliRilevati(){
+  try{
+    var d={};
+    Object.keys(aiConfig.providers||{}).forEach(function(p){
+      var m=aiConfig.providers[p]&&aiConfig.providers[p].modelliRilevati;
+      if(m&&m.length)d[p]=m;
+    });
+    localStorage.setItem(MODELLI_RILEVATI_CHIAVE,JSON.stringify(d));
+  }catch(e){}
+}
+
+function ripristinaModelliRilevati(){
+  try{
+    var g=localStorage.getItem(MODELLI_RILEVATI_CHIAVE);
+    if(!g)return;
+    var d=JSON.parse(g);
+    Object.keys(d||{}).forEach(function(p){
+      if(!aiConfig.providers[p])aiConfig.providers[p]={status:'idle',key:''};
+      aiConfig.providers[p].modelliRilevati=d[p];
+    });
+  }catch(e){}
+}
+
+// Quanti modelli sono stati rilevati per il fornitore a video: serve
+// all'etichetta del pulsante, che altrimenti è un'icona senza stato.
+function modelliRilevatiPer(p){
+  var pc=(aiConfig.providers||{})[normalizeProviderName(p)];
+  return (pc&&pc.modelliRilevati&&pc.modelliRilevati.length)||0;
+}
+
+document.addEventListener('DOMContentLoaded',function(){ setTimeout(ripristinaModelliRilevati,600) });

@@ -111,7 +111,14 @@ function renderPalette(){
   });
   var colors={trigger:'#F59E0B',ai:'#6366F1',action:'#10B981',logic:'#64748B',output:'#0F766E',crm:'#0EA5E9',comm:'#8B5CF6',erp:'#F97316',data:'#14B8A6',devops:'#EF4444',guard:'#D946EF'};
   document.getElementById('paletteList').innerHTML=list.map(function(p){
-    return '<div class="palette-item" draggable="true" ondragstart="onPaletteDrag(event,\''+p.type+'\',\''+p.icon+'\',\''+p.name+'\',\''+p.desc+'\')">'+
+    // I `data-` servono al tocco (js/mobile.js): su schermo tattile il
+    // trascinamento HTML5 non esiste e il blocco si aggiunge toccandolo, per
+    // cui gli stessi dati devono stare in un posto leggibile senza far
+    // partire un drag.
+    return '<div class="palette-item" draggable="true"'+
+      ' data-tipo="'+escAttr(p.type)+'" data-icona="'+escAttr(p.icon)+'"'+
+      ' data-nome="'+escAttr(p.name)+'" data-desc="'+escAttr(p.desc)+'"'+
+      ' ondragstart="onPaletteDrag(event,\''+p.type+'\',\''+p.icon+'\',\''+p.name+'\',\''+p.desc+'\')">'+
       '<div class="p-ic" style="background:'+(colors[p.cat]||'#64748B')+'15;color:'+(colors[p.cat]||'#64748B')+'">'+p.icon+'</div>'+
       '<div><div class="p-name">'+p.name+'</div><div class="p-sub">'+p.desc+'</div></div></div>';
   }).join('');
@@ -182,15 +189,26 @@ function initBuilder(){
     if(!B.dbAgentId)B.effimero=true;
     if(B.nodes.length===0){
       // Demo workflow
-      var id0=b_addNode('tr','📥','Webhook CRM','Lead in arrivo',80,40);
+      // I nomi devono essere quelli della palette, non nomi di fantasia: la
+      // validazione controlla che ogni nodo corrisponda a un blocco vero, e
+      // il flusso di esempio si bloccava da solo al primo Esegui con tre
+      // errori — «"Webhook CRM" non corrisponde a un trigger della palette»,
+      // e lo stesso per «Email alert», piu' il ramo dell'email che non
+      // finiva su un output. Il primo gesto di chi apre il Builder non puo'
+      // essere un errore di un flusso che gli abbiamo messo noi sulla tela.
+      // Cosa fa ogni nodo lo dice la descrizione, che e' libera.
+      var id0=b_addNode('tr','📥','Webhook','Lead in arrivo dal CRM',80,40);
       var id1=b_addNode('ai','🧠','Analisi Lead','Scoring con LLM',80,180);
       var id2=b_addNode('cd','🔀','Score > 70?','Routing',80,320);
-      var id3=b_addNode('ac','📧','Email alert','Notifica sales',20,460);
-      var id4=b_addNode('ou','📊','Update CRM','Salva score',240,460);
+      var id3=b_addNode('ac','📧','Invia email','Notifica al commerciale',20,460);
+      var id4=b_addNode('ou','📊','Output','Salva lo score sul CRM',260,600);
       b_addEdge(id0,'out',id1,'in','');
       b_addEdge(id1,'out',id2,'in','');
       b_addEdge(id2,'true',id3,'in','Sì');
       b_addEdge(id2,'false',id4,'in','No');
+      // Anche il ramo dell'email deve chiudersi su un output, altrimenti
+      // quella meta' dell'esecuzione non lascia traccia di cosa ha deciso.
+      b_addEdge(id3,'out',id4,'in','');
       // Questo flusso e un esempio, non un agente dell utente: finche non lo
       // tocca non deve comparire fra "I miei agenti" ne contare nelle
       // metriche. Il salvataggio automatico lo ignora finche resta effimero.
@@ -550,7 +568,7 @@ function b_render(){
     chatSugg.innerHTML=examples.map(function(ex,exIdx){
       // Lo stile vive nel foglio di stile (.chat-sugg): qui resta solo cio' che
       // dipende dallo stato, cioe' l'attenuazione quando non c'e' un provider.
-      return '<span class="chip" onclick="useChatSuggestion('+exIdx+')" title="'+escHtml(ex.request||ex.label||ex)+'"'+
+      return '<span class="chip" onclick="useChatSuggestion('+exIdx+')" title="'+escAttr(ex.request||ex.label||ex)+'"'+
         (provReady?'':' style="opacity:.75"')+'><span class="ic">'+iconaSugg+'</span>'+escHtml(ex.label||ex)+'</span>';
     }).join('');
     window._chatSuggestionExamples=examples;
@@ -1016,8 +1034,8 @@ function renderProps(nid){
   var n=B.nodes.find(function(x){return x.id===nid});if(!n)return;
   var isAI=n.type==='ai';
   body.innerHTML=
-    '<div class="prop-group"><div class="prop-label">Nome</div><input class="prop-input" value="'+escHtml(n.name)+'" onchange="updProp('+nid+',\'name\',this.value)"></div>'+
-    '<div class="prop-group"><div class="prop-label">Descrizione</div><input class="prop-input" value="'+escHtml(n.detail)+'" onchange="updProp('+nid+',\'detail\',this.value)"></div>'+
+    '<div class="prop-group"><div class="prop-label">Nome</div><input class="prop-input" value="'+escAttr(n.name)+'" onchange="updProp('+nid+',\'name\',this.value)"></div>'+
+    '<div class="prop-group"><div class="prop-label">Descrizione</div><input class="prop-input" value="'+escAttr(n.detail)+'" onchange="updProp('+nid+',\'detail\',this.value)"></div>'+
     '<div class="prop-group"><div class="prop-label">Icona</div><input class="prop-input" value="'+n.icon+'" onchange="updProp('+nid+',\'icon\',this.value)" style="width:60px"></div>'+
     (isAI?
       '<div class="ai-panel"><div class="ai-panel-title"><span class="sparkle">✨</span> Configurazione AI</div>'+
@@ -1276,13 +1294,93 @@ function renderSubAgentPanel(nid,n){
   var agenti=[];
   try{ agenti=dbAll('SELECT name FROM agents ORDER BY name') }catch(e){}
   var opts='<option value="">seleziona un agente</option>'+agenti.map(function(a){
-    return '<option value="'+escHtml(a.name)+'"'+(n.config.agentName===a.name?' selected':'')+'>'+escHtml(a.name)+'</option>';
+    return '<option value="'+escAttr(a.name)+'"'+(n.config.agentName===a.name?' selected':'')+'>'+escHtml(a.name)+'</option>';
   }).join('');
   return '<div class="connector-config"><div class="connector-config-title">🤝 Delega a sotto-agente</div>'+
     '<div class="prop-group"><div class="prop-label">Agente da invocare <span style="color:#EF4444">*</span></div>'+
     '<select class="prop-select" onchange="updConfig('+nid+',\'agentName\',this.value)">'+opts+'</select></div>'+
     (agenti.length?'':'<div style="font-size:10px;color:#D97706;margin-top:4px">Nessun agente salvato: salvane uno (💾) per poterlo invocare da qui.</div>')+
-    '<div style="font-size:10px;color:var(--tx4);margin-top:6px;line-height:1.5">L\'output di questo nodo è il risultato del sotto-agente. La traccia mostra il passaggio di controllo e il ritorno.</div></div>';
+    // Entrare nel sotto-agente: un nodo di delega che nomina un flusso senza
+    // dare modo di aprirlo costringe a cercarlo in "I miei agenti" e a
+    // tornare indietro a memoria. Da qui si apre, si guarda come e' fatto, e
+    // la briciola in testa al Builder riporta all'orchestratore.
+    (n.config.agentName
+      ? '<button class="tb-btn" style="width:100%;margin-top:8px;justify-content:center" '+
+          'onclick="bApriSottoAgente('+nid+')">📂 Apri «'+escHtml(n.config.agentName)+'» nel Builder</button>'+
+        (bSottoAgenteRiassunto(n.config.agentName)||'')
+      : '')+
+    '<div style="font-size:10px;color:var(--tx4);margin-top:6px;line-height:1.5">L\'output di questo nodo è il risultato del sotto-agente: diventa l\'input del nodo collegato a valle. La traccia mostra il passaggio di controllo e il ritorno.</div></div>';
+}
+
+// Riga di riepilogo del sotto-agente scelto: quanti nodi, se è pianificato.
+// Serve a capire cosa si sta delegando senza doverlo aprire.
+function bSottoAgenteRiassunto(nome){
+  var r=null;
+  try{ r=dbGetOne('SELECT nodes_json,active FROM agents WHERE name=?',[nome]) }catch(e){}
+  if(!r)return '<div style="font-size:10px;color:#EF4444;margin-top:5px">⚠️ Questo agente non è più fra quelli salvati: il flusso non partirà.</div>';
+  var ns=[];try{ ns=JSON.parse(r.nodes_json||'[]') }catch(e){}
+  return '<div style="font-size:10px;color:var(--tx4);margin-top:5px">'+
+    ns.length+' nod'+(ns.length===1?'o':'i')+(r.active?' · ⏰ in produzione':'')+'</div>';
+}
+
+// Apre il sotto-agente nel canvas conservando la strada di ritorno. Il flusso
+// corrente va salvato prima: aprire un altro agente sovrascrive il canvas, e
+// perdere il lavoro per aver cliccato un pulsante di navigazione non è
+// accettabile.
+function bApriSottoAgente(nid){
+  var n=B.nodes.find(function(x){return x.id===nid});
+  if(!n||!n.config||!n.config.agentName)return;
+  var nome=n.config.agentName;
+  var row=null;
+  try{ row=dbGetOne('SELECT * FROM agents WHERE name=?',[nome]) }catch(e){}
+  if(!row){showToast('⚠️ «'+nome+'» non è fra gli agenti salvati');return}
+
+  // Se l'orchestratore non è salvato non c'è dove tornare: lo si salva prima,
+  // chiedendolo, invece di perderlo in silenzio.
+  if(!B.dbAgentId&&B.nodes.length){
+    if(!confirm('Il flusso aperto («'+(currentAgentName||'senza nome')+'») non è ancora salvato.\n\nAprire «'+nome+'» lo sostituisce sul canvas.\n\nOK = salvo ora e poi entro nel sotto-agente\nAnnulla = resto qui'))return;
+    if(typeof saveAgent==='function')saveAgent();
+    if(!B.dbAgentId){showToast('⚠️ Salvataggio non riuscito: resto sul flusso corrente');return}
+  }
+
+  B._ritorno={id:B.dbAgentId,nome:currentAgentName,nodeId:nid};
+  try{
+    B.nodes=JSON.parse(row.nodes_json);B.edges=JSON.parse(row.edges_json);
+    B.nextId=row.next_id||(B.nodes.reduce(function(m,x){return Math.max(m,x.id||0)},0)+1);
+  }catch(e){ showToast('⚠️ Il flusso di «'+nome+'» non è leggibile'); B._ritorno=null; return }
+  B.selId=-1;B.selIds=[];B.selEdgeIdx=-1;
+  currentAgentName=row.name;B.dbAgentId=row.id;B.context=row.context||'';
+  if(typeof svuotaRegistroEsecuzione==='function')svuotaRegistroEsecuzione();
+  b_render();
+  if(typeof bResetView==='function')bResetView();
+  renderProps(-1); // il pannello mostrava ancora il nodo di delega del flusso precedente
+  aggiornaTitoloBuilder();
+  showToast('📂 Sei dentro «'+row.name+'», il sotto-agente delegato');
+  if(typeof addAct==='function')addAct('Aperto il sotto-agente «'+row.name+'» dal nodo di delega');
+}
+
+// Ritorno all'orchestratore. Il nodo da cui si era partiti viene riselezionato
+// così il pannello riapre la delega: è il punto in cui si era.
+function bTornaAllOrchestratore(){
+  var r=B._ritorno;
+  if(!r||!r.id){ B._ritorno=null; aggiornaTitoloBuilder(); return }
+  var row=null;
+  try{ row=dbGetOne('SELECT * FROM agents WHERE id=?',[r.id]) }catch(e){}
+  if(!row){showToast('⚠️ «'+r.nome+'» non è più fra gli agenti salvati');B._ritorno=null;aggiornaTitoloBuilder();return}
+  try{
+    B.nodes=JSON.parse(row.nodes_json);B.edges=JSON.parse(row.edges_json);
+    B.nextId=row.next_id||1;
+  }catch(e){ showToast('⚠️ Flusso non leggibile'); return }
+  B.selIds=[];B.selEdgeIdx=-1;
+  B.selId=B.nodes.some(function(x){return x.id===r.nodeId})?r.nodeId:-1;
+  currentAgentName=row.name;B.dbAgentId=row.id;B.context=row.context||'';
+  B._ritorno=null;
+  if(typeof svuotaRegistroEsecuzione==='function')svuotaRegistroEsecuzione();
+  b_render();
+  if(typeof bResetView==='function')bResetView();
+  renderProps(B.selId); // si torna sul nodo da cui si era entrati, con la sua delega aperta
+  aggiornaTitoloBuilder();
+  showToast('↩︎ Tornato su «'+row.name+'»');
 }
 
 function updProp(nid,key,val){B.effimero=false;var n=B.nodes.find(function(x){return x.id===nid});if(n){n[key]=val;b_render()}}
@@ -1658,23 +1756,31 @@ function builderRuntimeListener(evt,ctx){
     addExecEntry('LOGIC','⚡ '+evt.payload.conteggio+' nodi indipendenti avviati in parallelo','OK');
   }
   else if(evt.event_type==='capability:degraded'){
-    addExecEntry('LLM AI','⚠️ Capacità "'+evt.payload.capability+'" non supportata da '+evt.payload.provider+': ripiego: '+evt.payload.fallback,'WARN');
+    // Il fornitore va scritto con la sua etichetta, non con la chiave
+    // interna: nel registro comparivano «openai» e, peggio, «auto».
+    addExecEntry('LLM AI','⚠️ Capacità "'+evt.payload.capability+'" non supportata da '+
+      ((typeof providerLabel==='function')?providerLabel(evt.payload.provider):evt.payload.provider)+
+      ': ripiego: '+evt.payload.fallback,'WARN');
   }
 }
 
 async function runAgent(){
   var _errs=validateWorkflow();
   if(_errs.length){
-    // Il blocco va tracciato anche nel pannello e nello storico, non solo
-    // nel modale: l'utente deve poterlo ritrovare dopo averlo chiuso.
+    // Il flusso non parte: il registro resta vuoto e nello storico non va
+    // niente. Prima si scriveva una riga per ogni problema e si registrava
+    // un'esecuzione fallita: ma un'esecuzione mai cominciata non è
+    // un'esecuzione — nessun nodo è stato toccato, nessuna chiamata è partita,
+    // nessun sistema esterno sa che esistiamo — e contarla falsava i tassi di
+    // successo che il Monitoraggio calcola proprio su quelle righe.
+    // Cosa manca e dove lo dice la finestra, che è la diagnosi; il registro è
+    // il diario di bordo, e di un viaggio mai cominciato non c'è niente da
+    // scrivere.
     execEntries=[];
     document.getElementById('execLogBody').innerHTML='';
-    impostaAltezzaRegistro(LOG_ALTEZZE.normale);
+    document.getElementById('execCount').textContent='0 voci';
+    if(typeof aggiornaBottoneEsportaRegistro==='function')aggiornaBottoneEsportaRegistro();
     document.getElementById('execDot').className='exec-log-dot err';
-    addExecEntry('OUTPUT','⛔ Esecuzione bloccata: workflow non valido ('+_errs.length+' problema/i)','ERR');
-    _errs.forEach(function(er){addExecEntry('LOGIC','• '+er.msg,'ERR')});
-    recordExecution(currentAgentName,B.nodes.length,'err',0,'builder',
-      'Bloccato da validazione: '+_errs.map(function(er){return er.msg}).join(' | ').substring(0,200),execEntries.slice());
     showValidationErrors(_errs);
     return;
   }
@@ -1717,6 +1823,27 @@ function finalizeBuilderRun(res,_t0){
   dot.className='exec-log-dot '+(res.status==='error'?'err':inAttesa?'running':'ok');
   toggleRunControls(false);
 
+  // ── Il flusso non è partito ──
+  // Niente nel registro e niente nello storico. Il registro racconta cosa è
+  // successo mentre il flusso girava: qui non è successo niente, e riempirlo
+  // di righe rosse farebbe sembrare che qualcosa sia stato tentato. Lo storico,
+  // allo stesso modo, conta le esecuzioni: un tentativo mai partito non è
+  // un'esecuzione, e contarlo falserebbe i tassi di successo che il
+  // Monitoraggio calcola su quelle righe.
+  // Quello che serve davvero — COSA manca e DOVE — sta nella finestra, che è
+  // la diagnosi e non il diario di bordo.
+  if(res.nonPartito){
+    execEntries=[];
+    document.getElementById('execLogBody').innerHTML='';
+    document.getElementById('execCount').textContent='0 voci';
+    if(typeof aggiornaBottoneEsportaRegistro==='function')aggiornaBottoneEsportaRegistro();
+    hideApprovalPrompt();
+    showToast('⛔ Il flusso non è partito: nessun nodo eseguito');
+    if(typeof mostraErroriEsecuzione==='function'&&!_dentroLaDemo())mostraErroriEsecuzione(res);
+    setTimeout(function(){B.nodes.forEach(function(n){delete n._execState});b_render()},4000);
+    return;
+  }
+
   if(interrotta){
     addExecEntry('OUTPUT','⏹️ ═══ Esecuzione interrotta: '+res.stepsCount+' nodi completati ═══','WARN');
     showToast('⏹️ Esecuzione interrotta: '+res.stepsCount+' nodi completati, i restanti non sono partiti');
@@ -1732,6 +1859,24 @@ function finalizeBuilderRun(res,_t0){
     showToast(res.status==='error'?'⚠️ Workflow con errori':'✅ Workflow eseguito: '+res.stepsCount+' nodi');
     addAct('Eseguito workflow: '+res.stepsCount+' nodi');
     hideApprovalPrompt();
+  }
+
+  // Dove si è rotto, in chiaro. L'avviso che spariva in tre secondi e una riga
+  // rossa in mezzo a quaranta righe verdi non bastavano a rispondere alla
+  // domanda che uno si fa davvero: «ma dove?». La finestra elenca i nodi
+  // coinvolti, li evidenzia sulla tela, e porta il rimedio per ciascuno.
+  // La riga nel registro resta: chiudere la finestra non deve voler dire
+  // perderla.
+  var problemi=(res.problemi||[]);
+  // Si memorizza comunque, anche dove la finestra non si apre da sola: la riga
+  // «Dove si è rotto» nel registro deve poterla aprire in ogni caso.
+  if(problemi.length)ULTIMI_PROBLEMI_ESEC=res;
+  if(problemi.length&&typeof mostraErroriEsecuzione==='function'){
+    addExecEntry(res.status==='error'?'OUTPUT':'SISTEMA',
+      '🔎 <span style="text-decoration:underline;cursor:pointer" onclick="riapriErroriEsecuzione()">Dove si è rotto</span>: '+
+      problemi.length+' nod'+(problemi.length===1?'o':'i')+' da sistemare, con il rimedio per ciascuno',
+      res.status==='error'?'ERR':'WARN');
+    if(!_dentroLaDemo())mostraErroriEsecuzione(res);
   }
 
   var execRowId=recordExecution(currentAgentName,res.stepsCount,
@@ -1890,7 +2035,7 @@ function openDeployModal(){
       '<div class="prop-label" id="deployValueLabel">'+(type==='daily'?'Orario (HH:MM)':type==='event'?'Evento':type==='cron'?'Espressione cron':'Ogni quanti minuti')+'</div>'+
       (type==='event'?
         '<select class="prop-select" id="deployValue">'+Object.keys(EVENT_TYPES).map(function(k){return '<option value="'+k+'"'+(row.schedule_value===k?' selected':'')+'>'+EVENT_TYPES[k]+'</option>'}).join('')+'</select>':
-        '<input class="prop-input" id="deployValue" value="'+escHtml(row.schedule_value||'')+'" placeholder="'+(type==='daily'?'08:00':type==='cron'?'0 9 * * 1':'60')+'">'
+        '<input class="prop-input" id="deployValue" value="'+escAttr(row.schedule_value||'')+'" placeholder="'+(type==='daily'?'08:00':type==='cron'?'0 9 * * 1':'60')+'">'
       )+
     '</div>'+
     '<div style="display:flex;align-items:center;gap:8px;margin:12px 0"><input type="checkbox" id="deployActive" '+(row.active?'checked':'')+' style="width:16px;height:16px"><label for="deployActive" style="font-size:12px">Attiva subito</label></div>'+
@@ -2113,6 +2258,28 @@ async function runAgentHeadless(row, modo){
       msg:'⏸️ Sospeso in attesa di approvazione: nessun operatore in esecuzione automatica',status:'WARN'});
   }
 
+  // In automatico non c'è nessuno davanti allo schermo: il motivo del guasto
+  // deve finire nel registro salvato, altrimenti domani mattina si trova una
+  // riga rossa senza spiegazione. L'elenco strutturato è lo stesso che apre la
+  // finestra quando si esegue a mano.
+  //
+  // Qui la riga si scrive ANCHE quando il flusso non è partito, al contrario
+  // di quello che succede nel Builder, e la differenza è voluta: premendo
+  // Esegui si ha subito la finestra davanti e non serve altro, mentre una
+  // pianificata che non parte alle sette del mattino, se non lasciasse
+  // traccia, sarebbe un silenzio indistinguibile da «tutto a posto».
+  if(res.problemi&&res.problemi.length){
+    res.steps.push({time:new Date().toTimeString().substring(0,8),type:'OUTPUT',
+      msg:(res.nonPartito
+        ? '⛔ Esecuzione pianificata NON partita: nessun nodo eseguito, niente è stato spedito. '+res.problemi.length+' nodo/i da sistemare:'
+        : '🔎 '+res.problemi.length+' nodo/i con problemi in questa esecuzione:'),status:'ERR'});
+    res.problemi.forEach(function(p){
+      res.steps.push({time:new Date().toTimeString().substring(0,8),type:'OUTPUT',
+        nodeId:p.nodeId==null?null:p.nodeId,
+        msg:'   • '+(p.icona||'')+' '+(p.nome||'flusso')+': '+p.msg+(p.rimedio?' — '+p.rimedio:''),status:'ERR'});
+    });
+  }
+
   // Attribuita all'autore dell'agente: è il suo flusso che è partito, non
   // quello di chi si trovava connesso quando lo scheduler è scattato.
   var manuale=(modo==='manual');
@@ -2172,6 +2339,7 @@ function validateWorkflow(){
   // nell'etichetta.
   if(typeof PALETTE!=='undefined'){
     // Le CONDIZIONI restano fuori: il loro nome e' l'etichetta del test
+    // (vedi sotto). Prima, la funzione che propone il blocco di ricambio.
     // («Punteggio >= 70?») e va scritta da chi costruisce, come per i nodi AI.
     // Sono azioni, trigger e controlli ad avere il nome come identità: è da
     // quello che l'applicazione risale ai loro parametri.
@@ -2185,7 +2353,12 @@ function validateWorkflow(){
       // nodi di questa famiglia — viaggia in `kind`, e chi mostra l'elenco la
       // scrive una volta sola: ripeterla su ogni riga la rendeva illeggibile
       // proprio quando i nodi da sistemare erano più di uno.
-      errors.push({nodeId:n.id, kind:'nome-ignoto',
+      // Dire che un blocco è sbagliato senza dire quale sarebbe quello giusto
+      // lascia il lavoro a chi legge: deve aprire la palette, scorrere
+      // settantotto voci e indovinare. Il blocco più somigliante dello stesso
+      // tipo si calcola qui, e diventa un pulsante che rinomina il nodo.
+      var vicino=bPaletteSimile(n.name,n.type);
+      errors.push({nodeId:n.id, kind:'nome-ignoto', suggerito:vicino,
         msg:'"'+n.name+'" non corrisponde a '+etichetta+' della palette'});
     });
   }
@@ -2268,7 +2441,7 @@ function validateWorkflow(){
         if(!reqFields.length)reqFields=[cc.fields[0]];
         reqFields.forEach(function(f){
           if(!n.config||!n.config[f.k]||!String(n.config[f.k]).trim()){
-            errors.push({nodeId:n.id,msg:'"'+n.name+'": compila il campo obbligatorio "'+f.l+'".'});
+            errors.push({nodeId:n.id,kind:'campo-obbligatorio',msg:'"'+n.name+'": compila il campo obbligatorio "'+f.l+'".'});
           }
         });
       }
@@ -2281,7 +2454,7 @@ function validateWorkflow(){
       if(td&&td.fields){
         campiObbligatoriEffettivi(td,n.config||{}).forEach(function(f){
           if(!n.config||!n.config[f.k]||!String(n.config[f.k]).trim()){
-            errors.push({nodeId:n.id,msg:'"'+n.name+'": compila il campo obbligatorio "'+f.l+'".'});
+            errors.push({nodeId:n.id,kind:'campo-obbligatorio',msg:'"'+n.name+'": compila il campo obbligatorio "'+f.l+'".'});
           }
         });
       }
@@ -2313,7 +2486,7 @@ function validateWorkflow(){
       if(od&&od.fields){
         campiObbligatoriEffettivi(od,n.config||{}).forEach(function(f){
           if(!n.config||!n.config[f.k]||!String(n.config[f.k]).trim()){
-            errors.push({nodeId:n.id,msg:'"'+n.name+'": compila il campo obbligatorio "'+f.l+'".'});
+            errors.push({nodeId:n.id,kind:'campo-obbligatorio',msg:'"'+n.name+'": compila il campo obbligatorio "'+f.l+'".'});
           }
         });
       }
@@ -2341,7 +2514,7 @@ function validateWorkflow(){
       if(gd&&gd.fields){
         campiObbligatoriEffettivi(gd,n.config||{}).forEach(function(f){
           if(!n.config||!n.config[f.k]||!String(n.config[f.k]).trim()){
-            errors.push({nodeId:n.id,msg:'"'+n.name+'": compila il campo obbligatorio "'+f.l+'".'});
+            errors.push({nodeId:n.id,kind:'campo-obbligatorio',msg:'"'+n.name+'": compila il campo obbligatorio "'+f.l+'".'});
           }
         });
       }
@@ -2389,6 +2562,128 @@ function markInvalidNodes(errors){
 
 function clearInvalidNodes(){B._invalidIds=null}
 
+// ══════════════════════════════════════════
+// FINESTRA DEGLI ERRORI DI ESECUZIONE
+// ══════════════════════════════════════════
+// Quando la validazione falliva si apriva una finestra con l'elenco dei
+// problemi, ognuno cliccabile per saltare al nodo. Quando falliva
+// l'ESECUZIONE non si apriva niente: un avviso che spariva in tre secondi
+// («⚠️ Workflow con errori») e una riga rossa in mezzo a quaranta righe verdi
+// nel registro. Su un flusso di dodici nodi, trovare dove si è rotto era
+// lavoro dell'utente — cioè esattamente il lavoro che la piattaforma esiste
+// per togliere.
+//
+// Questa è la gemella di `showValidationErrors()`: stessa forma, stessi gesti,
+// ma parla di cosa è successo invece che di cosa manca. La differenza che
+// conta è che ogni riga porta un **rimedio**, perché un errore a tempo di
+// esecuzione non si corregge sempre nello stesso modo: un campo vuoto si
+// riempie, un controllo che blocca si riapre, un guasto esterno si riprova.
+
+// Come si chiama ciascun tipo di problema, e con quale colore. L'etichetta non
+// è decorazione: dice se la colpa è della configurazione, di una decisione
+// dichiarata, o di qualcosa fuori dalla piattaforma.
+var ERR_ESEC_ETICHETTE={
+  'campo-obbligatorio':{t:'configurazione',c:'#D97706'},
+  'controllo':         {t:'controllo',     c:'#7C3AED'},
+  'delega':            {t:'delega',        c:'#0EA5E9'},
+  'azione':            {t:'azione esterna',c:'#EF4444'},
+  'eccezione':         {t:'errore interno',c:'#EF4444'},
+  'autorizzazione':    {t:'decisione',     c:'#D946EF'}
+};
+
+// L'ultimo esito con problemi resta a portata: la finestra si chiude e si
+// riapre dal registro senza rieseguire il flusso.
+var ULTIMI_PROBLEMI_ESEC=null;
+
+// La dimostrazione guidata apre l'applicazione dentro un iframe e la pilota da
+// fuori. Una finestra che si apre da sola a meta' di un passo coprirebbe
+// proprio quello che il passo sta mostrando, e chi guarda non saprebbe se fa
+// parte del copione. Dentro la demo la finestra non si apre da sola: il
+// registro continua a dire tutto, e la riga «Dove si e' rotto» resta cliccabile
+// per chi la vuole aprire.
+function _dentroLaDemo(){
+  try{ return window.parent && window.parent !== window }catch(e){ return false }
+}
+
+function mostraErroriEsecuzione(res){
+  var problemi=(res&&res.problemi)||[];
+  if(!problemi.length)return;
+  ULTIMI_PROBLEMI_ESEC=res;
+
+  // Gli stessi nodi vengono evidenziati sulla tela, come per la validazione:
+  // leggere l'elenco e vedere dove sono sono due cose diverse, e servono
+  // entrambe.
+  markInvalidNodes(problemi.map(function(p){return {nodeId:p.nodeId}}));
+
+  var bloccante=res.status==='error';
+  var nonPartito=!!res.nonPartito;
+
+  var html='<div style="display:flex;justify-content:space-between;align-items:center">'+
+    '<h2>'+(nonPartito?'⛔ Il flusso non è partito':'⚠️ Esecuzione con errori')+'</h2>'+
+    '<button class="modal-close" onclick="closeModal()">✕</button></div>';
+
+  html+='<p style="font-size:12px;color:var(--tx3);margin:10px 0 4px;line-height:1.55">'+
+    (nonPartito
+      ? 'Nessun nodo è stato eseguito: mancano i dati per farlo lavorare. <strong>Niente è stato spedito a nessuno</strong>, '+
+        'e per questo il registro resta vuoto e nello storico non compare nessuna esecuzione: non ce n\'è stata una.'
+      : (bloccante
+        ? 'L\'esecuzione si è fermata dopo <strong>'+res.stepsCount+' nod'+(res.stepsCount===1?'o':'i')+'</strong>. I nodi a valle non sono partiti.'
+        : 'Il flusso è arrivato in fondo, ma <strong>'+problemi.length+' nod'+(problemi.length===1?'o ha':'i hanno')+'</strong> segnalato un problema: il risultato va letto sapendolo.'))+
+    '</p>';
+
+  html+='<div class="validation-list">'+problemi.map(function(p,i){
+    var et=ERR_ESEC_ETICHETTE[p.kind]||{t:p.kind||'problema',c:'#64748B'};
+    // Un problema che viene da dentro un sotto-agente non ha un nodo su questa
+    // tela: cliccarlo non porterebbe da nessuna parte, e va detto invece di
+    // offrire un salto che non salta.
+    var saltabile=(p.nodeId!=null)&&B.nodes.some(function(x){return x.id===p.nodeId});
+    return '<div class="validation-item'+(saltabile?'':' vi-no-salto')+'"'+
+      (saltabile?' onclick="jumpToNode('+p.nodeId+');closeModal()" title="Vai al nodo"':'')+'>'+
+      '<span class="vi-ic">'+(saltabile?'📍':(p.dentroSottoAgente?'🤝':'🔴'))+'</span>'+
+      '<span class="vi-msg">'+
+        '<strong>'+escHtml((p.icona||'')+' '+(p.nome||'Flusso'))+'</strong>'+
+        '<span class="vi-tag" style="color:'+et.c+';border-color:'+et.c+'55">'+escHtml(et.t)+'</span>'+
+        '<br>'+escHtml(p.msg)+
+        (p.rimedio?'<br><span class="vi-rimedio">→ '+escHtml(p.rimedio)+'</span>':'')+
+      '</span></div>';
+  }).join('')+'</div>';
+
+  // Campi obbligatori vuoti: lo stesso comando della finestra di validazione.
+  // È il caso più frequente e si risolve in un clic.
+  var obbl=problemi.filter(function(p){return p.kind==='campo-obbligatorio'&&p.nodeId!=null});
+  if(obbl.length){
+    html+='<div style="display:flex;gap:9px;align-items:center;background:var(--bg2);border:1px solid var(--bo);'+
+      'border-radius:9px;padding:10px 12px;margin-top:10px;font-size:11px;color:var(--tx3);line-height:1.5">'+
+      '<span style="flex-shrink:0">🧩</span>'+
+      '<span style="flex:1">Posso riempire i campi obbligatori vuoti con i valori predefiniti del connettore, '+
+      'così il flusso parte: restano modificabili nodo per nodo.</span>'+
+      '<button class="tb-btn" style="flex-shrink:0" onclick="bCompilaObbligatori()">Compila</button></div>';
+  }
+
+  // Dove la delega è fallita, la cosa utile è aprire il sotto-agente: l'errore
+  // sta dentro di lui e si vede eseguendolo da solo.
+  var deleghe=problemi.filter(function(p){return p.kind==='delega'&&p.nodeId!=null});
+  if(deleghe.length===1){
+    html+='<div style="margin-top:8px;text-align:right">'+
+      '<button class="tb-btn" onclick="closeModal();bApriSottoAgente('+deleghe[0].nodeId+')">'+
+      '📂 Apri il sotto-agente</button></div>';
+  }
+
+  html+='<div style="display:flex;gap:8px;margin-top:14px">'+
+    '<button class="tb-btn primary" onclick="closeModal();runAgent()">▶ Riprova</button>'+
+    '<button class="tb-btn" onclick="closeModal()">'+
+      (nonPartito?'Chiudi e sistemo i nodi':'Chiudi e guardo il registro')+'</button></div>';
+
+  openModal(html);
+}
+
+// Riapre l'ultima finestra degli errori. La riga nel registro che la richiama
+// resta lì: chiudere la finestra non deve voler dire perderla.
+function riapriErroriEsecuzione(){
+  if(!ULTIMI_PROBLEMI_ESEC){showToast('Nessun errore da rivedere');return}
+  mostraErroriEsecuzione(ULTIMI_PROBLEMI_ESEC);
+}
+
 // Il pannello distingue due piani, perché hanno conseguenze diverse:
 // i problemi BLOCCANTI impediscono l'esecuzione, i SUGGERIMENTI di presidio
 // sono raccomandazioni motivate dal rischio del flusso, accettabili a un
@@ -2407,8 +2702,16 @@ function showValidationErrors(errors){
     html+='<p style="font-size:12px;color:var(--tx3);margin:10px 0 4px">Il flusso si salva e si esporta comunque. Questi punti vanno risolti prima di <strong>eseguirlo</strong> o <strong>pubblicarlo</strong>:</p>'+
       '<div class="validation-list">'+
       errors.map(function(e){
+        // Dove esiste un ricambio, la riga porta il pulsante che lo applica.
+        // Il pulsante NON deve far scattare il salto al nodo e la chiusura
+        // della finestra della riga che lo contiene: `stopPropagation`.
+        var fix=e.suggerito
+          ? '<button class="tb-btn vi-fix" onclick="event.stopPropagation();bApplicaRicambio('+e.nodeId+',\''+
+              String(e.suggerito.name).replace(/'/g,"\\'")+'\')" title="Sostituisce il blocco con quello della palette">'+
+              'Usa «'+escHtml(e.suggerito.name)+'»</button>'
+          : '';
         return '<div class="validation-item" onclick="'+(e.nodeId!=null?'jumpToNode('+e.nodeId+');':'')+'closeModal()">'+
-          '<span class="vi-ic">'+(e.nodeId!=null?'📍':'🔴')+'</span><span class="vi-msg">'+escHtml(e.msg)+'</span></div>';
+          '<span class="vi-ic">'+(e.nodeId!=null?'📍':'🔴')+'</span><span class="vi-msg">'+escHtml(e.msg)+'</span>'+fix+'</div>';
       }).join('')+
       '</div>';
     // La spiegazione dei blocchi non riconosciuti è la stessa per tutti: sta
@@ -2420,6 +2723,30 @@ function showValidationErrors(errors){
         '<span style="flex-shrink:0">💡</span><span>I blocchi elencati non corrispondono a nessuna voce della '+
         'palette: non hanno parametri da configurare e all’esecuzione non faranno quello che il nome promette. '+
         'Sostituiscili con i blocchi corrispondenti presi dalla palette.</span></div>';
+      // Quando i ricambi proposti sono più di uno, conviene un comando solo:
+      // rinominarli a mano uno per uno è il lavoro che questa funzione esiste
+      // per togliere.
+      var conFix=errors.filter(function(e){ return e.kind==='nome-ignoto'&&e.suggerito });
+      if(conFix.length>1){
+        html+='<div style="margin-top:8px;text-align:right">'+
+          '<button class="tb-btn primary" onclick="bApplicaTuttiIRicambi()">🔧 Sostituisci tutti i '+
+          conFix.length+' blocchi</button></div>';
+      }
+    }
+
+    // Campi obbligatori vuoti: la funzione che li riempie con i valori
+    // predefiniti del connettore esisteva già ed era usata all'importazione e
+    // alla pubblicazione, ma non da qui — proprio dove la mancanza si vede.
+    // Compilarli a mano, uno per uno, su un flusso appena importato significa
+    // aprire sei pannelli per far partire una prova.
+    var obbl=errors.filter(function(e){ return e.kind==='campo-obbligatorio' });
+    if(obbl.length){
+      html+='<div style="display:flex;gap:9px;align-items:center;background:var(--bg2);border:1px solid var(--bo);'+
+        'border-radius:9px;padding:10px 12px;margin-top:10px;font-size:11px;color:var(--tx3);line-height:1.5">'+
+        '<span style="flex-shrink:0">🧩</span>'+
+        '<span style="flex:1">'+obbl.length+' campi obbligatori sono vuoti. Posso riempirli con i valori '+
+        'predefiniti del connettore, così il flusso parte: restano modificabili nodo per nodo.</span>'+
+        '<button class="tb-btn" style="flex-shrink:0" onclick="bCompilaObbligatori()">Compila</button></div>';
     }
   }else{
     html+='<div style="display:flex;gap:10px;align-items:center;background:var(--ac-l);border-radius:8px;padding:12px 14px;margin:12px 0">'+
@@ -2567,10 +2894,12 @@ function resetCanvasForNewAgent(){
   B.nodes=[];B.edges=[];B.nextId=1;B.selId=-1;B.selEdgeIdx=-1;B.selIds=[];
   B.zoom=1;B.panX=0;B.panY=0;
   B.dbAgentId=null;B.context='';
+  B._ritorno=null;
   currentAgentName='Nuovo agente';
   var zl=document.getElementById('zoomLabel');if(zl)zl.textContent='100%';
   svuotaRegistroEsecuzione();
   b_render();renderProps(-1);
+  if(typeof aggiornaTitoloBuilder==='function')aggiornaTitoloBuilder();
 }
 
 function newBlankAgent(){
@@ -3406,9 +3735,9 @@ function renderConfigFields(fields,nid,config,noImplicitReq){
         opzioni.map(function(o){return '<option'+(val===o?' selected':'')+'>'+escHtml(o)+'</option>'}).join('')+
       '</select>'+aiuto+'</div>';
     }
-    if(f.ta)return '<div class="prop-group"><div class="prop-label">'+label+'</div><textarea class="prop-input" id="campo_'+nid+'_'+f.k+'" rows="3" placeholder="'+escHtml(f.ph||'')+'" onchange="updConfig('+nid+',\''+f.k+'\',this.value)">'+escHtml(val)+'</textarea>'+aiuto+
+    if(f.ta)return '<div class="prop-group"><div class="prop-label">'+label+'</div><textarea class="prop-input" id="campo_'+nid+'_'+f.k+'" rows="3" placeholder="'+escAttr(f.ph||'')+'" onchange="updConfig('+nid+',\''+f.k+'\',this.value)">'+escHtml(val)+'</textarea>'+aiuto+
       (typeof aiutoTestoHTML==='function'?aiutoTestoHTML('campo_'+nid+'_'+f.k,'testo',nid,f.k):'')+'</div>';
-    return '<div class="prop-group"><div class="prop-label">'+label+'</div><input class="prop-input" value="'+escHtml(val)+'" placeholder="'+escHtml(f.ph||'')+'" onchange="updConfig('+nid+',\''+f.k+'\',this.value)">'+aiuto+'</div>';
+    return '<div class="prop-group"><div class="prop-label">'+label+'</div><input class="prop-input" value="'+escAttr(val)+'" placeholder="'+escAttr(f.ph||'')+'" onchange="updConfig('+nid+',\''+f.k+'\',this.value)">'+aiuto+'</div>';
   }).join('');
 }
 
@@ -3694,7 +4023,7 @@ function renderParametriTrigger(nid,n){
       return '<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;margin-bottom:3px">'+
         escHtml(c.l)+(c.req?' <span style="color:#EF4444">*</span>':'')+
         ' <span style="color:var(--tx4);font-weight:400">('+escHtml(c.k)+')</span></div>'+
-        '<input class="prop-input" value="'+escHtml(val[c.k]||'')+'" placeholder="'+escHtml(c.l)+'" '+
+        '<input class="prop-input" value="'+escAttr(val[c.k]||'')+'" placeholder="'+escAttr(c.l)+'" '+
         'onchange="updParametroTrigger('+nid+',\''+c.k+'\',this.value)"></div>';
     }).join('')+
     (mancanti
@@ -3843,23 +4172,63 @@ function renderSceltaModello(nid,n){
     // mostrare una tendina vuota.
     if(prov==='locale'||prov==='custom'){
       return '<div class="prop-group"><div class="prop-label">Modello</div>'+
-        '<input class="prop-input" value="'+escHtml(n.config.modelId||'')+'" placeholder="nome del modello sul server"'+
+        '<input class="prop-input" value="'+escAttr(n.config.modelId||'')+'" placeholder="nome del modello sul server"'+
         ' onchange="updConfig('+nid+',\'modelId\',this.value)">'+
         '<div style="font-size:10px;color:var(--tx4);margin-top:3px">Rileva i modelli disponibili dal pannello «Integrazione AI».</div></div>';
     }
     return '';
   }
 
-  var scelto=(typeof modelloEffettivo==='function')?modelloEffettivo(prov,n.config.modelId):elenco[0].id;
-  var corrente=elenco.filter(function(m){return m.id===scelto})[0]||elenco[0];
+  // Modello scritto a mano: la tendina resta su «Altro modello…» e sotto
+  // compare il campo con l'identificativo. Serve a usare un modello uscito
+  // dopo questa versione senza aspettare un aggiornamento del codice.
+  var libero=(typeof modelloLiberoDi==='function')?modelloLiberoDi(n.config):'';
+  var scelto=libero?MODELLO_LIBERO_VOCE
+    :((typeof modelloEffettivo==='function')?modelloEffettivo(prov,n.config.modelId):elenco[0].id);
+  var corrente=elenco.filter(function(m){return m.id===scelto})[0]||(libero?null:elenco[0]);
   return '<div class="prop-group"><div class="prop-label">Modello</div>'+
-    '<select class="prop-select" onchange="updConfig('+nid+',\'modelId\',this.value)">'+
+    '<select class="prop-select" onchange="bScegliModello('+nid+',this.value)">'+
       elenco.map(function(m){
-        return '<option value="'+escHtml(m.id)+'"'+(m.id===scelto?' selected':'')+'>'+escHtml(m.nome)+'</option>';
+        return '<option value="'+escAttr(m.id)+'"'+(m.id===scelto?' selected':'')+'>'+escHtml(m.nome)+'</option>';
       }).join('')+
+      '<option value="'+MODELLO_LIBERO_VOCE+'"'+(libero?' selected':'')+'>✏️ Altro modello…</option>'+
     '</select>'+
-    (corrente.nota?'<div style="font-size:10px;color:var(--tx4);margin-top:3px;line-height:1.45">'+escHtml(corrente.nota)+'</div>':'')+
+    (libero
+      ? '<input class="prop-input" style="margin-top:6px" value="'+escAttr(libero)+'"'+
+        ' placeholder="identificativo esatto, es. gpt-4.1-mini"'+
+        ' onchange="bModelloLibero('+nid+',this.value)">'+
+        '<div style="font-size:10px;color:var(--tx4);margin-top:3px;line-height:1.45">Incolla l\'identificativo <strong>esatto</strong> preso dalla documentazione di '+escHtml(providerLabel(prov))+'. Viene inviato così com\'è: se non esiste, il fornitore risponde con un errore al primo Esegui.</div>'
+      : (corrente&&corrente.nota?'<div style="font-size:10px;color:var(--tx4);margin-top:3px;line-height:1.45">'+escHtml(corrente.nota)+'</div>':''))+
+    // L'elenco scritto nel codice invecchia: se non è ancora stato chiesto al
+    // fornitore quali modelli ha davvero su questa chiave, lo si dice qui —
+    // dove si sta scegliendo — invece che nella documentazione.
+    ((typeof modelliRilevatiPer==='function'&&!modelliRilevatiPer(prov))
+      ? '<div style="font-size:10px;color:var(--tx4);margin-top:5px;line-height:1.45">Elenco predefinito. Per vedere i modelli davvero abilitati sulla tua chiave, premi <strong>🔄 Modelli</strong> nel pannello «Integrazione AI».</div>'
+      : '<div style="font-size:10px;color:var(--ok);margin-top:5px">✓ Elenco rilevato da '+escHtml(providerLabel(prov))+'</div>')+
   '</div>';
+}
+
+// La tendina dei modelli scrive su `modelId`. La voce «Altro modello…» non è
+// un identificativo: accende il campo libero, e finché è vuoto non si tocca
+// la configurazione — altrimenti il nodo resterebbe con un modello inesistente
+// solo per aver aperto la tendina.
+function bScegliModello(nid,valore){
+  if(valore===MODELLO_LIBERO_VOCE){
+    var n=B.nodes.find(function(x){return x.id===nid});
+    var attuale=(n&&n.config&&n.config.modelId)||'';
+    // Si riparte dall'identificativo che era selezionato: nove volte su dieci
+    // chi scrive a mano parte da una variante di quello.
+    if(String(attuale).indexOf(MODELLO_LIBERO_PREFISSO)!==0)
+      updConfig(nid,'modelId',MODELLO_LIBERO_PREFISSO+'');
+    renderProps(nid);
+    return;
+  }
+  updConfig(nid,'modelId',valore);
+}
+
+function bModelloLibero(nid,valore){
+  updConfig(nid,'modelId',MODELLO_LIBERO_PREFISSO+String(valore||'').trim());
+  renderProps(nid);
 }
 
 // ══════════════════════════════════════════
@@ -4029,6 +4398,21 @@ function campiCopertiDaConnessione(nome,config){
 function aggiornaTitoloBuilder(){
   var el=document.getElementById('builderTitoloNome');
   if(el)el.textContent=currentAgentName||'Nuovo agente';
+
+  // Briciola: visibile solo mentre si è dentro un sotto-agente aperto dal
+  // nodo di delega di un orchestratore.
+  var br=document.getElementById('builderRitorno');
+  if(br){
+    if(B._ritorno&&B._ritorno.nome){
+      br.style.display='flex';
+      br.innerHTML='🤝 Sei dentro un sotto-agente delegato da «'+escHtml(B._ritorno.nome)+'» · '+
+        '<span class="br-link" onclick="bTornaAllOrchestratore()">↩︎ torna all\'orchestratore</span>';
+    }else{
+      br.style.display='none';
+      br.innerHTML='';
+    }
+  }
+
   var st=document.getElementById('builderTitoloStato');
   if(!st)return;
   var parti=[];
@@ -4291,4 +4675,106 @@ function adattaAltezza(el){
   el.style.height='auto';
   var max=parseInt(getComputedStyle(el).maxHeight,10)||132;
   el.style.height=Math.min(el.scrollHeight,max)+'px';
+}
+
+// ══════════════════════════════════════════
+// BLOCCO DI RICAMBIO PER UN NODO FUORI PALETTE
+// ══════════════════════════════════════════
+// Un flusso importato, scritto a mano o arrivato da un esempio puo' contenere
+// nodi con nomi che la palette non conosce: «Webhook CRM» invece di
+// «Webhook», «Email alert» invece di «Invia email». La validazione lo diceva
+// gia', ma si fermava li', e chi leggeva doveva aprire la palette, scorrere
+// settantotto voci e indovinare quale fosse il ricambio.
+//
+// Qui si calcola il candidato piu' probabile FRA I BLOCCHI DELLO STESSO TIPO,
+// con un punteggio semplice e prevedibile: quante parole del nome hanno in
+// comune, piu' un bonus se uno contiene l'altro. Niente distanza di
+// Levenshtein: su nomi di due parole produce accostamenti che sembrano casuali
+// («Jira» per «Invia email»), e un suggerimento sbagliato e' peggio di nessun
+// suggerimento. Sotto la soglia non si propone niente.
+function bNormalizzaNome(s){
+  return String(s||'').toLowerCase()
+    .replace(/[^a-z0-9àèéìòù\s]/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+
+function bPaletteSimile(nome,tipo){
+  if(typeof PALETTE==='undefined')return null;
+  var n=bNormalizzaNome(nome);
+  if(!n)return null;
+  var parole=n.split(' ').filter(function(p){ return p.length>2 });
+  var migliore=null, punteggioMigliore=0;
+  PALETTE.forEach(function(p){
+    if(p.type!==tipo)return;
+    var c=bNormalizzaNome(p.name);
+    var punti=0;
+    // Uno contiene l'altro: «Webhook CRM» → «Webhook». E' il caso piu'
+    // frequente e il piu' affidabile, quindi pesa di piu' di tutto il resto.
+    if(c&&(n.indexOf(c)>=0||c.indexOf(n)>=0))punti+=3;
+    var paroleC=c.split(' ');
+    parole.forEach(function(w){ if(paroleC.indexOf(w)>=0)punti+=2 });
+    // Una parola in comune anche solo come prefisso di almeno quattro
+    // lettere: «mascheramento» → «maschera».
+    parole.forEach(function(w){
+      if(w.length>=4&&paroleC.some(function(x){ return x.indexOf(w.substring(0,4))===0 }))punti+=1;
+    });
+    if(punti>punteggioMigliore){ punteggioMigliore=punti; migliore=p }
+  });
+  return punteggioMigliore>=3 ? migliore : null;
+}
+
+// Applica il ricambio: rinomina il nodo e gli rimette icona e descrizione del
+// blocco vero, perche' il nome da solo non basta — l'applicazione risale ai
+// parametri dal nome, ma chi guarda la tela riconosce l'icona.
+function bApplicaRicambio(nid,nomeNuovo){
+  var n=B.nodes.find(function(x){return x.id===nid});
+  if(!n)return;
+  var p=(typeof PALETTE!=='undefined')?PALETTE.filter(function(v){ return v.type===n.type&&v.name===nomeNuovo })[0]:null;
+  if(!p)return;
+  if(typeof pushUndo==='function')pushUndo('sostituzione "'+n.name+'" → "'+p.name+'"');
+  var vecchio=n.name;
+  n.name=p.name; n.icon=p.icon;
+  if(!n.detail||n.detail===vecchio)n.detail=p.desc;
+  B.effimero=false;
+  if(B._invalidIds)delete B._invalidIds[nid];
+  b_render();
+  if(typeof showToast==='function')showToast('🔧 "'+vecchio+'" sostituito con il blocco "'+p.name+'"');
+  // La finestra si riapre sull'elenco aggiornato: chi sta sistemando piu'
+  // nodi vede subito quanti ne restano, invece di dover ripremere Verifica.
+  if(typeof checkWorkflow==='function')setTimeout(checkWorkflow,220);
+}
+
+// Sostituisce in un colpo solo tutti i nodi per cui esiste un ricambio.
+function bApplicaTuttiIRicambi(){
+  var v=(typeof validateWorkflow==='function')?validateWorkflow():[];
+  var da=v.filter(function(e){ return e.kind==='nome-ignoto'&&e.suggerito });
+  if(!da.length)return;
+  if(typeof pushUndo==='function')pushUndo('sostituzione di '+da.length+' blocchi');
+  da.forEach(function(e){
+    var n=B.nodes.find(function(x){return x.id===e.nodeId});
+    if(!n)return;
+    var vecchio=n.name;
+    n.name=e.suggerito.name; n.icon=e.suggerito.icon;
+    if(!n.detail||n.detail===vecchio)n.detail=e.suggerito.desc;
+    if(B._invalidIds)delete B._invalidIds[n.id];
+  });
+  B.effimero=false;
+  b_render();
+  if(typeof showToast==='function')showToast('🔧 '+da.length+' blocchi sostituiti con quelli della palette');
+  if(typeof checkWorkflow==='function')setTimeout(checkWorkflow,220);
+}
+
+// Riempie i campi obbligatori rimasti vuoti con i predefiniti del connettore e
+// riapre la verifica sull'elenco aggiornato. Il gesto e' annullabile come
+// qualunque altra modifica alla tela.
+function bCompilaObbligatori(){
+  if(typeof fillRequiredDefaults!=='function')return;
+  if(typeof pushUndo==='function')pushUndo('compilazione dei campi obbligatori');
+  var toccati=fillRequiredDefaults(B.nodes);
+  B.effimero=false;
+  b_render();
+  if(typeof renderProps==='function'&&B.selId>0)renderProps(B.selId);
+  if(typeof showToast==='function')
+    showToast(toccati?('🧩 '+toccati+' campi compilati con i valori predefiniti'):'🧩 Nessun campo da compilare');
+  if(typeof checkWorkflow==='function')setTimeout(checkWorkflow,220);
 }

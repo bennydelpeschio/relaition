@@ -622,7 +622,7 @@ function frPannelloSorgente(nid,n){
     }
     return testa+
       '<div class="prop-group"><div class="prop-label">Formati da includere</div>'+
-        '<input class="prop-input" value="'+escHtml(cfg.filtro||'')+'" placeholder="pdf, docx (vuoto = tutti i leggibili)" '+
+        '<input class="prop-input" value="'+escAttr(cfg.filtro||'')+'" placeholder="pdf, docx (vuoto = tutti i leggibili)" '+
         'onchange="updConfig('+nid+',\'filtro\',this.value)"></div>'+
       '<div class="prop-group"><div class="prop-label">Sottocartelle</div>'+
         '<select class="prop-select" onchange="updConfig('+nid+',\'profondita\',this.value)">'+

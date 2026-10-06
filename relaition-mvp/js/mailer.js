@@ -226,7 +226,7 @@ function mailPannelloAllegati(nid){
   try{ doc=dbAll('SELECT id,name,size FROM kb_docs ORDER BY name') }catch(e){}
 
   var chip=lista.map(function(a,i){
-    return '<span class="allegato-chip" title="'+escHtml(a.nome)+' · '+mailFormattaByte(a.byte||0)+'">'+
+    return '<span class="allegato-chip" title="'+escAttr(a.nome)+' · '+mailFormattaByte(a.byte||0)+'">'+
       '<span class="allegato-nome">'+escHtml(a.nome)+'</span>'+
       '<span class="allegato-peso">'+mailFormattaByte(a.byte||0)+'</span>'+
       '<span class="allegato-x" title="Togli" onclick="mailTogliAllegato('+nid+','+i+')">✕</span></span>';
@@ -242,7 +242,7 @@ function mailPannelloAllegati(nid){
       '<button class="tb-btn" onclick="mailScegliFile('+nid+')">📄 Dal computer</button>'+
       (doc.length?'<select class="prop-select allegati-sel" id="allegKb'+nid+'">'+
         '<option value="">documento dalla Knowledge Base</option>'+
-        doc.map(function(d){ return '<option value="'+escHtml(d.id)+'">'+escHtml(d.name)+'</option>' }).join('')+
+        doc.map(function(d){ return '<option value="'+escAttr(d.id)+'">'+escHtml(d.name)+'</option>' }).join('')+
        '</select><button class="tb-btn" onclick="mailAllegaDaKB('+nid+')">Aggiungi</button>':'')+
     '</div>'+
     '<div class="allegati-nota">Il totale non può superare '+mailFormattaByte(ALLEGATI_TETTO_BYTE)+

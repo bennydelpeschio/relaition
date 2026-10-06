@@ -193,7 +193,22 @@ var GUARDRAIL_CONFIGS = {
       String(cfg.required||'').split(',').map(function(s){return s.trim()}).filter(Boolean).forEach(function(f){
         if(obj[f] === undefined || obj[f] === null || obj[f] === '') problemi.push('campo mancante: '+f);
       });
-      String(cfg.rules||'').split('\n').map(function(s){return s.trim()}).filter(Boolean).forEach(function(r){
+      // Le regole si scrivono una per riga, ma «punteggio >= 0, punteggio <= 100»
+      // su una riga sola è la cosa che chiunque scrive, e il risultato era
+      // peggiore di un errore: la riga intera veniva letta come UNA regola,
+      // il valore atteso diventava il testo «0, punteggio <= 100», e il
+      // confronto falliva **sempre**, segnalando come non rispettata una
+      // regola che il valore rispettava. Una riga si divide solo quando ci si
+      // riconoscono due o più forme «campo operatore valore»: così un valore
+      // che contiene una virgola resta intero.
+      var regole=[];
+      String(cfg.rules||'').split(/[;\n]+/).forEach(function(riga){
+        riga=String(riga).trim(); if(!riga)return;
+        var pezzi=riga.match(/[A-Za-z_]\w*\s*(?:>=|<=|==|!=|>|<)\s*[^,;\n]+/g);
+        if(pezzi&&pezzi.length>1){ pezzi.forEach(function(p){ regole.push(p.trim()) }); return }
+        regole.push(riga);
+      });
+      regole.forEach(function(r){
         var m = r.match(/^(\w+)\s*(>=|<=|>|<|==|!=)\s*(.+)$/);
         if(!m) return;
         var val = obj[m[1]], op = m[2], atteso = isNaN(m[3]) ? m[3].trim() : parseFloat(m[3]);
