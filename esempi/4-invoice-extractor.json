@@ -1,0 +1,43 @@
+{
+  "name": "Invoice Extractor (Finance)",
+  "context": "La fattura arriva per email o viene caricata a mano. Il modello estrae i campi vincolati a schema JSON, un controllo verifica formati e coerenza, poi il flusso si dirama: sotto soglia registra da solo nel sistema contabile, sopra soglia sospende e chiede l'autorizzazione di un responsabile. Ogni esito chiude su un output tracciato.",
+  "nextId": 10,
+  "nodes": [
+    {"id":1,"type":"tr","icon":"📧","name":"Email trigger","detail":"Fattura in arrivo","x":420,"y":40,
+     "config":{"mailbox":"fatture@azienda.it","attachments":"Includi"}},
+    {"id":2,"type":"ai","icon":"🔍","name":"Estrazione campi fattura","detail":"Output vincolato a schema JSON","x":420,"y":170,
+     "config":{"model":"auto","temperature":0.2,"outformat":"json",
+       "prompt":"Estrai dalla fattura ricevuta ESATTAMENTE questi campi e rispondi SOLO con un oggetto JSON:\n{\"fornitore\": stringa, \"numero\": stringa, \"importo\": numero, \"data\": \"AAAA-MM-GG\", \"causale\": stringa}\nRegole: l'importo è il totale documento in euro, senza simbolo e con il punto come separatore decimale; la data è quella di emissione. Un campo che non trovi va lasciato vuoto: non dedurlo e non inventarlo. Se il documento non è una fattura, rispondi con tutti i campi vuoti."}},
+    {"id":3,"type":"gr","icon":"📐","name":"Convalida output","detail":"Formati e coerenza dei valori","x":420,"y":300,
+     "config":{"required":"fornitore, numero, importo, data, causale",
+       "rules":"importo: numero > 0 · data: formato AAAA-MM-GG non futura · numero: stringa non vuota · fornitore: stringa non vuota",
+       "onfail":"Blocca il flusso"}},
+    {"id":4,"type":"cd","icon":"🔀","name":"Importo entro soglia?","detail":"Soglia di registrazione automatica","x":420,"y":430,
+     "config":{"condition":"importo <= 500 e nessuna anomalia rilevata nella convalida"}},
+    {"id":5,"type":"ac","icon":"📒","name":"QuickBooks","detail":"Registra la fattura, stato approvata","x":170,"y":570,
+     "config":{"operation":"Crea","type":"Fattura","customer":"{{result.fornitore}}","amount":"{{result.importo}}"}},
+    {"id":6,"type":"ac","icon":"📧","name":"Invia email","detail":"Al responsabile amministrativo","x":170,"y":700,
+     "config":{"to":"amministrazione@azienda.it","cc":"","subject":"Fattura registrata automaticamente",
+       "body":"Registrata senza intervento manuale perché entro soglia.\n\n{{result}}","bodytype":"Testo","attach":"No"}},
+    {"id":7,"type":"gr","icon":"✋","name":"Approvazione umana","detail":"Sopra soglia: decide un responsabile","x":670,"y":570,
+     "config":{"approver":"Responsabile Amministrativo",
+       "message":"Fattura sopra la soglia di registrazione automatica. Verifica fornitore, importo e causale prima di autorizzare la registrazione.",
+       "timeout":"48"}},
+    {"id":8,"type":"ac","icon":"📧","name":"Invia email","detail":"Notifica al richiedente","x":670,"y":700,
+     "config":{"to":"richiedente@azienda.it","cc":"","subject":"Fattura in attesa di autorizzazione",
+       "body":"La fattura è sospesa in attesa della decisione del responsabile amministrativo.\n\n{{result}}","bodytype":"Testo","attach":"No"}},
+    {"id":9,"type":"ou","icon":"📊","name":"Output","detail":"Traccia completa per audit","x":420,"y":840,
+     "config":{"format":"JSON","destination":"Log esecuzioni"}}
+  ],
+  "edges": [
+    {"from":1,"fp":"out","to":2,"tp":"in","label":""},
+    {"from":2,"fp":"out","to":3,"tp":"in","label":""},
+    {"from":3,"fp":"out","to":4,"tp":"in","label":""},
+    {"from":4,"fp":"true","to":5,"tp":"in","label":"entro soglia: ramo A"},
+    {"from":4,"fp":"false","to":7,"tp":"in","label":"sopra soglia: ramo B"},
+    {"from":5,"fp":"out","to":6,"tp":"in","label":""},
+    {"from":6,"fp":"out","to":9,"tp":"in","label":""},
+    {"from":7,"fp":"out","to":8,"tp":"in","label":"decisione registrata"},
+    {"from":8,"fp":"out","to":9,"tp":"in","label":""}
+  ]
+}

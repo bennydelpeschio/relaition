@@ -175,10 +175,18 @@ problemi, cliccabile per saltare al nodo incriminato (`showValidationErrors()` /
 `validateWorkflow()`, pushando `{nodeId, msg}` in `errors`. Non serve toccare altro:
 l'hook è già collegato a tutte le azioni critiche.
 
-Quando **Esegui** viene bloccato da un workflow non valido, il blocco non resta solo
-nel pop-up: viene scritto anche nel pannello di esecuzione (`addExecEntry`) e nello
-storico permanente (`relaition_execlog`, visibile nella pagina Log Esecuzioni), così
-resta tracciabile anche dopo aver chiuso il modale.
+Quando **Esegui** viene bloccato da un workflow non valido, il flusso **non parte** e
+non viene scritto niente: né nel pannello di esecuzione né nello storico. Un tentativo
+mai cominciato non è un'esecuzione — nessun nodo è stato toccato, nessuna chiamata è
+uscita — e contarlo falserebbe i tassi di successo che il Monitoraggio calcola proprio
+su quelle righe. Cosa manca e dove lo dice la finestra della verifica
+(`showValidationErrors`), che è la diagnosi; il registro è il diario di bordo, e di un
+viaggio mai cominciato non c'è niente da scrivere. Vedi `ARCHITECTURE.md` §5.185.
+
+Quando invece il flusso **parte e poi si rompe**, il registro riporta tutto riga per
+riga e si apre `mostraErroriEsecuzione()`: la finestra gemella di quella della
+validazione, con il nodo coinvolto, il tipo di guasto e il rimedio (§5.183). La riga
+«🔎 Dove si è rotto» nel registro la riapre.
 
 ### Modificare/eliminare le connessioni
 

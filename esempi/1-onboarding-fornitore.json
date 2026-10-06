@@ -1,0 +1,43 @@
+{
+  "name": "Onboarding fornitore con dossier allegato",
+  "context": "Un nuovo fornitore si registra dal portale. Il flusso legge i dati, li verifica, chiede un'approvazione umana sopra soglia, genera il dossier e lo spedisce via email insieme alle condizioni contrattuali standard.",
+  "nextId": 11,
+  "nodes": [
+    {"id":1,"type":"tr","icon":"📥","name":"Webhook","detail":"Portale fornitori","x":420,"y":40,
+     "config":{"method":"POST","path":"/hooks/fornitori","campi":"ragione_sociale*|Ragione sociale\npartita_iva*|Partita IVA\nfatturato_annuo|Fatturato annuo\nreferente_email|Email del referente","auth":"Bearer token"}},
+    {"id":2,"type":"gr","icon":"🎭","name":"Mascheramento dati","detail":"Prima del modello","x":420,"y":170,
+     "config":{"entities":"Solo identificativi fiscali/bancari","restore":"Sì"}},
+    {"id":3,"type":"ai","icon":"🔍","name":"Estrai anagrafica","detail":"Ragione sociale, PIVA, fatturato","x":420,"y":300,
+     "config":{"model":"auto","temperature":0.3,"outformat":"json",
+       "prompt":"Estrai dai documenti allegati: ragione_sociale, partita_iva, sede, fatturato_annuo (numero, in euro), settore, referente_email. Rispondi SOLO con un oggetto JSON. Se un campo non è leggibile lascialo vuoto: non inventarlo."}},
+    {"id":4,"type":"gr","icon":"📐","name":"Convalida output","detail":"Schema anagrafica","x":420,"y":430,
+     "config":{"required":"ragione_sociale, partita_iva, fatturato_annuo","rules":"partita_iva: 11 cifre · fatturato_annuo: numero >= 0","onfail":"Blocca il flusso"}},
+    {"id":5,"type":"cd","icon":"🔀","name":"Fatturato > 5M?","detail":"Soglia due diligence","x":420,"y":560,
+     "config":{"condition":"fatturato_annuo > 5000000"}},
+    {"id":6,"type":"gr","icon":"✋","name":"Approvazione umana","detail":"Due diligence rafforzata","x":190,"y":690,
+     "config":{"approver":"Responsabile Acquisti","message":"Fornitore sopra i 5 milioni: verifica visure e referenze prima di procedere.","timeout":"48"}},
+    {"id":7,"type":"ai","icon":"📝","name":"Genera dossier","detail":"Scheda fornitore","x":420,"y":820,
+     "config":{"model":"auto","temperature":0.4,"outformat":"markdown",
+       "prompt":"Scrivi la scheda di onboarding del fornitore in Markdown, con queste sezioni: Anagrafica, Profilo economico, Livello di due diligence applicato, Passi successivi. Usa esclusivamente i dati ricevuti: dove manca un dato scrivi «non fornito»."}},
+    {"id":8,"type":"ou","icon":"💾","name":"Esporta file","detail":"Dossier in PDF","x":420,"y":950,
+     "config":{"filename":"dossier-fornitore","format":"PDF","title":"Scheda di onboarding fornitore","destination":"Entrambe"}},
+    {"id":9,"type":"ac","icon":"📧","name":"Invia email","detail":"Dossier + condizioni","x":420,"y":1080,
+     "config":{"to":"acquisti@azienda.it","cc":"legale@azienda.it","subject":"Onboarding fornitore: dossier pronto",
+       "body":"In allegato il dossier generato dal flusso e le condizioni contrattuali standard.\n\n{{result}}",
+       "bodytype":"Testo","attach":"Sì"}},
+    {"id":10,"type":"ou","icon":"📊","name":"Output","detail":"Esito registrato","x":420,"y":1210,
+     "config":{"format":"JSON","destination":"Log esecuzioni"}}
+  ],
+  "edges": [
+    {"from":1,"fp":"out","to":2,"tp":"in","label":""},
+    {"from":2,"fp":"out","to":3,"tp":"in","label":""},
+    {"from":3,"fp":"out","to":4,"tp":"in","label":""},
+    {"from":4,"fp":"out","to":5,"tp":"in","label":""},
+    {"from":5,"fp":"true","to":6,"tp":"in","label":"sopra soglia"},
+    {"from":5,"fp":"false","to":7,"tp":"in","label":"sotto soglia"},
+    {"from":6,"fp":"out","to":7,"tp":"in","label":"approvato"},
+    {"from":7,"fp":"out","to":8,"tp":"in","label":""},
+    {"from":8,"fp":"out","to":9,"tp":"in","label":""},
+    {"from":9,"fp":"out","to":10,"tp":"in","label":""}
+  ]
+}

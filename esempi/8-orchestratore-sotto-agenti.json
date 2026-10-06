@@ -1,0 +1,71 @@
+{
+  "name": "Sportello unico: orchestratore di agenti specializzati",
+  "context": "Una sola porta d'ingresso per richieste che oggi finiscono in tre caselle diverse. Un nodo di triage classifica la richiesta, e due condizioni annidate la instradano all'agente specializzato giusto: commerciale, sinistri o amministrazione. Ogni specialista è un agente già pubblicato e mantenuto dal suo reparto: l'orchestratore non ne duplica la logica, la invoca. I tre rami riconvergono su un nodo che compone la risposta, un controllo ne verifica la struttura, e sopra una soglia di rischio la decisione passa a una persona. È il caso in cui il multi-agente si giustifica: tre competenze diverse, un'unica esperienza per chi scrive.",
+  "nextId": 15,
+  "nodes": [
+    {"id":1,"type":"tr","icon":"📥","name":"Webhook","detail":"Richiesta dallo sportello unico","x":520,"y":40,
+     "config":{"method":"POST","path":"/hooks/sportello","campi":"richiedente, oggetto, testo, allegati","auth":"Bearer token"}},
+
+    {"id":2,"type":"gr","icon":"🛡️","name":"Difesa da istruzioni ostili","detail":"Il testo del richiedente è dato, non comando","x":520,"y":160,
+     "config":{"action":"Blocca e notifica","sensitivity":"Media"}},
+
+    {"id":3,"type":"ai","icon":"🏷️","name":"Triage della richiesta","detail":"Una categoria e un livello di rischio","x":520,"y":280,
+     "config":{"model":"auto","temperature":0.1,"maxtokens":600,"outformat":"json",
+       "prompt":"Classifichi una richiesta in arrivo allo sportello unico aziendale. Rispondi SOLO con un oggetto JSON:\n{\"categoria\": \"commerciale|sinistro|amministrativo\", \"rischio\": \"alto|medio|basso\", \"sintesi\": stringa, \"motivo_classificazione\": stringa}\nRegole vincolanti: scegli UNA sola categoria fra le tre indicate, mai altre. Il rischio è alto se la richiesta comporta un impegno economico, una scadenza legale o il trattamento di dati particolari; in caso di dubbio alza il livello, non abbassarlo. La sintesi è una frase sola. Non proponi soluzioni: qui si classifica soltanto."}},
+
+    {"id":4,"type":"cd","icon":"🔀","name":"È commerciale?","detail":"Primo instradamento","x":520,"y":400,
+     "config":{"condition":"categoria == commerciale"}},
+
+    {"id":5,"type":"sa","icon":"🤝","name":"Agente commerciale","detail":"Delega: qualificazione del contatto","x":200,"y":540,
+     "config":{"model":"auto","temperature":0.3,"prompt":"","agentName":"1 · Qualificazione contatti commerciali"}},
+
+    {"id":6,"type":"cd","icon":"🔀","name":"È un sinistro?","detail":"Secondo instradamento","x":780,"y":540,
+     "config":{"condition":"categoria == sinistro"}},
+
+    {"id":7,"type":"sa","icon":"🤝","name":"Agente sinistri","detail":"Delega: istruttoria del sinistro","x":640,"y":680,
+     "config":{"model":"auto","temperature":0.3,"prompt":"","agentName":"4 · Istruttoria sinistro assicurativo"}},
+
+    {"id":8,"type":"sa","icon":"🤝","name":"Agente amministrativo","detail":"Delega: estrazione dati dal documento","x":940,"y":680,
+     "config":{"model":"auto","temperature":0.3,"prompt":"","agentName":"2 · Estrazione dati da fattura"}},
+
+    {"id":9,"type":"ai","icon":"✍️","name":"Compone la risposta","detail":"Una voce sola per chi ha scritto","x":520,"y":820,
+     "config":{"model":"auto","temperature":0.4,"maxtokens":1200,"outformat":"json",
+       "prompt":"Ricevi l'esito del lavoro di un agente specializzato e la classificazione iniziale. Componi la risposta per chi ha scritto allo sportello.\nRegole vincolanti: usi SOLO quello che l'agente specializzato ha prodotto, senza aggiungere informazioni tue. Se l'esito è incompleto, lo dici e indichi cosa manca invece di colmare il vuoto. Dichiari sempre quale reparto ha lavorato la richiesta. Tono professionale, massimo dieci righe, nessuna promessa su tempi o importi che non siano nell'esito ricevuto.\nRispondi SOLO JSON: {risposta, reparto, completo}."}},
+
+    {"id":10,"type":"gr","icon":"📐","name":"Convalida output","detail":"La risposta è completa?","x":520,"y":940,
+     "config":{"required":"risposta, reparto","rules":"","onfail":"Segnala e prosegui"}},
+
+    {"id":11,"type":"cd","icon":"🔀","name":"Rischio alto?","detail":"Il gate si apre solo quando serve","x":520,"y":1060,
+     "config":{"condition":"rischio == alto"}},
+
+    {"id":12,"type":"gr","icon":"✋","name":"Approvazione umana","detail":"Sopra soglia decide una persona","x":260,"y":1190,
+     "config":{"approver":"responsabile.sportello@azienda.it",
+       "message":"Richiesta classificata ad alto rischio: confermi la risposta prima dell'invio?","timeout":"24"}},
+
+    {"id":13,"type":"ac","icon":"📧","name":"Invia email","detail":"Risposta al richiedente","x":520,"y":1320,
+     "config":{"to":"richiedente@esempio.it","cc":"sportello@azienda.it","subject":"Riscontro alla sua richiesta",
+       "body":"Gentile richiedente,\n\n{{result}}\n\nLa sua richiesta è stata lavorata dal reparto competente. Per chiarimenti può rispondere a questa email.\n\nSportello Unico",
+       "bodytype":"Testo","attach":"No"}},
+
+    {"id":14,"type":"ou","icon":"📊","name":"Output","detail":"Categoria, agente invocato, esito","x":520,"y":1440,
+     "config":{"format":"JSON","destination":"Log esecuzioni"}}
+  ],
+  "edges": [
+    {"from":1,"fp":"out","to":2,"tp":"in","label":""},
+    {"from":2,"fp":"out","to":3,"tp":"in","label":"testo verificato"},
+    {"from":3,"fp":"out","to":4,"tp":"in","label":""},
+    {"from":4,"fp":"true","to":5,"tp":"in","label":"commerciale"},
+    {"from":4,"fp":"false","to":6,"tp":"in","label":"non commerciale"},
+    {"from":6,"fp":"true","to":7,"tp":"in","label":"sinistro"},
+    {"from":6,"fp":"false","to":8,"tp":"in","label":"amministrativo"},
+    {"from":5,"fp":"out","to":9,"tp":"in","label":""},
+    {"from":7,"fp":"out","to":9,"tp":"in","label":""},
+    {"from":8,"fp":"out","to":9,"tp":"in","label":""},
+    {"from":9,"fp":"out","to":10,"tp":"in","label":""},
+    {"from":10,"fp":"out","to":11,"tp":"in","label":""},
+    {"from":11,"fp":"true","to":12,"tp":"in","label":"rischio alto"},
+    {"from":11,"fp":"false","to":13,"tp":"in","label":"rischio contenuto"},
+    {"from":12,"fp":"out","to":13,"tp":"in","label":"approvata"},
+    {"from":13,"fp":"out","to":14,"tp":"in","label":""}
+  ]
+}

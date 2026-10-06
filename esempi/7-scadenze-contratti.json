@@ -1,0 +1,44 @@
+{
+  "name": "Sorveglianza scadenze contrattuali (Legal)",
+  "context": "Parte da solo ogni lunedì mattina: nessuno deve ricordarsi di controllare. Legge i contratti dalla Knowledge Base, estrae per ciascuno le date e le clausole di rinnovo tacito, e produce un elenco di quelli in scadenza nei novanta giorni. Un gestore eccezioni assorbe i guasti di rete invece di far fallire tutta l'esecuzione, e il risultato arriva a chi di dovere su due canali. È il caso in cui l'automazione vale non perché è difficile, ma perché nessuno lo farebbe con costanza.",
+  "nextId": 9,
+  "nodes": [
+    {"id":1,"type":"tr","icon":"⏰","name":"Scheduler","detail":"Ogni lunedì alle 07:00","x":420,"y":40,
+     "config":{"cron":"0 7 * * 1","timezone":"Europe/Rome","onmiss":"Esegui al riavvio"}},
+
+    {"id":2,"type":"gr","icon":"🛠️","name":"Gestore eccezioni","detail":"Un contratto illeggibile non ferma gli altri","x":420,"y":170,
+     "config":{"strategy":"Riprova poi prosegui","attempts":"2","notify":"legal@azienda.it"}},
+
+    {"id":3,"type":"ai","icon":"📑","name":"Estrazione scadenze","detail":"Date e rinnovo tacito, schema vincolato","x":420,"y":300,
+     "config":{"model":"auto","temperature":0.1,"maxtokens":1500,"outformat":"json","useKB":true,
+       "prompt":"Analizzi i contratti forniti nel contesto. Per OGNI contratto restituisci un oggetto. Rispondi SOLO con un array JSON:\n[{\"controparte\": stringa, \"oggetto\": stringa, \"scadenza\": \"AAAA-MM-GG\", \"rinnovo_tacito\": true/false, \"preavviso_giorni\": numero, \"clausola_riferimento\": stringa}]\nRegole vincolanti: riporti solo date scritte nel testo, mai calcolate o supposte. Se la data di scadenza non è esplicita, metti la stringa vuota e non inventare. Per il rinnovo tacito cita la clausola esatta in \"clausola_riferimento\": se non trovi una clausola, metti false e lascia il riferimento vuoto. Non aggiungi commenti fuori dall'array."}},
+
+    {"id":4,"type":"gr","icon":"📐","name":"Convalida output","detail":"Struttura e campi obbligatori","x":420,"y":430,
+     "config":{"required":"controparte, scadenza","rules":"preavviso_giorni >= 0","onfail":"Segnala e prosegui"}},
+
+    {"id":5,"type":"cd","icon":"🔀","name":"Scadenze entro 90 giorni?","detail":"Si avvisa solo se serve","x":420,"y":560,
+     "config":{"condition":"almeno un contratto ha scadenza entro 90 giorni dalla data odierna"}},
+
+    {"id":6,"type":"ac","icon":"💬","name":"Slack","detail":"Avviso al canale legale","x":180,"y":700,
+     "config":{"channel":"#legal-scadenze",
+       "message":"Contratti in scadenza nei prossimi 90 giorni. Per ciascuno è indicato se il rinnovo è tacito e con quanto preavviso va disdetto.\n\n{{result}}"}},
+
+    {"id":7,"type":"ac","icon":"📧","name":"Invia email","detail":"Riepilogo al responsabile legale","x":180,"y":830,
+     "config":{"to":"legal@azienda.it","cc":"direzione@azienda.it","subject":"Scadenze contrattuali: riepilogo settimanale",
+       "body":"Riepilogo generato automaticamente ogni lunedì.\n\n{{result}}\n\nLe date provengono dai contratti archiviati nella Knowledge Base: ogni voce cita la clausola di riferimento. Le date non esplicite nel testo sono lasciate vuote, non stimate.",
+       "bodytype":"Testo","attach":"Sì"}},
+
+    {"id":8,"type":"ou","icon":"📊","name":"Output","detail":"Elenco e fonti, anche quando non c'è nulla in scadenza","x":420,"y":960,
+     "config":{"format":"JSON","destination":"Log esecuzioni"}}
+  ],
+  "edges": [
+    {"from":1,"fp":"out","to":2,"tp":"in","label":""},
+    {"from":2,"fp":"out","to":3,"tp":"in","label":""},
+    {"from":3,"fp":"out","to":4,"tp":"in","label":""},
+    {"from":4,"fp":"out","to":5,"tp":"in","label":""},
+    {"from":5,"fp":"true","to":6,"tp":"in","label":"ci sono scadenze"},
+    {"from":5,"fp":"false","to":8,"tp":"in","label":"nulla in scadenza"},
+    {"from":6,"fp":"out","to":7,"tp":"in","label":""},
+    {"from":7,"fp":"out","to":8,"tp":"in","label":""}
+  ]
+}
